@@ -14,6 +14,7 @@ void main()
 		fork = new Semaphore(1); 
 		
 	foreach(phil; taskPool.parallel(philosophers)) {
+        writeln("STARTING THREAD FOR PHIL: ", phil); 
 		for(int i = 0; i < PHILOSOPHER_EAT_COUNT; i++){
 			Thread.sleep(uniform(1,500).msecs);
 			forks[phil].wait;
@@ -24,5 +25,6 @@ void main()
 			forks[(phil+1)%5].notify; 
 			forks[phil].notify;
 		} 
+        writeln("PHILOSOPHER ", phil, " HAS STOPPED EATING FOR GOOD"); 
 	}
 }

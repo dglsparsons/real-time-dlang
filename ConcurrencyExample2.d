@@ -10,8 +10,9 @@ class myThread : Thread
 
     private void run() {
         writeln("Hello, I am a new thread!"); 
-        auto message = receiveOnly!string; 
-        writeln("message: ", message); 
+        //auto message = receiveOnly!string; <- we can't do this, since it does
+        //not have any concept of a mailbox.
+        //writeln("message: ", message); 
     }
 }
 
