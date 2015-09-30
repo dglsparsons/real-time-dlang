@@ -9,7 +9,7 @@ immutable PHILOSOPHER_EAT_COUNT = 5;
 void main()
 {
 	immutable int[] philosophers = [0,1,2,3,4];
-    Semaphore[philosophers.length] forks;
+	Semaphore[philosophers.length] forks;
 	foreach(ref fork; forks) 
 		fork = new Semaphore(1); 
 		
