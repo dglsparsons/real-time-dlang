@@ -4,26 +4,25 @@ import core.thread;
 import std.parallelism;
 import std.random;
 
-immutable int NUMBER_OF_SEATS = 5; 
-immutable int PHILOSOPHER_EAT_COUNT = 5; 
+immutable PHILOSOPHER_EAT_COUNT = 5; 
 
 void main()
 {
-	const philosophers = [0,1,2,3,4];
-	writeln(philosophers.length);
+	immutable int[] philosophers = [0,1,2,3,4];
     Semaphore[philosophers.length] forks;
 	foreach(ref fork; forks) 
 		fork = new Semaphore(1); 
-	foreach(i, philosopher; taskPool.parallel(philosophers)) {
-		while(true){
+		
+	foreach(phil; taskPool.parallel(philosophers)) {
+		for(int i = 0; i < PHILOSOPHER_EAT_COUNT; i++){
 			Thread.sleep(uniform(1,500).msecs);
-			forks[i].wait;
-			forks[(i+1)% 5].wait;
-			writeln("philosopher: ", philosopher, " is eating, with forks ", i, " and ", (i+1)%5);
+			forks[phil].wait;
+			forks[(phil+1)% 5].wait;
+			writeln("philosopher: ", phil, " is eating, with forks ", phil, " and ", (phil+1)%5);
 			Thread.sleep(uniform(1,500).msecs); 
-			writeln("philosopher ", philosopher, " has stopped eating");
-			forks[(i+1)%5].notify;
-			forks[i].notify;
+			writeln("philosopher: ", phil, " has stopped eating");
+			forks[(phil+1)%5].notify; 
+			forks[phil].notify;
 		} 
 	}
 }
