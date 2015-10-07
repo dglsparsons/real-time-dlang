@@ -1,3 +1,5 @@
+#!/usr/bin/rdmd
+
 import std.stdio; 
 import core.thread; 
 import std.concurrency; 
@@ -5,7 +7,7 @@ import std.concurrency;
 void main()
 {
     writeln("Starting new thread"); 
-    auto myThread = spawn(&myThreadFunction, 321); 
+    auto myThread = spawn(&myThreadFunction); 
     //Thread.sleep(200.msecs); 
     writeln("Sending message"); 
     myThread.send(42); 

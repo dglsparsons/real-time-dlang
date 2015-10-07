@@ -1,3 +1,5 @@
+#!/usr/bin/rdmd
+
 import std.stdio; 
 import core.thread; 
 import std.concurrency; 

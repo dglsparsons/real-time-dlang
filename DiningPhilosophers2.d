@@ -1,3 +1,4 @@
+#!/usr/bin/rdmd
 import std.stdio; 
 import core.sync.semaphore; 
 import core.thread; 

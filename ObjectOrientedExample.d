@@ -1,3 +1,4 @@
+#!/usr/bin/rdmd
 import std.stdio; 
 
 interface Animal 
