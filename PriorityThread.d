@@ -20,7 +20,7 @@ class AThread : Thread
     void run()
     {
         //This method of changing the priority works
-	this.priority(90); 
+    	this.priority(90); 
         writeln("priority of A thread: ", this.priority); 
         foreach (number; 1..1000) {
             writeln("A: ", number, " ", this.priority);
@@ -62,8 +62,7 @@ void main()
     //Check what the max and min priorities are
     int max_prio = sched_get_priority_max(sched_getscheduler(0)); 
     int min_prio = sched_get_priority_min(sched_getscheduler(0)); 
-    int default_prio = sched_get_priority(sched_getscheduler(0)); 
-    writeln("schedulers max_prio: ", max_prio, " min prio: ", min_prio, " default prio ", default_prio); 
+    writeln("schedulers max_prio: ", max_prio, " min prio: ", min_prio); 
 
     //Create a new thread and check its MAX and MIN priorities
     auto a = new AThread();
@@ -71,4 +70,7 @@ void main()
 
     a.start();
     auto b = new BThread().start(); 
+    auto c = new AThread().start; 
+    auto d = new AThread().start; 
+    auto e = new AThread().start; 
 }
