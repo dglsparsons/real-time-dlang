@@ -6,7 +6,7 @@ import core.sys.posix.pthread;
 import core.sync.mutex; 
 
 shared bool should_exit = false; 
-MutexWithPrioInheritance myMutex;
+__gshared MutexWithPrioInheritance myMutex;
 
 class HighPriorityThread : Thread
 {
@@ -14,13 +14,14 @@ class HighPriorityThread : Thread
         super(&run); 
     }
 
-    private: 
-    void run(mutex){
-        this.priority(99);
+private: 
+    void run(){
+        this.priority(48);
         writeln("High Priority Thread has Started"); 
-        should_exit = true; 
-        writeln("myMutex: ", &mutex); 
-        // TODO - LOCK THE MUTEX (see if it gets it) 
+        //should_exit = true; 
+        myMutex.lock(); 
+        writeln("High priority thread has aquired lock!"); 
+        myMutex.unlock(); 
     }
 }
 
@@ -30,18 +31,17 @@ class LowPriorityThread : Thread
         super(&run); 
     }
 
-    private: 
-
+private: 
     void run(){
         this.priority(1); 
         writeln("Low Priority Thread has Started"); 
         //lock the mutex
-        // TODO - LOCK THE MUTEX HERE 
-        writeln("myMutex: ", &myMutex); 
-        while(!should_exit) {
-            // Loop forever
+        myMutex.lock; 
+        writeln("Low Priority has locked the Mutex "); 
+        for(int i = 0; i < 10_000_000_000; i++) {
         }
-
+        writeln("Low Priority has unlocked the Mutex"); 
+        myMutex.unlock;
     }
 }
 
@@ -50,14 +50,14 @@ class MediumPriorityThread : Thread
     this(){
         super(&run); 
     }
-    private: 
+private: 
     void run(){
         this.priority(2); 
         writeln("Medium Priority Thread has Started"); 
-        writeln("myMutex: ", &myMutex); 
         while(!should_exit) {
-            //Infinitely loop
+            // Loop forever
         }
+        writeln("Medium priority thread has finished"); 
     }
 }
 
@@ -107,12 +107,11 @@ void main()
     // Medium priority to preempt the low priority
     // High priority to see if the inversion works
 
-    new LowPriorityThread().start(&myMutex); 
+    new LowPriorityThread().start(); 
     Thread.sleep(1.seconds); 
     new MediumPriorityThread().start; 
     Thread.sleep(1.seconds); 
-    new HighPriorityThread().start(&myMutex); 
+    new HighPriorityThread().start(); 
 
     thread_joinAll; 
-
 }
