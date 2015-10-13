@@ -38,7 +38,8 @@ private:
         //lock the mutex
         myMutex.lock; 
         writeln("Low Priority has locked the Mutex "); 
-        for(int i = 0; i < 10_000_000_000; i++) {
+        while(!should_exit) {
+            //loop forever
         }
         writeln("Low Priority has unlocked the Mutex"); 
         myMutex.unlock;
@@ -50,11 +51,12 @@ class MediumPriorityThread : Thread
     this(){
         super(&run); 
     }
+
 private: 
     void run(){
         this.priority(2); 
         writeln("Medium Priority Thread has Started"); 
-        while(!should_exit) {
+        while(true) {
             // Loop forever
         }
         writeln("Medium priority thread has finished"); 
@@ -78,6 +80,9 @@ class MutexWithPrioInheritance : Mutex
 
             if( pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE ) )
                 throw new SyncError( "Unable to initialize mutex" );
+
+            if (pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT))
+                throw new SyncError("Unable to initialize prio inheritance"); 
 
             if( pthread_mutex_init( &m_hndl, &attr ) )
                 throw new SyncError( "Unable to initialize mutex" );
