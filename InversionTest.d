@@ -10,8 +10,7 @@ __gshared should_continue = false;
 
 void lowPriorityThread()
 {
-    writeln("ahhhh"); 
-    int newPriority = 70; 
+    int newPriority = 10; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -27,12 +26,13 @@ void lowPriorityThread()
     if (pthread_getschedparam(self, &policy, &param))
         throw new Error("Unable to get thread priority"); 
     writeln("continuing lowprio thread, priority: ", param.sched_priority); 
-    while(true){}
+    if (pthread_mutex_unlock(&myMutex))
+        throw new Error("Unable to UNLOCK mutex"); 
 }
 
 void mediumPriorityThread()
 {
-    int newPriority=80; 
+    int newPriority=20; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -41,12 +41,13 @@ void mediumPriorityThread()
     if (pthread_getschedparam(self, &policy, &param))
         throw new Error("Unable to get thread priority"); 
     writeln("Starting Medium Priority thread with priority: ", param.sched_priority); 
-    while(true) {}
+    while(!should_continue) {}
+    writeln("Ending Medium Priority thread"); 
 }
 
 void highPriorityThread()
 {
-    int newPriority=90; 
+    int newPriority=30; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -59,6 +60,8 @@ void highPriorityThread()
     if (pthread_mutex_lock(&myMutex))
         throw new Error("Unable to LOCK mutex"); 
     writeln("High priority thread has locked the mutex"); 
+    if (pthread_mutex_unlock(&myMutex))
+        throw new Error("Unable to unlock mutex"); 
     
 }
 
