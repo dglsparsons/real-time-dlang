@@ -10,7 +10,8 @@ __gshared should_continue = false;
 
 void lowPriorityThread()
 {
-    int newPriority = 10; 
+    writeln("ahhhh"); 
+    int newPriority = 70; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -31,7 +32,7 @@ void lowPriorityThread()
 
 void mediumPriorityThread()
 {
-    int newPriority=20; 
+    int newPriority=80; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -45,7 +46,7 @@ void mediumPriorityThread()
 
 void highPriorityThread()
 {
-    int newPriority=30; 
+    int newPriority=90; 
     int policy; 
     sched_param param; 
     pthread_t self = pthread_self(); 
@@ -91,9 +92,12 @@ void main()
 
 
     // Create some Threads
+     
     new Thread(&lowPriorityThread).start; 
+    
     Thread.sleep(1.seconds); 
     new Thread(&mediumPriorityThread).start; 
     Thread.sleep(1.seconds); 
     new Thread(&highPriorityThread).start; 
+    thread_joinAll; 
 }
