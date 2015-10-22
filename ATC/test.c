@@ -53,8 +53,7 @@ static void cleanup_handler(void *arg)
 
 
 
-    int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     pthread_t thr;
     int s;
