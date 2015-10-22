@@ -25,20 +25,19 @@ void main()
 void threadFunc()
 {
     myThread = pthread_self(); 
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null); 
+    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null); 
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, null); 
     writeln("new thread: ", pthread_self()); 
-    //signal(SIGINT, &handler); 
     Thread.sleep(2.seconds); 
     while(1){
         writeln("Hello, i am new thread"); 
         Thread.sleep(500.msecs); 
+        pthread_testcancel(); 
     } // loop forever
 }
 
 extern (C) void handler(int signum)
 {
-    //printf("%i in thread %lu\n",signum, pthread_self()); 
-    //signal(SIGINT, &handler); 
     writeln("Cancelling thread ", myThread, " from ", pthread_self()); 
     pthread_cancel(myThread); 
     writeln("Worked!"); 

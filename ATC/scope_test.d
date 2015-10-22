@@ -5,7 +5,7 @@ import core.sync.mutex;
 
 __gshared Mutex mut; 
 
-void main()
+@nogc void main()
 {
     mut = new Mutex(); 
     new Thread(&threadFunc).start(); 
@@ -19,11 +19,15 @@ void main()
 
 void threadFunc()
 {
-    mut.lock(); 
-    scope(exit) mut.unlock; 
-    writeln("New thread has the mutex!") ; 
+    try {
+        mut.lock(); 
+        scope(exit) mut.unlock; 
+        writeln("New thread has the mutex!") ; 
 
-    Thread.sleep(5.seconds); 
-    writeln("New thread crashing!"); 
-    throw new Exception("Oops"); 
+        Thread.sleep(5.seconds); 
+        writeln("New thread crashing!"); 
+        throw new Exception("Oops"); 
+    } catch (Exception e) {
+        //
+    }
 }
