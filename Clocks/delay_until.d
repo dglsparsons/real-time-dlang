@@ -6,7 +6,7 @@ import core.sys.linux.time;
 void main()
 {
     timespec current_time; 
-    if (clock_gettime(CLOCK_MONOTONIC, &current_time)) {
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &current_time)) {
         throw new Exception("Failed to get the time"); 
     }
 
@@ -15,7 +15,7 @@ void main()
     writeln("time: ", current_time); 
 
     // This should be a 3 second sleep! 
-    if (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &current_time, null))
+    if (clock_nanosleep(CLOCK_MONOTONIC_RAW, TIMER_ABSTIME, &current_time, null))
         throw new Exception("Failed to sleep as expected!"); 
     writeln("Woken from sleep!"); 
 }

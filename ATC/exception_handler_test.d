@@ -18,14 +18,15 @@ void main()
 
 void threadFunc()
 {
-    try {
-        writeln("New thread started with thread_id: ", pthread_self()); 
+    writeln("New thread started with thread_id: ", pthread_self()); 
 
-        //set up a sighandler
-        sigaction_t action; 
-        action.sa_handler = &sig_handler; 
-        sigemptyset(&action.sa_mask); 
-        sigaction(SIGINT, &action, null); 
+    //set up a sighandler
+    sigaction_t action; 
+    action.sa_handler = &sig_handler; 
+    sigemptyset(&action.sa_mask); 
+    sigaction(SIGINT, &action, null); 
+
+    try {
 
         scope(exit) writeln("Unlocking a mutex for example"); 
         scope(exit) writeln("Unwind stuff here"); 
@@ -38,7 +39,6 @@ void threadFunc()
     catch (Exception e) {}
     finally {
         //reset the sighandler
-
         sigset_t set; 
         sigemptyset(&set); 
         pthread_sigmask(SIG_BLOCK, &set, null); 
