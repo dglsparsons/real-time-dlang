@@ -11,7 +11,7 @@ void main()
     writeln("Delay Until is working!"); 
 }
 
-extern (C) void delay_until(MonoTime timeIn)
+void delay_until(MonoTime timeIn)
 {
     import core.sys.linux.time; 
     Duration dur = timeIn - MonoTime(0) ;
