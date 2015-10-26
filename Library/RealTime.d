@@ -15,6 +15,10 @@ import core.time;
  * time += 3.seconds; 
  * delay_until(time); 
  * ---
+ * 
+ * Note: 
+ * In order for clock_nanosleep() to be called, this was added to the core
+ * druntime under CRuntime_Glibc. 
  */
 
 void delay_until(MonoTime timeIn)
@@ -113,6 +117,16 @@ enum PRIORITY_CEILING = 3;
  *  auto a = new RTMutex(PRIORITY_INHERIT); 
  *  ---
  *
+ *  Note: 
+ *  In order for RTMutex to function properly, the Mutex attribute m_hndl was
+ *  modified within druntime. This was changed from private, to protected,
+ *  enabling RTMutex to access it through the constructor. 
+ *  It would also be possible to not need these modifications by defining
+ *  RTMutex as a separate class, and defining any methods needed here. 
+ * 
+ *  Further Note: 
+ *  In order to provide support for priority ceiling/ inheritance protocols, a
+ *  modification was made to the druntime. 
  */
 
 import core.sync.mutex; 
