@@ -20,7 +20,7 @@ class LowPriorityThread : Thread
         writeln("starting low Priority thread with priority: ", this.priority); 
         myMutex.lock; 
         writeln("low priority thread has locked the mutex"); 
-        while(!should_continue){} 
+        while(!should_continue){}
         writeln("Continuing low priority thread"); 
         myMutex.unlock; 
     }
@@ -64,7 +64,8 @@ void main()
     setScheduler(SCHED_FIFO, 50); 
 
     // Create a mutex
-    myMutex = new RTMutex(PRIORITY_INHERIT); 
+    myMutex = new RTMutex(PRIORITY_CEILING); 
+    myMutex.ceiling = 50; 
     
     writeln("Mutex has been initialised"); 
 

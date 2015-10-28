@@ -33,7 +33,7 @@ class RTThread : Thread
 
     this(void function() fn)
     {
-        super(&fn); 
+        super(fn); 
     }
 
     bool interrupt()
@@ -52,26 +52,25 @@ class RTThread : Thread
             return false; 
         }
     }
-
-    private: 
-    void run()
-    {
-        threadFunc(); 
-    }
 }
 
 void threadFunc()
 {
     RTThread self = to!RTThread(Thread.getThis()); 
     self.interruptable = true; 
-    try {
+    // interruptable section of code
+    try 
+    {
         while(true)
         {
             Thread.sleep(1.seconds); 
             writeln("Hello, I am a thread"); 
         }
-    } catch (AsyncException e)
+    } 
+    catch (AsyncException e)
+
     self.interruptable = false; 
+
     while(true)
     {
         writeln("Thread is now down here"); 

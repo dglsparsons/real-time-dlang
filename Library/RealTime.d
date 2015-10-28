@@ -1,6 +1,7 @@
 //module realtime; 
 
 import core.time; 
+import core.thread; 
 
 /** 
  * Implementation of a non-relative delay function. 
@@ -219,4 +220,54 @@ unittest
     a.ceiling(newPrio); 
     assert(prio != a.ceiling); 
     assert(newPrio == a.ceiling); 
+}
+
+
+void enableInterruptableSections()
+{
+    import core.sys.posix.signal; 
+    sigaction_t action; 
+    action.sa_handler = &sig_handler; 
+    sigemptyset(&action.sa_mask); 
+    sigaction(36, &action, null); 
+}
+
+extern (C) void sig_handler(int signum)
+{
+    throw new AsyncException(); 
+}
+
+class AsyncException : Exception
+{
+    this()
+    {
+        super(null); 
+    }
+}
+
+class RTThread : Thread 
+{
+    import core.sys.posix.signal; 
+    bool interruptable = false; 
+
+    this(void function() fn)
+    {
+        super(fn); 
+    }
+
+    bool interrupt()
+    {
+        if (this.interruptable)
+        {
+            if (pthread_kill(m_addr, 36))
+            {
+                throw new Exception("Unable to signal the posix thread: "); 
+            }
+            return true; 
+        } 
+        else 
+        {
+            return false; 
+        }
+    }
 }
