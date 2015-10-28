@@ -1,7 +1,7 @@
 //module realtime; 
 
-import core.time; 
-import core.thread; 
+import core.time : MonoTime;//, Duration; 
+import core.thread : Thread; 
 
 /** 
  * Implementation of a non-relative delay function. 
@@ -26,6 +26,7 @@ void delay_until(MonoTime timeIn)
 {
     version(Posix) {
         import core.sys.linux.time; 
+        import core.time : Duration, timespec; 
         Duration dur = timeIn - MonoTime(0) ;
         long secs, nansecs; 
         dur.split!("seconds", "nsecs")(secs, nansecs); 
@@ -64,7 +65,7 @@ void delay_until(MonoTime timeIn)
 void setScheduler(int scheduler_type, int scheduler_priority)
 {
     version(Posix){
-        import core.sys.posix.sched; 
+        import core.sys.posix.sched : sched_setscheduler, sched_param; 
         sched_param sp = { sched_priority: scheduler_priority }; 
         int ret = sched_setscheduler(0, scheduler_type, &sp); 
         if (ret == -1) {
@@ -75,7 +76,6 @@ void setScheduler(int scheduler_type, int scheduler_priority)
 
 unittest 
 {
-    import core.sys.posix.sched; 
     setScheduler(SCHED_FIFO, 50); 
     auto a = sched_getscheduler(0); 
     assert(a == SCHED_FIFO); 
@@ -83,13 +83,13 @@ unittest
     a = sched_getscheduler(0); 
     assert(a == SCHED_RR); 
     /*
-    setScheduler(SCHED_BATCH); 
-    a = sched_getscheduler(0); 
-    assert(a == SCHED_BATCH); 
-    setScheduler(SCHED_IDLE); 
-    a = sched_getscheduler(0); 
-    assert(a == SCHED_IDLE); 
-    */
+       setScheduler(SCHED_BATCH); 
+       a = sched_getscheduler(0); 
+       assert(a == SCHED_BATCH); 
+       setScheduler(SCHED_IDLE); 
+       a = sched_getscheduler(0); 
+       assert(a == SCHED_IDLE); 
+     */
 }
 
 // TODO - THREAD FIXES NEEDED - Thread.PRIORITY_MAX and Thread.PRIORITY_MIN are not
@@ -130,7 +130,7 @@ enum PRIORITY_CEILING = 3;
  *  modification was made to the druntime. 
  */
 
-import core.sync.mutex; 
+import core.sync.mutex : Mutex, SyncError; 
 class RTMutex : Mutex 
 {
     version(Posix)
@@ -223,9 +223,31 @@ unittest
 }
 
 
+/**
+ * Sets up the signal handler and sets up signals to be redirected to the
+ * handler in order to allow asynchronous interrupts to be used within the 
+ * system.
+ * This is a necessary feature of real-time systems, in order to allow
+ * asynchronously interruptable sections of code to be executed, and fail
+ * through if the behaviour is either not as expected, or if an exetrnal change
+ * in environment justifies a need for it. 
+ *
+ * Example: 
+ * ---
+ * void main()
+ * {
+ *     enableInterruptableSections; 
+ *     auto a = new RTThread(&thread_function); 
+ *     a.start; 
+ *     Thread.sleep(1.seconds); 
+ *     a.interrupt; 
+ * }
+ * ---
+ */
+
 void enableInterruptableSections()
 {
-    import core.sys.posix.signal; 
+    import core.sys.posix.signal: sigaction_t, sigemptyset, sigaction; 
     sigaction_t action; 
     action.sa_handler = &sig_handler; 
     sigemptyset(&action.sa_mask); 
@@ -237,6 +259,34 @@ extern (C) void sig_handler(int signum)
     throw new AsyncException(); 
 }
 
+/** 
+  * This is a derived class, inheriting from Exception, and exists for the sole
+  * purpose of communicating that an asynchronously interruptable task has been
+  * interrupted. 
+  * 
+  * Example: 
+  * --- 
+  * void thread_function()
+  * {
+  *     RTThread self = to!RTThread(Thread.getThis()); 
+  *     self.interruptable = true; 
+  *     try 
+  *     {
+  *         while(true) { Thread.sleep(1.seconds); writeln("Hello"); }
+  *     }
+  *     catch (AsyncException ex) {}
+  * }
+  * 
+  * void main()
+  * {
+  *     auto a = new RTThread(&thread_fuction); 
+  *     a.start(); 
+  *     Thread.sleep(1.seconds); 
+  *     a.interrupt(); 
+  * }
+  * --- 
+*/
+
 class AsyncException : Exception
 {
     this()
@@ -245,15 +295,72 @@ class AsyncException : Exception
     }
 }
 
+/** 
+  * This is an extension of the default thread class, providing additional
+  * functionality for real time systems in the form of support for asynchronous
+  * interruptions. 
+  * This is a requirement for real time systems in order for asynchronous
+  * transfer control. 
+  * 
+  * Params: 
+  * void function() fn = passing in a reference to a function will cause the
+  * thread to execute the function following a call to start(); 
+  * 
+  * Example: 
+  * ---
+  * void thread_function()
+  * {
+  *     writeln("Hello, World!"); 
+  * }
+  * 
+  * void main()
+  * {
+  *     new RTThread(&thread_function).start(); 
+  * }
+  * --- 
+  * 
+  * Note: 
+  * In order to successfully implement the RTThread complete with interrupts,
+  * the druntime was modified to make m_addr protected. This enables RTThread's
+  * interrupt function to access the m_addr for the underlying pthread_kill
+  * call. Alternative solutions would include: A full custom implementation of
+  * thread, or modifying the default thread function to also have a public bool
+  * interruptable would enable the same end result. 
+  */
+
 class RTThread : Thread 
 {
-    import core.sys.posix.signal; 
+    import core.sys.posix.signal : pthread_kill; 
     bool interruptable = false; 
 
     this(void function() fn)
     {
         super(fn); 
     }
+
+    /** 
+      * Sends an asynchronous interrupt to the thread, if the thread is
+      * flagged as being interruptable. 
+      * 
+      * Throws: 
+      * Exception on failure to send a signal to the thread
+      * 
+      * Returns: 
+      * true if the signal was successfully sent to the thread. 
+      * false if the thread was not flagged as interruptable, and hence no
+      * signal was sent. 
+      * 
+      * Example: 
+      * --- 
+      * void main()
+      * {
+      *     auto a = new RTThread(&thread_function);
+      *     a.start(); 
+      *     Thread.sleep(1.seconds); 
+      *     a.interrupt(); 
+      * }
+      * --- 
+      */
 
     bool interrupt()
     {
