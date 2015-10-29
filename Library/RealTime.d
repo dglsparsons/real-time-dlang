@@ -61,11 +61,12 @@ void delay_until(MonoTime timeIn)
  *  Also: Testing on Arch Linux, it appears SCHED_BATCH and SCHED_IDLE are not
  *  present?
  */
+public import core.sys.posix.sched : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
 
 void setScheduler(int scheduler_type, int scheduler_priority)
 {
     version(Posix){
-        import core.sys.posix.sched : sched_setscheduler, sched_param; 
+        import core.sys.posix.sched : sched_param, sched_setscheduler; 
         sched_param sp = { sched_priority: scheduler_priority }; 
         int ret = sched_setscheduler(0, scheduler_type, &sp); 
         if (ret == -1) {
@@ -76,20 +77,13 @@ void setScheduler(int scheduler_type, int scheduler_priority)
 
 unittest 
 {
+    import core.sys.posix.sched : sched_getscheduler; 
     setScheduler(SCHED_FIFO, 50); 
     auto a = sched_getscheduler(0); 
     assert(a == SCHED_FIFO); 
     setScheduler(SCHED_RR, 50); 
     a = sched_getscheduler(0); 
     assert(a == SCHED_RR); 
-    /*
-       setScheduler(SCHED_BATCH); 
-       a = sched_getscheduler(0); 
-       assert(a == SCHED_BATCH); 
-       setScheduler(SCHED_IDLE); 
-       a = sched_getscheduler(0); 
-       assert(a == SCHED_IDLE); 
-     */
 }
 
 // TODO - THREAD FIXES NEEDED - Thread.PRIORITY_MAX and Thread.PRIORITY_MIN are not
@@ -253,6 +247,18 @@ void enableInterruptableSections()
     sigemptyset(&action.sa_mask); 
     sigaction(36, &action, null); 
 }
+
+unittest
+{
+    import core.sys.posix.signal : raise; 
+    enableInterruptableSections(); 
+    import std.exception : assertThrown; 
+    assertThrown!AsyncException(raise(36)); 
+
+
+}
+
+
 
 extern (C) void sig_handler(int signum)
 {
