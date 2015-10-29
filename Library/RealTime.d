@@ -258,11 +258,13 @@ unittest
 
 }
 
+const AsyncException async = new AsyncException(); 
 
 
-extern (C) void sig_handler(int signum)
+extern (C) @safe void sig_handler(int signum)
 {
-    throw new AsyncException(); 
+    //auto a = new AsyncException(); 
+    throw async; 
 }
 
 /** 
