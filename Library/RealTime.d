@@ -254,8 +254,6 @@ unittest
     enableInterruptableSections(); 
     import std.exception : assertThrown; 
     assertThrown!AsyncException(raise(36)); 
-
-
 }
 
 const AsyncException async = new AsyncException(); 
@@ -341,7 +339,7 @@ class RTThread : Thread
     import core.sys.posix.signal : pthread_kill; 
     bool interruptable = false; 
 
-    this(void function() fn)
+    this(void delegate() fn)
     {
         super(fn); 
     }
