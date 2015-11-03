@@ -262,7 +262,7 @@ extern (C) @safe void sig_handler(int signum)
     auto curr_thread = RTThread.getSelf(); 
     for (int i = 0; i < curr_thread.interruptableSections.length; i++)
     {
-        if(curr_thread.interruptableSections[i].toThrow)
+        if(curr_thread.interruptableSections[i].toThrow && curr_thread.interruptableSections[i].interruptable)
         {
             throw curr_thread.interruptableSections[i].interrupt; 
         }
@@ -418,13 +418,25 @@ class Interruptable
 {
     bool toThrow = false; 
     AsyncInterrupt interrupt; 
-    bool interruptable = false; 
+    private bool m_interruptable = false; 
 
-    void function() m_fn; 
-    void delegate() m_dg; 
-    Call m_call; 
-    enum Call { NO, FN, DG }; 
+    private void function() m_fn; 
+    private void delegate() m_dg; 
+    private Call m_call; 
+    private enum Call { NO, FN, DG }; 
 
+    @trusted @property bool interruptable()
+    {
+        return m_interruptable; 
+    }
+    @property void interruptable(bool newValue)
+    {
+        m_interruptable = newValue; 
+        if (newValue)
+        {
+            RTThread.getSelf.interrupt(); 
+        }
+    }
 
     this(void function() fn)
     {
