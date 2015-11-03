@@ -256,42 +256,46 @@ unittest
     assertThrown!AsyncException(raise(36)); 
 }
 
-const AsyncException async = new AsyncException(); 
-const AsyncInterrupt asy = new AsyncInterrupt(); 
 
 extern (C) @safe void sig_handler(int signum)
 {
-    //auto a = new AsyncException(); 
-    throw asy; 
+    auto curr_thread = RTThread.getSelf(); 
+    for (int i = 0; i < curr_thread.interruptableSections.length; i++)
+    {
+        if(curr_thread.interruptableSections[i].toThrow)
+        {
+            throw curr_thread.interruptableSections[i].interrupt; 
+        }
+    }
 }
 
 /** 
-  * This is a derived class, inheriting from Exception, and exists for the sole
-  * purpose of communicating that an asynchronously interruptable task has been
-  * interrupted. 
-  * 
-  * Example: 
-  * --- 
-  * void thread_function()
-  * {
-  *     RTThread self = to!RTThread(Thread.getThis()); 
-  *     self.interruptable = true; 
-  *     try 
-  *     {
-  *         while(true) { Thread.sleep(1.seconds); writeln("Hello"); }
-  *     }
-  *     catch (AsyncException ex) {}
-  * }
-  * 
-  * void main()
-  * {
-  *     auto a = new RTThread(&thread_fuction); 
-  *     a.start(); 
-  *     Thread.sleep(1.seconds); 
-  *     a.interrupt(); 
-  * }
-  * --- 
-*/
+ * This is a derived class, inheriting from Exception, and exists for the sole
+ * purpose of communicating that an asynchronously interruptable task has been
+ * interrupted. 
+ * 
+ * Example: 
+ * --- 
+ * void thread_function()
+ * {
+ *     RTThread self = to!RTThread(Thread.getThis()); 
+ *     self.interruptable = true; 
+ *     try 
+ *     {
+ *         while(true) { Thread.sleep(1.seconds); writeln("Hello"); }
+ *     }
+ *     catch (AsyncException ex) {}
+ * }
+ * 
+ * void main()
+ * {
+ *     auto a = new RTThread(&thread_fuction); 
+ *     a.start(); 
+ *     Thread.sleep(1.seconds); 
+ *     a.interrupt(); 
+ * }
+ * --- 
+ */
 
 class AsyncException : Exception
 {
@@ -303,49 +307,51 @@ class AsyncException : Exception
 
 class AsyncInterrupt : Error
 {
-    public int depth; 
-    this()
+    uint depth; 
+    this(uint d)
     {
         super(null, null); 
+        depth = d;
     }
 }
 
 
 /** 
-  * This is an extension of the default thread class, providing additional
-  * functionality for real time systems in the form of support for asynchronous
-  * interruptions. 
-  * This is a requirement for real time systems in order for asynchronous
-  * transfer control. 
-  * 
-  * Params: 
-  * void function() fn = passing in a reference to a function will cause the
-  * thread to execute the function following a call to start(); 
-  * 
-  * Example: 
-  * ---
-  * void thread_function()
-  * {
-  *     writeln("Hello, World!"); 
-  * }
-  * 
-  * void main()
-  * {
-  *     new RTThread(&thread_function).start(); 
-  * }
-  * --- 
-  * 
-  * Note: 
-  * In order to successfully implement the RTThread complete with interrupts,
-  * the druntime was modified to make m_addr protected. This enables RTThread's
-  * interrupt function to access the m_addr for the underlying pthread_kill
-  * call. Alternative solutions would include: A full custom implementation of
-  * thread, or modifying the default thread function to also have a public bool
-  * interruptable would enable the same end result. 
-  */
+ * This is an extension of the default thread class, providing additional
+ * functionality for real time systems in the form of support for asynchronous
+ * interruptions. 
+ * This is a requirement for real time systems in order for asynchronous
+ * transfer control. 
+ * 
+ * Params: 
+ * void function() fn = passing in a reference to a function will cause the
+ * thread to execute the function following a call to start(); 
+ * 
+ * Example: 
+ * ---
+ * void thread_function()
+ * {
+ *     writeln("Hello, World!"); 
+ * }
+ * 
+ * void main()
+ * {
+ *     new RTThread(&thread_function).start(); 
+ * }
+ * --- 
+ * 
+ * Note: 
+ * In order to successfully implement the RTThread complete with interrupts,
+ * the druntime was modified to make m_addr protected. This enables RTThread's
+ * interrupt function to access the m_addr for the underlying pthread_kill
+ * call. Alternative solutions would include: A full custom implementation of
+ * thread, or modifying the default thread function to also have a public bool
+ * interruptable would enable the same end result. 
+ */
 
 class RTThread : Thread 
 {
+    Interruptable[] interruptableSections = []; 
     import core.sys.posix.signal : pthread_kill; 
     bool interruptable = false; 
     uint depth = 0; 
@@ -360,42 +366,119 @@ class RTThread : Thread
     }
 
     /** 
-      * Sends an asynchronous interrupt to the thread, if the thread is
-      * flagged as being interruptable. 
-      * 
-      * Throws: 
-      * Exception on failure to send a signal to the thread
-      * 
-      * Returns: 
-      * true if the signal was successfully sent to the thread. 
-      * false if the thread was not flagged as interruptable, and hence no
-      * signal was sent. 
-      * 
-      * Example: 
-      * --- 
-      * void main()
-      * {
-      *     auto a = new RTThread(&thread_function);
-      *     a.start(); 
-      *     Thread.sleep(1.seconds); 
-      *     a.interrupt(); 
-      * }
-      * --- 
-      */
+     * Sends an asynchronous interrupt to the thread, if the thread is
+     * flagged as being interruptable. 
+     * 
+     * Throws: 
+     * Exception on failure to send a signal to the thread
+     * 
+     * Returns: 
+     * true if the signal was successfully sent to the thread. 
+     * false if the thread was not flagged as interruptable, and hence no
+     * signal was sent. 
+     * 
+     * Example: 
+     * --- 
+     * void main()
+     * {
+     *     auto a = new RTThread(&thread_function);
+     *     a.start(); 
+     *     Thread.sleep(1.seconds); 
+     *     a.interrupt(); 
+     * }
+     * --- 
+     */
 
-    bool interrupt()
+    void interrupt()
     {
-        if (this.interruptable)
-        {
-            if (pthread_kill(m_addr, 36))
+        pthread_kill(m_addr, 36); 
+        /*
+           if (this.interruptable)
+           {
+           if (pthread_kill(m_addr, 36))
+           {
+           throw new Error("Unable to signal the posix thread: "); 
+           }
+           return true; 
+           } 
+           else 
+           {
+           return false; 
+           } */
+    }
+
+    static RTThread getSelf() @trusted
+    {
+        import std.conv : to; 
+        return to!RTThread(Thread.getThis);
+    }
+}
+
+class Interruptable
+{
+    bool toThrow = false; 
+    AsyncInterrupt interrupt; 
+    bool interruptable = false; 
+
+    void function() m_fn; 
+    void delegate() m_dg; 
+    Call m_call; 
+    enum Call { NO, FN, DG }; 
+
+
+    this(void function() fn)
+    {
+        m_fn = fn; 
+        m_call = Call.FN; 
+    }
+    this(void delegate() fn)
+    {
+        m_dg = fn; 
+        m_call = Call.DG; 
+    }
+
+    void start()
+    {
+        // Track the current Interruptable sections within the thread
+        auto curr_thread = RTThread.getSelf;
+        curr_thread.interruptableSections ~= this;
+        interrupt = new AsyncInterrupt(curr_thread.depth); 
+
+        curr_thread.depth += 1; 
+        scope(exit) curr_thread.depth -= 1; 
+
+        // execute the desired functionality
+        thread_start();
+    }
+
+    private:
+    void thread_start()
+    {
+        try {
+            interruptable = true;
+            scope(exit) interruptable = false; 
+            switch( m_call )
             {
-                throw new Error("Unable to signal the posix thread: "); 
+                case Call.FN:
+                    m_fn();
+                    break;
+                case Call.DG:
+                    m_dg();
+                    break;
+                default:
+                    break;
             }
-            return true; 
-        } 
-        else 
+        }
+        catch (AsyncInterrupt caughtex)
         {
-            return false; 
+            import std.stdio : writeln;
+            if (interrupt.depth == caughtex.depth)
+                writeln("Exception been caught");
+            else
+            {
+                writeln("Exception been rethrown");
+                throw caughtex; 
+            }
         }
     }
 }
