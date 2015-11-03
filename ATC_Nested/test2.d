@@ -1,7 +1,7 @@
 #!/usr/bin/rdmd
 
 import RealTime; 
-        import std.stdio; 
+import std.stdio; 
 
 class myAsyncException : AsyncException
 {
@@ -16,10 +16,16 @@ class myAsyncException : AsyncException
 
 void main()
 {
+    void testfunction()
+    {
+        writeln("What the hell!"); 
+    }
+
     auto aie = new myAsyncException(0); 
     try {
         auto exc = new myAsyncException(1); 
         try {
+            testfunction();
             throw aie; 
         } catch (myAsyncException ex) {
             if (ex.depth == exc.depth)

@@ -1,4 +1,4 @@
-//module realtime;
+//module rt.realtime; 
 
 import core.time : MonoTime;//, Duration; 
 import core.thread : Thread; 
@@ -257,12 +257,12 @@ unittest
 }
 
 const AsyncException async = new AsyncException(); 
-
+const AsyncInterrupt asy = new AsyncInterrupt(); 
 
 extern (C) @safe void sig_handler(int signum)
 {
     //auto a = new AsyncException(); 
-    throw async; 
+    throw asy; 
 }
 
 /** 
@@ -301,6 +301,16 @@ class AsyncException : Exception
     }
 }
 
+class AsyncInterrupt : Error
+{
+    public int depth; 
+    this()
+    {
+        super(null, null); 
+    }
+}
+
+
 /** 
   * This is an extension of the default thread class, providing additional
   * functionality for real time systems in the form of support for asynchronous
@@ -338,7 +348,12 @@ class RTThread : Thread
 {
     import core.sys.posix.signal : pthread_kill; 
     bool interruptable = false; 
+    uint depth = 0; 
 
+    this(void function() fn)
+    {
+        super(fn); 
+    }
     this(void delegate() fn)
     {
         super(fn); 
@@ -374,7 +389,7 @@ class RTThread : Thread
         {
             if (pthread_kill(m_addr, 36))
             {
-                throw new Exception("Unable to signal the posix thread: "); 
+                throw new Error("Unable to signal the posix thread: "); 
             }
             return true; 
         } 
