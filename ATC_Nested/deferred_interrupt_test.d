@@ -21,8 +21,8 @@ void thread_function()
     void interruptable_section()
     {
         //disable the interrupts
-        //auto self = RTThread.getSelf; 
-        RTThread.getSelf.interruptableSections[0].interruptable = false;
+        auto level = RTThread.getSelf.depth -1;
+        RTThread.getSelf.interruptableSections[level].interruptable = false;
 
         //sleep for a while while we get an interrupt
         writeln("Disabling"); 
@@ -30,7 +30,7 @@ void thread_function()
 
         //enable interrupts and hopefully, immediately exit
         writeln("Enabling"); 
-        RTThread.getSelf.interruptableSections[0].interruptable = true; 
+        RTThread.getSelf.interruptableSections[level].interruptable = true; 
     }
 
     auto a = new Interruptable(&interruptable_section); 
