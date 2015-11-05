@@ -6,7 +6,7 @@ import RealTime,
 
 void thread_function()
 {
-    void nested_interruptable_section()
+    void nested_interruptable_section(Interruptable self)
     {
         while(true)
         {
@@ -15,7 +15,7 @@ void thread_function()
         }
     }
 
-    void interruptable_section()
+    void interruptable_section(Interruptable self)
     {
         new Interruptable(&nested_interruptable_section).start(); 
         while(true) 

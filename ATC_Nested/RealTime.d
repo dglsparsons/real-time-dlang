@@ -444,17 +444,17 @@ class Interruptable
 
     private bool m_interruptable = false; 
 
-    private void function() m_fn; 
-    private void delegate() m_dg; 
+    private void function(Interruptable x) m_fn; 
+    private void delegate(Interruptable x) m_dg; 
     private Call m_call; 
     private enum Call { NO, FN, DG }; 
 
-    this(void function() fn)
+    this(void function(Interruptable x) fn)
     {
         m_fn = fn; 
         m_call = Call.FN; 
     }
-    this(void delegate() fn)
+    this(void delegate(Interruptable x) fn)
     {
         m_dg = fn; 
         m_call = Call.DG; 
@@ -522,10 +522,10 @@ class Interruptable
             switch( m_call )
             {
                 case Call.FN:
-                    m_fn();
+                    m_fn(this);
                     break;
                 case Call.DG:
-                    m_dg();
+                    m_dg(this);
                     break;
                 default:
                     break;
@@ -536,6 +536,5 @@ class Interruptable
             if (interrupt.depth != caughtex.depth)
                 throw caughtex; 
         }
-
     }
 }

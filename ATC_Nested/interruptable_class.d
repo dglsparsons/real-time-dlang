@@ -6,7 +6,7 @@ import RealTime,
 
 void thread_function()
 {
-    void interruptable_section()
+    void interruptable_section(Interruptable self)
     {
         while(true) 
         {

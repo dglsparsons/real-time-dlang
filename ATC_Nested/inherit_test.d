@@ -10,7 +10,7 @@ class myInterruptable : Interruptable
     {
         super(&run); 
     }
-    private void run()
+    private void run(Interruptable self)
     {
         writeln("Hello"); 
     }

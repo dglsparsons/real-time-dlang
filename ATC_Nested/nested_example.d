@@ -29,13 +29,13 @@ void main()
             throw aie; 
         } catch (myAsyncException ex) {
             if (ex.depth == exc.depth)
-                writeln("WOO");
+                writeln("Depth 1");
             else 
                 throw ex; 
         }
     } catch (myAsyncException ex) {
         if (ex.depth == aie.depth)
-            writeln("LEL"); 
+            writeln("Depth 0"); 
         else
             throw ex; 
     }
