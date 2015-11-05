@@ -510,6 +510,7 @@ class Interruptable
         // Track the current Interruptable sections within the thread
         auto curr_thread = RTThread.getSelf;
         curr_thread.interruptableSections ~= this;
+        scope(exit) curr_thread.interruptableSections = curr_thread.interruptableSections[0..$-1];
         interrupt = new AsyncInterrupt(curr_thread.depth); 
 
         curr_thread.depth += 1; 
