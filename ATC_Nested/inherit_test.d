@@ -4,13 +4,13 @@ import RealTime,
        std.stdio; 
 
 
-class myInterruptable : Interruptable 
+class myInterruptable : InterruptableSection
 {
     this()
     {
         super(&run); 
     }
-    private void run(Interruptable self)
+    private void run(InterruptableSection self)
     {
         writeln("Hello"); 
     }

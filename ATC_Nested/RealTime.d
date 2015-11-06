@@ -239,8 +239,7 @@ unittest
 {
     import core.sys.posix.signal : raise; 
     enableInterruptableSections(); 
-    import std.exception : assertThrown; 
-    assertThrown!AsyncException(raise(36)); 
+    raise(36); // Should do nothing
 }
 
 
@@ -284,14 +283,6 @@ extern (C) @safe void sig_handler(int signum)
  * --- 
  */
 
-class AsyncException : Exception
-{
-    this()
-    {
-        super(null); 
-    }
-}
-
 class AsyncInterrupt : Error
 {
     uint depth; 
@@ -301,7 +292,6 @@ class AsyncInterrupt : Error
         depth = d;
     }
 }
-
 
 /** 
  * This is an extension of the default thread class, providing additional
@@ -338,8 +328,7 @@ class AsyncInterrupt : Error
 
 class RTThread : Thread 
 {
-    Interruptable[] interruptableSections = []; 
-    import core.sys.posix.signal : pthread_kill; 
+    InterruptableSection[] interruptableSections = []; 
     bool interruptable = false; 
     uint depth = 0; 
 
@@ -374,6 +363,7 @@ class RTThread : Thread
 
     void interrupt()
     {
+        import core.sys.posix.signal : pthread_kill; 
         if (pthread_kill(m_addr, 36))
             throw new Exception("Unable to signal the thread"); 
     }
@@ -396,6 +386,17 @@ class RTThread : Thread
     }
 }
 
+unittest
+{
+    void thread_func()
+    {
+        RTThread b = RTThread.getSelf; 
+        assert(a == b); 
+    }
+    __gshared RTThread a; 
+    a = new RTThread(&thread_func);
+    a.start; 
+}
 
 /** 
  * This class is a predefined existance of an asynchronously interruptable
@@ -405,7 +406,8 @@ class RTThread : Thread
  * that additionally enables interruptable sections to be nested. 
  * 
  * Params: 
- * void delegate() dg
+ * void delegate() dg 
+ * or
  * void function() fn
  * Passing in either of the above will initialise the interruptable section of
  * code, setting up any necessary handlers and Errors. On a call to start,
@@ -421,7 +423,7 @@ class RTThread : Thread
  *     }
  *
  *     enableInterruptableSections(); 
- *     new Interruptable(&interruptableCode).start; 
+ *     new InterruptableSection(&interruptableCode).start; 
  * }
  * 
  * void main()
@@ -435,26 +437,24 @@ class RTThread : Thread
  * --- 
  */
 
-
-
-class Interruptable
+class InterruptableSection
 {
     bool toThrow = false; 
     AsyncInterrupt interrupt; 
 
     private bool m_interruptable = false; 
 
-    private void function(Interruptable x) m_fn; 
-    private void delegate(Interruptable x) m_dg; 
+    private void function(InterruptableSection x) m_fn; 
+    private void delegate(InterruptableSection x) m_dg; 
     private Call m_call; 
     private enum Call { NO, FN, DG }; 
 
-    this(void function(Interruptable x) fn)
+    this(void function(InterruptableSection x) fn)
     {
         m_fn = fn; 
         m_call = Call.FN; 
     }
-    this(void delegate(Interruptable x) fn)
+    this(void delegate(InterruptableSection x) fn)
     {
         m_dg = fn; 
         m_call = Call.DG; 
@@ -500,7 +500,7 @@ class Interruptable
      *     // do something
      * }
      * 
-     * auto a = new Interruptable(&interruptableCode); 
+     * auto a = new InterruptableSection(&interruptableCode); 
      * a.start(); 
      * ---
      */

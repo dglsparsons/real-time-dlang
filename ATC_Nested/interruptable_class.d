@@ -6,7 +6,7 @@ import RealTime,
 
 void thread_function()
 {
-    void interruptable_section(Interruptable self)
+    void interruptable_section(InterruptableSection self)
     {
         while(true) 
         {
@@ -16,7 +16,7 @@ void thread_function()
     }
 
     writeln("Thread started"); 
-    auto a = new Interruptable(&interruptable_section);
+    auto a = new InterruptableSection(&interruptable_section);
     a.start; 
 }
 

@@ -18,7 +18,7 @@ void main()
 
 void thread_function()
 {
-    void interruptable_section(Interruptable self)
+    void interruptable_section(InterruptableSection self)
     {
         //disable the interrupts
         auto level = RTThread.getSelf.depth -1;
@@ -34,6 +34,6 @@ void thread_function()
         while(true){} 
     }
 
-    auto a = new Interruptable(&interruptable_section); 
+    auto a = new InterruptableSection(&interruptable_section); 
     a.start(); 
 }

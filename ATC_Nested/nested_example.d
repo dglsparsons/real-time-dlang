@@ -3,7 +3,7 @@
 import RealTime; 
 import std.stdio; 
 
-class myAsyncException : AsyncException
+class myAsyncException : Exception
 {
     int depth; 
     this(int d)
