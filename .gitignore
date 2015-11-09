@@ -2,3 +2,6 @@
 *.obj
 *.out
 *.swp
+*.log
+*.aux
+*.pdf
