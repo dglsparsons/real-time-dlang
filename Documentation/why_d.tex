@@ -5,28 +5,34 @@ specifically in regard to Real Time systems.
 % Aims to achieve everything that is possible with other languages such as C++
 % Contains high level abstractions
 The D programming language is primarily inspired by C++, aiming to be a "C++ done
-right" \cite{qznc.github.io/d-tut/philosophy.html}. This explicates the 
-power that the language possesses: D is primarily a high level language: 
-abstractions to aid in speed and ease of development are rife, and can 
-be seen in the expansive standard libraries that are provided. However, D still 
-maintains low level capabilities: the language still has access to inline assembler, 
-system calls, interrupts, and low level I/O as well as being a compiled language. 
+right" \cite{qznc.github.io/d-tut/philosophy.html}. This explains the 
+power that the language possesses: D is primarily a high level language, with
+a large number of abstractions that aid in the speed an ease of development. 
+However, D still maintains low level capabilities: the language still has access 
+to inline assembler, system calls, interrupts, and low level I/O in addition to 
+being a compiled language.
 \par\bigskip\noindent
 The flexibility of D is one of the largest advantages. It "allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
 idiosyncrasies in the way" \cite{ddili.org/ders/d.en/Programming_in_D.pdf}, 
 while simultaneously generating code that can be aggressively optimized by the
-compiler while still being idiomatic\cite{dlang.org/overview.html}.
+compiler \cite{dlang.org/overview.html}. D maintains a readable syntax, and 
+user-friendly approach to development, making it a powerful and highly capable 
+language.
 
 \subsection{Memory Safe Programming}
 % Concept of memory safe programming that D supports.
 An area of particular interest to Real Time systems is the notion of memory 
-safe programming. In addition to providing powerful in built types for arrays 
-in D, the D compiler implements range checking on compilation. 
-Additional safety features are also provided in the safeD subset of the language
-\cite{dlang.org/safed.html}. This will only allow functions to perform 
+safe programming. In addition to providing powerful in built types such as arrays 
+in D, the D compiler also implements range checking, and numerous other 
+safety checks on compilation, preventing any undefined behaviour from occuring.
+Additional safety features are also provided in the SafeD subset of the language
+\cite{dlang.org/safed.html}. The SafeD subset will only allow functions to perform 
 operations that are deemed as either safe or trusted, preventing any 
-potential corruption of memory.
+potential corruption of memory. Examples of unsafe functions could include the 
+manual manipulation of pointers, or the use of unsafe types. A major difference 
+with regards to other languages, is that D provides enough power so many complex 
+operations can be performed and used, while still remaining completely safe.
 
 \subsection{Unittesting}
 % Idea of built in tests, contract programming, debugging, error handling
@@ -40,11 +46,11 @@ D is of further interest for two rather unusual features of the language.
 First of all, an unusual approach is taken to sharing memory between threads: 
 the concept of Thread Local Storage (TLS) is used. 
 Rather than each thread having access to shared resources, resources are by 
-default duplicated in each new thread created. In order to share resources they 
+default duplicated in each thread created. In order to share resources they 
 have to be explicitly specified as \texttt{shared}. This approach is taken in 
 order to both reduce the use of global variables, and reduce any errors that may
-occur as a result of this. \cite{dlang website for migrating to shared}
+occur as a result of this \cite{dlang website for migrating to shared}.
 Another interesting feature is the atomic section of the core library, provided 
 by the druntime. This documents a set of uninterruptable actions that can be taken, 
-enabling a lock free approach to managing shared resources. \cite{shared documentation}.
+enabling a lock free approach to managing shared resources \cite{shared documentation}.
 
