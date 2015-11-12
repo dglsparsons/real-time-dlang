@@ -18,11 +18,11 @@ class LowPriorityThread : Thread
     void run(){
         this.priority(10);
         writeln("starting low Priority thread with priority: ", this.priority); 
-        myMutex.lock; 
+        //myMutex.lock; 
         writeln("low priority thread has locked the mutex"); 
         while(!should_continue){}
         writeln("Continuing low priority thread"); 
-        myMutex.unlock; 
+        //myMutex.unlock; 
     }
 }
 
@@ -52,9 +52,9 @@ class HighPriorityThread : Thread
         this.priority(30); 
         writeln("Starting High Priority thread with priority: ", this.priority); 
         should_continue = true; 
-        myMutex.lock; 
+        //myMutex.lock; 
         writeln("High priority thread has locked the mutex"); 
-        myMutex.unlock; 
+        //myMutex.unlock; 
     }
 }
 
@@ -65,7 +65,7 @@ void main()
 
     // Create a mutex
     myMutex = new RTMutex(PRIORITY_CEILING); 
-    myMutex.ceiling = 50; 
+    myMutex.ceiling = 30; 
     
     writeln("Mutex has been initialised"); 
 

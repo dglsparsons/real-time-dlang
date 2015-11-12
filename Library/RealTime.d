@@ -124,7 +124,7 @@ import core.sync.mutex : Mutex, SyncError;
 class RTMutex : Mutex 
 {
     import core.sys.posix.pthread; 
-    this(int type) nothrow @trusted
+    this(int type) @trusted
     {
         pthread_mutexattr_t attr = void; 
 
@@ -136,8 +136,13 @@ class RTMutex : Mutex
 
         if(type == PRIORITY_CEILING)
         {
+            import std.stdio; 
             if(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_PROTECT))
+            {
                 throw new SyncError("Unable to initialize Priority ceiling protocol"); 
+                writeln("ERROR"); 
+            }
+            writeln("PRIO_PROTECT called"); 
         }
         else if (type == PRIORITY_INHERIT)
         {
@@ -388,6 +393,7 @@ class RTThread : Thread
 
 unittest
 {
+    /*
     void thread_func()
     {
         RTThread b = RTThread.getSelf; 
@@ -396,6 +402,7 @@ unittest
     __gshared RTThread a; 
     a = new RTThread(&thread_func);
     a.start; 
+    */
 }
 
 /** 
