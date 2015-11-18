@@ -1,22 +1,30 @@
-This sections aims to outline the reasons for using D as a programming language,
-specifically in regard to Real Time systems. 
+As mentioned in the introduction, the D programming language has many 
+characteristics that lend it nicely to the development of real-time systems, 
+these are outlined in further detail in this section. 
+However, D also has certain features that are less desirable for a real-time 
+system, such as the use of a Garbage Collector, these less desirable features 
+are also detailed in this section.
 
-\subsection{High and Low Level}
+
+\subsection{High and Low-Level}
 % Aims to achieve everything that is possible with other languages such as C++
 % Contains high level abstractions
-The D programming language is primarily inspired by C++, aiming to be a "C++ done
-right" \cite{qznc.github.io/d-tut/philosophy.html}. This explains the 
+The D programming language is primarily inspired by C++, aiming to be a `C++ done
+right' 
+\cite{qznc.github.io/d-tut/philosophy.html}. This explains the 
 power that the language possesses: D is primarily a high level language, with
 a large number of abstractions that aid in the speed an ease of development. 
 However, D still maintains low level capabilities: the language still has access 
 to inline assembler, system calls, interrupts, and low level I/O in addition to 
 being a compiled language.
 \par\bigskip\noindent
-The flexibility of D is one of the largest advantages. It "allows its user to tap 
+The flexibility of D is one of the largest advantages. It `allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
-idiosyncrasies in the way" \cite{ddili.org/ders/d.en/Programming_in_D.pdf}, 
+idiosyncrasies in the way'
+\cite{ddili.org/ders/d.en/Programming_in_D.pdf}, 
 while simultaneously generating code that can be aggressively optimized by the
-compiler \cite{dlang.org/overview.html}. D maintains a readable syntax, and 
+compiler 
+\cite{dlang.org/overview.html}. D maintains a readable syntax, and 
 user-friendly approach to development, making it a powerful and highly capable 
 language.
 
@@ -25,7 +33,7 @@ language.
 An area of particular interest to Real Time systems is the notion of memory 
 safe programming. In addition to providing powerful in built types such as arrays 
 in D, the D compiler also implements range checking, and numerous other 
-safety checks on compilation, preventing any undefined behaviour from occuring.
+safety checks on compilation, preventing any undefined behaviour from occurring.
 Additional safety features are also provided in the SafeD subset of the language
 \cite{dlang.org/safed.html}. The SafeD subset will only allow functions to perform 
 operations that are deemed as either safe or trusted, preventing any 
@@ -34,23 +42,63 @@ manual manipulation of pointers, or the use of unsafe types. A major difference
 with regards to other languages, is that D provides enough power so many complex 
 operations can be performed and used, while still remaining completely safe.
 
-\subsection{Unittesting}
+\subsection{Concurrency}
+%Message passing
+D is often referred to as a language that implements the message passing model 
+of concurrency, rather than the more standard Lock and Mutex approach 
+\cite{http://ddili.org/ders/d.en/concurrency.html}. D's message passing API 
+allows asynchronous messages to be transferred between threads of control using 
+message boxes. This allows a high-level of abstraction, and provides an 
+interface that is simplistic to use. However, it is also misleading: the underlying 
+model of D uses the more typical lock and mutex approach 
+\cite{https://github.com/D-Programming-Language/druntime/blob/master/src/core/sync/mutex.d}, 
+with the message passing interface simply built on top of this 
+\cite{https://github.com/D-Programming-Language/phobos/blob/master/std/concurrency.d}. 
+As such, when developing in D, the programmer has the option to choose between 
+the higher level message passing interface, or the lower level lock and mutex 
+approach. It is even true that the two can both be used, taking a mixed approach. 
+\par\bigskip\noindent
+D also has an interesting approach to sharing memory between threads. In D 
+global variables are not shared between threads of control, as they are in 
+other languages. Instead, each thread has a local copy of the global variable. 
+This is a concept that is known as Thread Local Storage (TLS). 
+\cite{http://dlang.org/migrate-to-shared.html}. 
+If resources are to be shared between different threads, D provides a way of 
+achieving this: the \texttt{shared} and \texttt{\_\_gshared} keywords. In addition, 
+\texttt{immutable} variables are shared by default. 
+\par\bigskip\noindent
+The core runtime for D provides an additional interesting feature: an atomicop 
+library 
+\cite{http://dlang.org/phobos/core_atomic.html}. 
+This provides a mechanism for some degree of sharing to be performed without the 
+need for locks, allowing many operations to be performed indivisibly.
+
+
+\subsection{Garbage Collector}
+%GC
+One significant problem with developing a real-time system in D, is the need to 
+overcome D's garbage collector. The current implementation of the garbage 
+collector is a `Stop the World' approach: when garbage collection is occurring, 
+all different threads are halted from making progress 
+\cite{http://dlang.org/garbage.html}. This causes problems with 
+real-time systems. A real-time system must be able to guarantee a maximum response 
+time on any operation performed, predictable behaviour is therefore fundamental to this. 
+With a stop the world Garbage Collector, such behaviour cannot be guaranteed. 
+\par\bigskip\noindent
+One possible solution to this problem, is to disable the garbage collector for 
+real time applications. This is possible to do by marking functions \texttt{@nogc}, 
+or by calling \texttt{GC.disable()}. However, this is not without drawback: 
+many of D's higher level features and libraries use garbage collection. 
+Tackling the issue of the garbage collector is outside of the scope of this 
+article, however it is an issue that would require future work in order to 
+enable the development real-time systems in D. 
+
+\subsection{Additional Interesting Features}
 % Idea of built in tests, contract programming, debugging, error handling
 Another unique feature of D is the ability to build unit tests into a 
 program without the need for external libraries: D provides support for 
 unittesting as a language feature. 
-
-\subsection{Additional Interesting Features}
-
-D is of further interest for two rather unusual features of the language.
-First of all, an unusual approach is taken to sharing memory between threads: 
-the concept of Thread Local Storage (TLS) is used. 
-Rather than each thread having access to shared resources, resources are by 
-default duplicated in each thread created. In order to share resources they 
-have to be explicitly specified as \texttt{shared}. This approach is taken in 
-order to both reduce the use of global variables, and reduce any errors that may
-occur as a result of this \cite{dlang website for migrating to shared}.
-Another interesting feature is the atomic section of the core library, provided 
-by the druntime. This documents a set of uninterruptable actions that can be taken, 
-enabling a lock free approach to managing shared resources \cite{shared documentation}.
-
+\par\bigskip\noindent
+In addition, D provides a Java style model for Exceptions and Errors, enabling 
+a much simpler error handling system than the C style ERRNOs 
+\cite{http://ddili.org/ders/d.en/exceptions.html}. 

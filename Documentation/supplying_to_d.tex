@@ -1,2 +1,109 @@
 % Article writing on how Real Time features are provided to Dlang
-%
+
+In the previous chapter, we discussed the characteristics a real-time 
+systems programming language would need to provide in order to enable the 
+development of a real-time system. The aim of this project has been primarily to 
+provide these primitives to the D programming language, and hence any discussion, 
+design decisions and the implementation of these features is discussed in this 
+section. 
+
+\subsection{Threads and Interprocess Communication}
+D, being a C/C++ style language, provides support for the creation and use of 
+threads. Threads in D follow a Java style approach: Thread is a class, 
+allowing subclasses to be derived and methods to be overridden. The default 
+class method will allow a function to be passed by reference and executed. 
+This is seen in the example below, taken from the D website. 
+\cite{http://dlang.org/phobos/core_thread.html}: 
+\begin{lstlisting}
+class DerivedThread : Thread
+{
+    this()
+    {
+        super(&run);
+    }
+    private:
+        void run()
+        {
+            // Derived thread running.
+        }
+}
+
+void threadFunc()
+{
+    // Composed thread running.
+}
+
+// create and start instances of each type
+auto derived = new DerivedThread().start();
+auto composed = new Thread(&threadFunc).start();
+\end{lstlisting}
+We can therefore see that the primitive of Threads, and interprocess communication 
+is already provided by D. However, the implementation is of interest: D 
+provides an agnostic approach to operating systems, supporting Windows, FreeBSD, 
+OSX and Linux. 
+In order to provide support for this wide range of operating systems, the Thread 
+class contains operating system specific code, mapping down a standard interface 
+onto various underlying implementations 
+\cite{https://github.com/D-Programming-Language/druntime/blob/master/src/core/thread.d}. 
+We are interested only in operating systems 
+that support real-time applications, and as such all additions made to D with 
+regards to real-time applications are specifically targeting POSIX compliant 
+operating systems. 
+\par\bigskip\noindent
+It is worth noting that the underlying operating system may not be fully
+real-time compliant, even if it is POSIX compliant. Real-time patches to the 
+Linux kernel exist 
+\cite{https://rt.wiki.kernel.org/index.php/Main_Page}, enabling a greater 
+guarantee over the responsiveness. Special care may also be required when 
+developing such a system 
+\cite {https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application}. 
+
+\subsection{Monotonic Clocks and Absolute Sleep}
+As mentioned in the previous chapter, it is a necessary feature of a real-time 
+systems programming language to be able to sleep until an absolute time, rather 
+than a relative time. In addition, this sleep must use a monotonic clock in order 
+to remove any subjection from clock-drift, or time-zone changes. D has support 
+for a monotonic clock as part of the core libraries 
+\cite{http://dlang.org/phobos/core_time.html}. We can access this using 
+\texttt{MonoTime}, but unfortunately there is no ability to sleep until an 
+absolute time. Using D's ability to interact with C libraries, it is possible 
+to leverage Glibc's ability to perform this operation: the C function 
+clock\textunderscore{}nanosleep allows an absolute time to be specified.
+\cite{http://man7.org/linux/man-pages/man2/clock_nanosleep.2.html}
+A wrapper function has been provided as part of a real-time library, delay\textunderscore{}until. 
+This function accepts the D type MonoTime as an input, convert it to the C 
+equivalent, and calls the C function clock\textunderscore{}nanosleep, allowing an absolute delay.
+The code is displayed below: 
+\begin{lstlisting}
+void delay_until(MonoTime timeIn)
+{
+    import core.sys.linux.time; 
+    import core.time : Duration, timespec; 
+    Duration dur = timeIn - MonoTime(0) ;
+    long secs, nansecs; 
+    dur.split!("seconds", "nsecs")(secs, nansecs); 
+    timespec sleep_time = timespec(secs, nansecs); 
+    if (clock_nanosleep(CLOCK_MONOTONIC, 
+                        TIMER_ABSTIME, &sleep_time, null))
+        throw new Exception("Failed to sleep as expected!"); 
+}
+\end{lstlisting}
+This allows a simplistic use from a real-time application. A relative sleep can 
+be performed in the following manner: 
+\begin{lstlisting}
+void main()
+{
+    auto time = MonoTime.currTime(); 
+    time += 3.seconds; 
+    delay_until(time);
+}
+\end{lstlisting}
+As such, the D programming language can easily provide the ability to sleep 
+until an absolute time. In addition to it's ability, a wrapper has been provided, 
+enabling ease of use. 
+
+\subsection{Priority Scheduling}
+
+\subsection{Bounded Priority Inversion}
+
+\subsection{Asynchronous Transfer of Control}

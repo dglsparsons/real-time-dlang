@@ -1,42 +1,67 @@
 In order to supply support for programming real-time systems, we must first 
 consider the characteristics of a real-time system. This section aims to outline
-any necessary primites for a programming language, explaining why they are 
+any necessary primitives for a programming language, explaining why they are 
 necessary. 
 
 \subsection{Threads and Interprocess Communication}
-Real-time systems are inherrently parallel. They are concerned heavily with 
-the notion of timing for many different components across a system. 
-The ability to schedule these components in isolation  through the medium 
+Real-time systems are inherently parallel. They are concerned heavily with 
+the notion of timing and scheduling many different components across a system. 
+The ability to schedule these components in isolation through the medium 
 of threads therefore provides a valuable tool in reducing the complexity in 
 constructing the system, and additionally increases the readability of the 
-final system \cite{BURNS +WELLING p132}.
+final system 
+\cite{BURNS +WELLING p132}. It is therefore a requirement of a real-time systems 
+programming language to provide support for an abstraction into isolating 
+concurrent events and their control into separate entities. Through Java, and 
+C with POSIX threads, this isolation is provided through threads or processes, 
+and in Ada is provided with Tasks 
+\cite{books.google.co.uk/books?id=ZDRBv8U_bJ0C&pg=PA251}.
 
 \subsection{Priority Scheduling}
 In addition to the creation and isolation of processes through the use of 
-threads, it is a requirement of real-time systems to provide control over 
-their scheduling. Threads may be either language controlled, or operating
-system controlled. If the first is true, then it is necessary to provide 
-language functionality enabling the threads to be scheduled on a 
-priority based method. If the latter is true, then the language needs 
-support for interacting with the operating system to adjust the scheduler. 
+threads, on a similar abstraction, it is a requirement of real-time systems 
+that control over their scheduling is provided. 
+While many algorithms exist that enable real-time systems to be scheduled, such 
+as earliest deadline first (EDF), priority based scheduling approaches are the 
+norm 
+\cite{http://research.cs.queensu.ca/home/akl/techreports/scheduling.pdf}. 
+It is therefore a requirement of the programming language to provide support 
+for a priority based scheduling algorithm, or allowing the scheduler to be 
+selected. Additional complication is introduced when we consider if scheduling 
+is the domain of the programming language, or of the operating system:
+threads may be either language controlled, or operating system controlled. 
+If threads are language controlled, then it is necessary to provide 
+language functionality enabling threads to have priorities, and scheduling threads 
+based on their priority.
+If the threads are operating system controlled, then the language needs 
+support for interacting with the underlying operating system in order to 
+adjust the scheduler. 
 
-\subsection{Priority Inversion}
-When using shared resources in a priority based system, it is possible for 
-a high priority task to become blocked from making progress, due to a low
-priority task holding onto a resource. In addition, the low priority task 
-may become blocked by a task with priority between the high priority task, 
-and the low priority task. In this instance, the high priority task is 
-effectively running at the lowest priority: it has to wait for all other 
-tasks to complete before it can progress. 
-For a real-time system, it is a requirement that this condition does not 
-occur. As a result, a priority inheritance, or piroity ceiling protocol 
-must therefore be implemented, raising the priority of any task blocking
-resources. 
+\subsection{Bounded Priority Inversion}
+When using shared resources in a priority based system it is possible for 
+a high priority task to become blocked from making progress due to a low
+priority task holding a resource. Additionally, the low priority task may be 
+preempted, and prevented from making progress. In this instance, the high priority task is 
+effectively running at the lowest priority of the system: it has to wait for all other 
+tasks to complete before it can progress. This is a well studied phenomenon known 
+as priority inversion 
+\cite{Burns and Welling page..}. 
+In order to provide a reliable response in a priority based system, it is 
+therefore necessary that priority inversion is bounded.
+Two protocols exist that solve this problem: the priority inheritance protocol 
+and the priority ceiling protocol. Each protocol has its own respective 
+strengths and weaknesses, but enable reliable behaviour of the system 
+\cite{books.google.co.uk/books?id=coPT7vaEjFsC&pg=PA87}.
+It is therefore a requirement of a real-time systems programming language 
+that the underlying data sharing system is not subject to unbounded priority 
+inversion: the ability to specify the use of either the priority inheritance 
+protocol or the priority ceiling protocol is a necessary feature.  
 
 \subsection{Monotonic Clocks and Absolute Sleep}
+%TODO - fix this section
 In general programming, when a worker thread has no computation to be 
 performing, a call is made to a sleep method. This will cause the thread
-to hand over any computation time for a defined amount of time. In a 
+to hand over any computation resources for a defined period of time. In a 
 real-time system however, we often require fine-grained control of exactly
 when a thread will awaken. The typical approach involving a relative sleep 
 time can be imprecise due to preemption. In order to achieve a predictable 
@@ -45,9 +70,10 @@ to have the ability to wait until an absolute time. Further complication
 occurs with the definition of time: many implementations of time are subject 
 to phenomena such as daylights savings time, or leap seconds. 
 In order to counteract these, a Monotonic clock must be used. This ticks at a 
-predifined costant rate, giving predictable behaviour. 
+predefined constant rate, giving predictable behaviour. 
 
 \subsection{Asynchronous Transfer of Control}
+%TODO - fix this section
 Asynchronous Transfer of Control entails the ability to define a section of code, 
 that at any moment in time may be externally interrupted. This can be used for a 
 wide range of features, such as changes in mode of operation, recovery from a 
