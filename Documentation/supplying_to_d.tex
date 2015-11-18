@@ -22,10 +22,10 @@ class DerivedThread : Thread
         super(&run);
     }
     private:
-        void run()
-        {
-            // Derived thread running.
-        }
+    void run()
+    {
+        // Derived thread running.
+    }
 }
 
 void threadFunc()
@@ -70,12 +70,12 @@ absolute time. Using D's ability to interact with C libraries, it is possible
 to leverage Glibc's ability to perform this operation: the C function 
 clock\textunderscore{}nanosleep allows an absolute time to be specified.
 \cite{http://man7.org/linux/man-pages/man2/clock_nanosleep.2.html}
-A wrapper function has been provided as part of a real-time library, delay\textunderscore{}until. 
+A wrapper function has been provided as part of a real-time library, delayUntil. 
 This function accepts the D type MonoTime as an input, convert it to the C 
 equivalent, and calls the C function clock\textunderscore{}nanosleep, allowing an absolute delay.
 The code is displayed below: 
 \begin{lstlisting}
-void delay_until(MonoTime timeIn)
+void delayUntil(MonoTime timeIn)
 {
     import core.sys.linux.time; 
     import core.time : Duration, timespec; 
@@ -84,8 +84,8 @@ void delay_until(MonoTime timeIn)
     dur.split!("seconds", "nsecs")(secs, nansecs); 
     timespec sleep_time = timespec(secs, nansecs); 
     if (clock_nanosleep(CLOCK_MONOTONIC, 
-                        TIMER_ABSTIME, &sleep_time, null))
-        throw new Exception("Failed to sleep as expected!"); 
+    TIMER_ABSTIME, &sleep_time, null))
+    throw new Exception("Failed to sleep as expected!"); 
 }
 \end{lstlisting}
 This allows a simplistic use from a real-time application. A relative sleep can 
@@ -99,11 +99,101 @@ void main()
 }
 \end{lstlisting}
 As such, the D programming language can easily provide the ability to sleep 
-until an absolute time. In addition to it's ability, a wrapper has been provided, 
-enabling ease of use. 
+until an absolute time. In order to easily use this functionality, a 
+wrapper has been provided.
 
 \subsection{Priority Scheduling}
+The ability to correctly schedule tasks or threads based on their priority is of 
+critical importance to a real-time system. As previously discussed within this 
+section, D provides the isolation mechanic of a Thread, easily allowing the 
+separation of concern. Additionally, the Thread class contains the parameter, 
+priority, that can be used to set or get a threads priority
+\cite{http://dlang.org/phobos/core_thread.html}. 
+However, in order for priority based scheduling to be used, this alone is not 
+enough: the scheduler must be changed to function in a priority based manner. 
+It was previously identified that D's threads provide a mapping onto an operating  
+system thread, and hence it is the operating system scheduler that has to be set.  
+No support exists within the D standard libraries to interact with the scheduler 
+however, so this support has to be supplied. 
+This was achieved once again through interaction with Glibc: the function 
+sched\textunderscore{}setscheduler allows the operating system scheduler to 
+be set to either SCHED\textunderscore{}FIFO or SCHED\textunderscore{}RR for 
+this process
+\cite{http://linux.die.net/man/2/sched_setscheduler}. 
+As with the delayUntil function, a wrapper has been added around the C function,
+providing a simpler interface: 
+\begin{lstlisting}[language=C++]
+public import core.sys.posix.sched 
+                : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
+
+void setScheduler(int scheduler_type, int scheduler_priority)
+{
+    import core.sys.posix.sched 
+                : sched_param, sched_setscheduler; 
+
+    sched_param sp = { 
+        sched_priority: scheduler_priority 
+    }; 
+
+    int ret = sched_setscheduler(0, scheduler_type, &sp); 
+    if (ret == -1) {
+        throw new Exception("scheduler did not properly set");
+    }
+}
+\end{lstlisting}
+This can then be called in the following manner: 
+\begin{lstlisting}
+void main()
+{
+    setScheduler(SCHED_FIFO, 0); 
+}
+\end{lstlisting}
+The ability to set the scheduler to use a priority based method, combined with 
+D languages previously present ability to set the priority of a thread therefore 
+enables a priority based scheduling approach to be used.  
 
 \subsection{Bounded Priority Inversion}
+In D, Mutexes follow a similar approach to Threads: the languages'
+implementation provides a wrapper around operating system calls, this 
+enables operating system independent code to be written simply. However, D has no 
+inherent ability to provide priority inversion handling protocols. 
+However, these protocols are already provided for POSIX compliant Mutexes 
+\cite{http://linux.die.net/man/3/pthread_mutexattr_setprotocol}. On a POSIX 
+compliant operating system D will use this mutex type but not set the protocol. 
+By interacting with Glibc, we can therefore inherit from the default mutex class, 
+and provide a constructor that sets this property.
+A mutex created like this may then be initialised in the following manner: 
+\begin{lstlisting}
+auto a = new RTMutex(PRIORITY_INHERIT);
+\end{lstlisting}
+Additionally, support is needed to set and receive the priority ceiling 
+associated with the mutex. This is achieved in a similar manner, additional 
+functions can be added providing a wrapper around the C functions 
+pthread\textunderscore{}mutex\textunderscore{}getprioceiling and 
+pthread\textunderscore{}mutex\textunderscore{}setprioceiling
+in the following manner 
+\cite{http://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_mutex_getprioceiling.html}:
+\begin{lstlisting}
+final @property int ceiling()
+{
+    int ceiling; 
+    if(pthread_mutex_getprioceiling(&m_hndl, &ceiling))
+    throw new SyncError("Unable to fetch the priority 
+                    ceiling for the associated Mutex"); 
+    return ceiling; 
+}
+\end{lstlisting}
+This allows the priority ceiling to be set or get as if it were a property of 
+the class. Allowing a very idiomatic and readable interaction: 
+\begin{lstlisting}
+auto a = new RTMutex(PRIORITY_CEILING); 
+a.ceiling = 50; 
+writeln("priority ceiling of a is: ", a.ceiling); 
+\end{lstlisting}
+Therefore, on a POSIX compliant operating system, the ability to interact with 
+existing C libraries enables D to provide a subclass of the languages default 
+Mutex class. This subclass is capable of providing either the priority ceiling 
+protocol, or the priority inheritance protocol. Wrappers around the C functions 
+enable this to be used in an intuitive manner. 
 
 \subsection{Asynchronous Transfer of Control}
