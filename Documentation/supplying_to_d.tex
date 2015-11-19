@@ -197,3 +197,35 @@ protocol, or the priority inheritance protocol. Wrappers around the C functions
 enable this to be used in an intuitive manner. 
 
 \subsection{Asynchronous Transfer of Control}
+The final primitive required for a programming language to support the development 
+of a real-time system, is the ability to perform an asynchronous transfer of 
+control. As detailed in the previous section, this entails providing a 
+section of code that can be interrupted at any moment in time asynchronously. 
+When using C with POSIX threads, this can be achieved through clever use of 
+setjmp and longjmp, combined with SIG handlers. This allows an asynchronous 
+signal to effect the flow of control. A similar approach can be taken in D, 
+however the complexity of such a system, and unsafe management of the stack when 
+calling longjmp 
+\cite{c2.com/cgi/wiki?UnwindingTheStack} mean that it is not especially feasible. 
+An alternative approach is to set a threads cancellation type using to 
+\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS} using 
+\texttt{pthread\textunderscore{}setcanceltype}. This then allows a thread to 
+asynchronously cancelled using \texttt{pthread\textunderscore{}cancel}. Cleanup 
+is additionally possible using this mechanism through the use of 
+\texttt{pthread\textunderscore{}cleanup\textunderscore{}pop}. However, 
+this method is complicated to implement, requiring a thread to resume from an 
+arbitrary point after where it was cancelled. In addition this becomes further 
+complicated by the desire to nest interruptible sections of code. 
+Ada takes a similar approach to this, using a multi-threaded model. 
+
+An alternative approach is use the inbuilt Exception/Error handling mechanisms 
+that D provides, throwing an Error when an asynchronous signal is received, and 
+catching that error when leaving the interruptible section. This can be 
+achieved through having explicit methods such as \texttt{enableAsynchronousInterrupts()}
+and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error 
+prone programs, where \texttt{enableAsynchronousInterrupts()} is called, and not 
+followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
+In addition, this does not permit the ability to nest interruptible sections. 
+
+
+
