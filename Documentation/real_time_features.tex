@@ -8,30 +8,30 @@ Real-time systems are inherently parallel. They are concerned heavily with
 the notion of timing and scheduling many different components across a system. 
 The ability to schedule these components in isolation through the medium 
 of threads therefore provides a valuable tool in reducing the complexity in 
-constructing the system, and additionally increases the readability of the 
+constructing the system and additionally increases the readability of the 
 final system 
-\cite{BURNS +WELLING p132}. It is therefore a requirement of a real-time systems 
+\cite[132]{real-time-systems}. It is therefore a requirement of a real-time systems 
 programming language to provide support for an abstraction into isolating 
-concurrent events and their control into separate entities. Through Java, and 
-C with POSIX threads, this isolation is provided through threads or processes, 
-and in Ada is provided with Tasks 
-\cite{books.google.co.uk/books?id=ZDRBv8U_bJ0C&pg=PA251}.
+concurrent events and their control into separate entities. Through Java and 
+C with POSIX threads, this isolation is provided through threads or processes. 
+In Ada it is provided with Tasks 
+\cite[251]{gehani1989concurrent}.
 
 \subsection{Priority Scheduling}
 In addition to the creation and isolation of processes through the use of 
-threads, on a similar abstraction, it is a requirement of real-time systems 
+threads, it is a requirement of real-time systems 
 that control over their scheduling is provided. 
 While many algorithms exist that enable real-time systems to be scheduled, such 
 as earliest deadline first (EDF), priority based scheduling approaches are the 
-most commonly used approach 
-\cite{http://research.cs.queensu.ca/home/akl/techreports/scheduling.pdf}. 
+most commonly used
+\cite{real-time-systems}. 
 It is therefore a requirement of the programming language to provide support 
-for a priority based scheduling algorithm, or allowing the scheduler to be 
+for a priority based scheduling algorithm or allowing the scheduler to be 
 selected. Additional complication is introduced when we consider if scheduling 
-is the domain of the programming language, or of the operating system:
-threads may be either language controlled, or operating system controlled. 
+is the domain of the programming language or of the operating system:
+threads may be either language controlled or operating system controlled. 
 If threads are language controlled, then it is necessary to provide 
-language functionality enabling threads to have priorities, and scheduling threads 
+language functionality enabling threads to have priorities and scheduling threads 
 based on their priority.
 If the threads are operating system controlled, then the language needs 
 support for interacting with the underlying operating system in order to 
@@ -41,17 +41,17 @@ adjust the scheduler.
 When using shared resources in a priority based system it is possible for 
 a high priority task to become blocked from making progress due to a low
 priority task holding a resource. Additionally, the low priority task may be 
-preempted, and prevented from making progress. In this instance, the high priority task is 
+preempted and prevented from making progress. In this instance, the high priority task is 
 effectively running at the lowest priority of the system: it has to wait for all other 
 tasks to complete before it can progress. This is a well studied phenomenon known 
 as priority inversion 
-\cite{Burns and Welling page..}. 
+\cite{real-time-systems}. 
 In order to provide a reliable response in a priority based system, it is 
 therefore necessary that priority inversion is bounded.
 Two protocols exist that solve this problem: the priority inheritance protocol 
 and the priority ceiling protocol. Each protocol has its own respective 
 strengths and weaknesses, but enable reliable behaviour of the system 
-\cite{books.google.co.uk/books?id=coPT7vaEjFsC&pg=PA87}.
+\cite{mall2009real}.
 It is therefore a requirement of a real-time systems programming language 
 that the underlying data sharing system is not subject to unbounded priority 
 inversion: the ability to specify the use of either the priority inheritance 
@@ -68,7 +68,7 @@ time can be imprecise due to preemption. In order to achieve a predictable
 sleep function, as required in a real time system, it is therefore necessary 
 to have the ability to wait until an absolute time. Further complication 
 occurs with the definition of time: many implementations of time are subject 
-to phenomena such as daylights savings time, or leap seconds. 
+to phenomena such as daylights savings time or leap seconds. 
 In order to counteract these, a Monotonic clock must be used. This ticks at a 
 predefined constant rate, giving predictable behaviour. 
 
@@ -76,7 +76,7 @@ predefined constant rate, giving predictable behaviour.
 Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
 implementation in many languages, yet it is deemed a useful, if not necessary 
 feature of a real-time system 
-\cite{books.google.co.uk/books?id=pD9sCQAAQBAJ&pg=PA113}. ATC is the transfer 
+\cite{atc-article}. ATC is the transfer 
 of control within a thread, that has been triggered by an external event or thread, 
 its effect may be instantaneous, or deferred until a safe section has been reached. 
 In addition, sections of code susceptible to ATC may be nested, causing a 
