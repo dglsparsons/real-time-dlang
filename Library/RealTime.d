@@ -22,6 +22,7 @@ import core.thread : Thread;
  * druntime under CRuntime_Glibc. 
  */
 
+
 void delay_until(MonoTime timeIn)
 {
     import core.sys.linux.time; 
@@ -119,6 +120,26 @@ enum PRIORITY_CEILING = 3;
  *  In order to provide support for priority ceiling/ inheritance protocols, a
  *  modification was made to the druntime. 
  */
+version( Posix )
+{
+    import core.sys.posix.sys.types; 
+    //extern (C)
+        nothrow: 
+    enum 
+    {
+        PTHREAD_PRIO_NONE, 
+        PTHREAD_PRIO_INHERIT, 
+        PTHREAD_PRIO_PROTECT
+    }
+
+    int pthread_mutex_getprioceiling(in pthread_mutex_t*, int*);
+    int pthread_mutex_setprioceiling(pthread_mutex_t*, int, int*);
+    int pthread_mutexattr_getprioceiling(in pthread_mutexattr_t*, int*);
+    int pthread_mutexattr_getprotocol(in pthread_mutexattr_t*, int*);
+    int pthread_mutexattr_setprioceiling(pthread_mutexattr_t*, int);
+    int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int);
+
+}
 
 import core.sync.mutex : Mutex, SyncError; 
 class RTMutex : Mutex 
