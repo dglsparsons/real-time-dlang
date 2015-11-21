@@ -73,8 +73,13 @@ In order to counteract these, a Monotonic clock must be used. This ticks at a
 predefined constant rate, giving predictable behaviour. 
 
 \subsection{Asynchronous Transfer of Control}
-%TODO - fix this section
-Asynchronous Transfer of Control entails the ability to define a section of code, 
-that at any moment in time may be externally interrupted. This can be used for a 
-wide range of features, such as changes in mode of operation, recovery from a 
-rogue procedure, or scheduling using partial computations.
+Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
+implementation in many languages, yet it is deemed a useful, if not necessary 
+feature of a real-time system 
+\cite{books.google.co.uk/books?id=pD9sCQAAQBAJ&pg=PA113}. ATC is the transfer 
+of control within a thread, that has been triggered by an external event or thread, 
+its effect may be instantaneous, or deferred until a safe section has been reached. 
+In addition, sections of code susceptible to ATC may be nested, causing a 
+complex problem in terms of semantics, methodology, and implementation. 
+However, the use of ATC extends to many purposes such as low latency responses to events, timing 
+out a thread of computation, or terminating threads, making it an invaluable feature. 
