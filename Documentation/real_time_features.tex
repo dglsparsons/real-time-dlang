@@ -10,12 +10,13 @@ The ability to schedule these components in isolation through the medium
 of threads therefore provides a valuable tool in reducing the complexity in 
 constructing the system and additionally increases the readability of the 
 final system 
-\cite[132]{real-time-systems}. It is therefore a requirement of a real-time systems 
+\cite[p132]{real-time-systems}. It is therefore a requirement of a real-time systems 
 programming language to provide support for an abstraction into isolating 
-concurrent events and their control into separate entities. Through Java and 
-C with POSIX threads, this isolation is provided through threads or processes. 
-In Ada it is provided with Tasks 
-\cite[251]{gehani1989concurrent}.
+concurrent events and their control into separate entities. 
+In Java and 
+C with POSIX threads, this concurrency mechanism is provided by threads or processes. 
+In Ada this mechanism is provided by Tasks 
+\cite[p251]{gehani1989concurrent}.
 
 \subsection{Priority Scheduling}
 In addition to the creation and isolation of processes through the use of 
@@ -48,7 +49,7 @@ as priority inversion
 \cite{real-time-systems}. 
 In order to provide a reliable response in a priority based system, it is 
 therefore necessary that priority inversion is bounded.
-Two protocols exist that solve this problem: the priority inheritance protocol 
+Two main protocols exist that solve this problem: the priority inheritance protocol 
 and the priority ceiling protocol. Each protocol has its own respective 
 strengths and weaknesses, but enable reliable behaviour of the system 
 \cite{mall2009real}.

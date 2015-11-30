@@ -1,8 +1,8 @@
-% Article writing on how Real Time features are provided to Dlang
+% Article writing on how real-time features are provided to Dlang
 
-In the previous chapter, we discussed the characteristics a real-time 
+In the previous section, the characteristics a real-time 
 systems programming language would need to provide in order to enable the 
-development of a real-time system. The aim of this project has been primarily to 
+development of a real-time system were discussed. The aim of this project has been primarily to 
 provide these primitives to the D programming language, and hence any discussion, 
 design decisions and the implementation of these features is discussed in this 
 section. 
@@ -48,7 +48,7 @@ onto various underlying implementations
 We are interested only in operating systems 
 that support real-time applications, and as such all additions made to D with 
 regards to real-time applications are specifically targeting POSIX compliant 
-operating systems. 
+operating systems, in particular those with real-time extensions. 
 \par\bigskip\noindent
 It is worth noting that the underlying operating system may not be fully
 real-time compliant, even if it is POSIX compliant. Real-time patches to the 
@@ -59,7 +59,8 @@ developing such a system
 \cite {rt-wiki-how-to}. 
 
 \subsection{Monotonic Clocks and Absolute Sleep}
-As mentioned in the previous chapter, it is a necessary feature of a real-time 
+%TODO - Mention what the default sleep method maps onto. 
+As mentioned in the previous section, it is a necessary feature of a real-time 
 systems programming language to be able to sleep until an absolute time, rather 
 than a relative time. In addition, this sleep must use a monotonic clock in order 
 to remove any subjection from clock-drift or time-zone changes. D has support 
@@ -88,8 +89,8 @@ void delayUntil(MonoTime timeIn)
     throw new Exception("Failed to sleep as expected!"); 
 }
 \end{lstlisting}
-This allows a simplistic use from a real-time application. A relative sleep can 
-be performed in the following manner: 
+This allows a simplistic use from a real-time application. An absolute sleep can 
+then be performed in the following manner: 
 \begin{lstlisting}
 void main()
 {
@@ -160,9 +161,10 @@ inherent ability to provide priority inversion handling protocols.
 However, these protocols are already provided for POSIX compliant Mutexes 
 \cite{mutex-setprotocol}. On a POSIX 
 compliant operating system D will use this mutex type but not set the protocol. 
-By interacting with Glibc, we can therefore inherit from the default mutex class 
-and provide a constructor that sets this property.
+By interacting with Glibc, the default mutex class can be inherited
+and provided with a constructor that sets this property.
 A mutex created like this may then be initialised in the following manner: 
+%TODO - GIVE FULL DEFINITION OF RTMUTEX
 \begin{lstlisting}
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}

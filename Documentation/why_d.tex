@@ -13,12 +13,13 @@ The D programming language is primarily inspired by C++, aiming to be a ``C++ do
 right'' 
 \cite{qznc-tutorial}. This explains the 
 power that the language possesses: D is primarily a high level language, with
-a large number of abstractions that aid in the speed an ease of development. 
+a large number of abstractions that aid in the speed and ease of development. 
+%TODO - EASE OF DEVELOPMENT OF WHAT.
 However, D still maintains low level capabilities: the language still has access 
 to inline assembler, system calls, interrupts, and low level I/O in addition to 
 being a compiled language.
 \par\bigskip\noindent
-The flexibility of D is one of the largest advantages. It ``allows its user to tap 
+The flexibility of D is one of its greatest advantages. It ``allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
 idiosyncrasies in the way''
 \cite{ddili-book}, 
@@ -30,7 +31,7 @@ language.
 
 \subsection{Memory Safe Programming}
 % Concept of memory safe programming that D supports.
-An area of particular interest to Real Time systems is the notion of memory 
+An area of particular interest to real-time systems is the notion of memory 
 safe programming. In addition to providing powerful inbuilt types such as arrays 
 in D, the D compiler also implements range checking and numerous other 
 safety checks on compilation, preventing any undefined behaviour from occurring.
@@ -89,8 +90,12 @@ One possible solution to this problem is to disable the garbage collector for
 real time applications. This is possible to do by marking functions \texttt{@nogc}, 
 or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
 many of D's higher level features and libraries use garbage collection. 
-Due to the amount of further work required, tackling the issue of the garbage collector is outside the scope of this 
-article.
+%TODO - An alternative approach, i.e detaching a thread from the runtime
+Another possibility is to replace D's garbage collector with a real-time 
+garbage collector. This would provide realiable behaviour, thus preventing any 
+issues. However, 
+due to the amount of further work required, tackling the issue of the garbage 
+collector is outside the scope of this article.
 
 \subsection{Additional Interesting Features}
 % Idea of built in tests, contract programming, debugging, error handling
@@ -101,3 +106,4 @@ unittesting as a language feature.
 In addition, D provides a Java style model for Exceptions and Errors, enabling 
 a much simpler error handling system than the C style ERRNOs 
 \cite{ddili-book}. 
+%TODO - Compare with C++ exceptions.
