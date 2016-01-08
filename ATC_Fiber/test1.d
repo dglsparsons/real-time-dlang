@@ -4,7 +4,6 @@ import std.stdio,
        core.thread, 
        core.sys.posix.pthread; 
 
-
 void enableInterruptableSections()                                                                                                                                                                      
 {                                                                                                                                                                                                       
     import core.sys.posix.signal: sigaction_t, sigemptyset, sigaction;                                                                                                                                  

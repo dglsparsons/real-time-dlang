@@ -37,7 +37,10 @@ void main()
     auto a = new RTThread(&thread_function); 
     a.start(); 
     Thread.sleep(3.seconds); 
-    //a.interruptableSections[1].toThrow = true; 
+    a.interruptableSections[1].toThrow = true; 
+    //a.interruptableSections[0].toThrow = true; 
+    a.interrupt; 
+    Thread.sleep(2.seconds); 
     a.interruptableSections[0].toThrow = true; 
     a.interrupt; 
 }
