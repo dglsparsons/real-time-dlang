@@ -192,7 +192,7 @@ class RTMutex : Mutex
     final @property int ceiling()
     {
         int ceiling; 
-        if(pthread_mutex_getprioceiling(&m_hndl, &ceiling))
+        if(pthread_mutex_getprioceiling(this.handleAddr, &ceiling))
             throw new SyncError("Unable to fetch the priority ceiling for the associated Mutex"); 
         return ceiling; 
     }
@@ -212,7 +212,7 @@ class RTMutex : Mutex
      */
     final @property void ceiling(int val)
     {
-        if(pthread_mutex_setprioceiling(&m_hndl, val, null))
+        if(pthread_mutex_setprioceiling(this.handleAddr, val, null))
             throw new SyncError("Unable to set the priority ceiling for the associated Mutex"); 
     }
 }
@@ -390,7 +390,7 @@ class RTThread : Thread
     void interrupt()
     {
         import core.sys.posix.signal : pthread_kill; 
-        if (pthread_kill(m_addr, 36))
+        if (pthread_kill(this.id, 36))
             throw new Exception("Unable to signal the thread"); 
     }
 
