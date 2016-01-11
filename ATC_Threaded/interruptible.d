@@ -1,17 +1,16 @@
+
 class Interruptible
 {
-    import core.thread; 
-    import core.sys.posix.pthread; 
-    import std.stdio; 
+    import core.thread, 
+           core.sys.posix.pthread, 
+           core.sync.condition, 
+           core.sync.mutex; 
 
-    void delegate() m_dg; 
-    void function() m_fn; 
-    private Call m_call; 
-    private enum Call {NO, FN, DG}; 
-    private pthread_t m_thr; 
-
-    static Interruptible sm_this; 
-
+    void delegate() m_dg;
+    void function() m_fn;
+    private Call m_call;
+    private enum Call {NO, FN, DG};
+    private pthread_t m_thr;
 
     this (void delegate() dg)
     {
@@ -37,10 +36,26 @@ class Interruptible
         {
             throw new Error("Unable to create thread"); 
         }
+        
+        if (auto err = pthread_setschedprio(m_thr, Thread.getThis.priority))
+        {
+            throw new Error("Unable to correctly set thread priority"); 
+        }
+
+        pthread_join(m_thr, null); 
     }
 
     void interrupt()
     {
+        int policy;
+        sched_param param; 
+        if (auto err = pthread_getschedparam(m_thr, &policy, &param))
+        {
+            throw new Error("NOOOO"); 
+        }
+
+        import std.stdio; 
+        writeln("priority: ", param.sched_priority); 
         pthread_cancel(m_thr); 
     }
 }

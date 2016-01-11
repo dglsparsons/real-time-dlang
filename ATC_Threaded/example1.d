@@ -2,9 +2,10 @@
 
 import std.stdio, 
        core.thread, 
-       interruptible; 
+       interruptible, 
+       RealTime : setScheduler, SCHED_FIFO; 
 
-
+__gshared Interruptible a;
 
 void threadFunction()
 {
@@ -15,10 +16,20 @@ void threadFunction()
     }
 }
 
+void thread_to_spawn_interruptible()
+{
+    Thread.getThis.priority = 75; // testing inheriting priority works
+    a = new Interruptible(&threadFunction);  
+    a.start(); 
+    writeln("Thread ending"); 
+}
+
 void main()
 {
-   auto a = new Interruptible(&threadFunction);  
-   a.start(); 
-   Thread.sleep(5.seconds); 
-   a.interrupt();
+    setScheduler(SCHED_FIFO, 50);
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(5.seconds); 
+    a.interrupt();
+    mythread.join;
 }
