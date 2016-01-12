@@ -6,9 +6,23 @@ import std.stdio,
        RealTime : setScheduler, SCHED_FIFO; 
 
 __gshared Interruptible a;
+__gshared Interruptible b;
+__gshared Interruptible c;
+
+
+void myThirdInterruptibleFunction()
+{
+    while(true)
+    {
+        Thread.sleep(1.seconds);
+        writeln("Third interruptible section");
+    }
+}
 
 void mySecondInterruptibleFunction()
 {
+    c = new Interruptible(&myThirdInterruptibleFunction);
+    c.start();
     while(true)
     {
         Thread.sleep(1.seconds); 
@@ -18,10 +32,10 @@ void mySecondInterruptibleFunction()
 
 void interruptibleFunction()
 {
-    auto x = new Interruptible(&mySecondInterruptibleFunction); 
-    x.start(); 
+    b = new Interruptible(&mySecondInterruptibleFunction); 
+    b.start(); 
 
-    for (int i = 0; i < 3; i++)
+    while(true)
     {
         Thread.sleep(1.seconds); 
         writeln("Outer interruptible");
@@ -41,8 +55,14 @@ void main()
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
 
-    Thread.sleep(10.seconds); 
+    Thread.sleep(5.seconds); 
     a.interrupt();
+
+    Thread.sleep(5.seconds); 
+    //a.interrupt();
+    //Thread.sleep(5.seconds);
+    //Thread.sleep(5.seconds);
+    //a.interrupt();
 
     mythread.join;
 }

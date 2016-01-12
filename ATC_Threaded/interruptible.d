@@ -6,15 +6,18 @@ class Interruptible
            core.sync.condition, 
            core.sync.mutex; 
 
-    void delegate() m_dg;
-    void function() m_fn;
+    private void delegate() m_dg;
+    private void function() m_fn;
 
     private Call m_call;
     private enum Call {NO, FN, DG};
 
     private pthread_t m_thr;
 
-    static pthread_t sm_this; 
+    private static pthread_t sm_thr; 
+    private static Interruptible sm_this;
+
+    Interruptible child;
 
     this (void delegate() dg)
     {
@@ -36,6 +39,13 @@ class Interruptible
             throw new Error("Unable to initialise thread attributes"); 
         }
 
+        if (Interruptible.sm_thr != 0)
+        {
+            // Then we need to set the parent Interruptibles child, allowing cancels
+            // to propagate.
+            Interruptible.getThis.child = this;
+        }
+
         if (pthread_create(&m_thr, &attr, &run, cast(void*)this))
         {
             throw new Error("Unable to create thread"); 
@@ -43,35 +53,27 @@ class Interruptible
 
         auto a = sched_getscheduler(0);
 
-        import std.stdio; 
-        writeln("sched_getscheduler(0): ", a); 
-        writeln("priority: ");//, //Thread.getThis.priority()); 
-
         if (pthread_setschedprio(m_thr, getParentPriority))
         {
             throw new Error("Unable to correctly set thread priority"); 
         }
+
 
         pthread_join(m_thr, null); 
     }
 
     void interrupt()
     {
-        int policy;
-        sched_param param; 
-        if (auto err = pthread_getschedparam(m_thr, &policy, &param))
-        {
-            throw new Error("NOOOO"); 
-        }
-
-        import std.stdio; 
-        writeln("priority: ", param.sched_priority); 
         pthread_cancel(m_thr); 
+        if( !(child is null) )
+        {
+            child.interrupt(); 
+        }
     }
 
     int getParentPriority()
     {
-        if (Interruptible.sm_this == 0) 
+        if (Interruptible.sm_thr == 0) 
         {
             // Then we need the parent thread. 
             return Thread.getThis.priority;
@@ -91,13 +93,17 @@ class Interruptible
         }
     }
 
-
-    static void setThis(pthread_t inr)
+    static void setTid(pthread_t inr)
     {
-        sm_this = inr; 
+        sm_thr = inr; 
     }
 
-    static pthread_t getThis()
+    static void setThis(Interruptible intr)
+    {
+        sm_this = intr;
+    }
+
+    static Interruptible getThis()
     {
         return sm_this; 
     }
@@ -114,7 +120,8 @@ extern (C) void* run(void* arg)
 
     Interruptible obj = cast(Interruptible)(cast(void*)arg);
 
-    Interruptible.setThis(obj.getThreadID); 
+    Interruptible.setTid(obj.getThreadID); 
+    Interruptible.setThis(obj);
 
     int oldtype; 
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype); 
