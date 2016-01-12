@@ -8,9 +8,13 @@ class Interruptible
 
     void delegate() m_dg;
     void function() m_fn;
+
     private Call m_call;
     private enum Call {NO, FN, DG};
+
     private pthread_t m_thr;
+
+    static pthread_t sm_this; 
 
     this (void delegate() dg)
     {
@@ -36,8 +40,14 @@ class Interruptible
         {
             throw new Error("Unable to create thread"); 
         }
-        
-        if (auto err = pthread_setschedprio(m_thr, Thread.getThis.priority))
+
+        auto a = sched_getscheduler(0);
+
+        import std.stdio; 
+        writeln("sched_getscheduler(0): ", a); 
+        writeln("priority: ");//, //Thread.getThis.priority()); 
+
+        if (pthread_setschedprio(m_thr, getParentPriority))
         {
             throw new Error("Unable to correctly set thread priority"); 
         }
@@ -58,6 +68,44 @@ class Interruptible
         writeln("priority: ", param.sched_priority); 
         pthread_cancel(m_thr); 
     }
+
+    int getParentPriority()
+    {
+        if (Interruptible.sm_this == 0) 
+        {
+            // Then we need the parent thread. 
+            return Thread.getThis.priority;
+        }
+        else 
+        {
+            pthread_t parent_m_addr = pthread_self();
+            // We need to get the parent pthread
+            int         policy;
+            sched_param param;
+            if (auto err = pthread_getschedparam(parent_m_addr, &policy, &param))
+            {
+                //if (!atomicLoad(m_isRunning)) return PRIORITY_DEFAULT;
+                throw new ThreadException("Unable to get thread priority");
+            }
+            return param.sched_priority;
+        }
+    }
+
+
+    static void setThis(pthread_t inr)
+    {
+        sm_this = inr; 
+    }
+
+    static pthread_t getThis()
+    {
+        return sm_this; 
+    }
+
+    pthread_t getThreadID()
+    {
+        return m_thr;
+    }
 }
 
 extern (C) void* run(void* arg) 
@@ -65,6 +113,8 @@ extern (C) void* run(void* arg)
     import core.sys.posix.pthread; 
 
     Interruptible obj = cast(Interruptible)(cast(void*)arg);
+
+    Interruptible.setThis(obj.getThreadID); 
 
     int oldtype; 
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype); 
