@@ -4,8 +4,9 @@ import std.stdio;
 import core.thread; 
 import core.sys.posix.pthread; 
 import MutexWithPriorityInheritance; 
+import MutexWithPriorityCeil;
 
-__gshared MutexWithPriorityInheritance myMutex; 
+__gshared MutexWithPriorityCeiling myMutex; 
 __gshared should_continue = false; 
 
 class LowPriorityThread : Thread
@@ -14,8 +15,7 @@ class LowPriorityThread : Thread
     {
         super(&run);
     }
-    private: 
-    void run(){
+    private void run(){
         this.priority(10);
         writeln("starting low Priority thread with priority: ", this.priority); 
         myMutex.lock; 
@@ -32,8 +32,7 @@ class MediumPriorityThread : Thread
     {
         super(&run);
     }
-    private: 
-    void run(){
+    private void run(){
         this.priority(20);          
         writeln("Starting Medium Priority thread with priority: ", this.priority); 
         while(!should_continue) {}
@@ -47,8 +46,7 @@ class HighPriorityThread : Thread
     {
         super(&run);
     }
-    private: 
-    void run(){
+    private void run(){
         this.priority(30); 
         writeln("Starting High Priority thread with priority: ", this.priority); 
         should_continue = true; 
@@ -65,7 +63,8 @@ void main()
     setScheduler(SCHED_FIFO, 50); 
 
     // Create a mutex
-    myMutex = new MutexWithPriorityInheritance(); 
+    //myMutex = new MutexWithPriorityInheritance(); 
+    myMutex = new MutexWithPriorityCeiling();
     writeln("Mutex has been initialised"); 
 
     // Create some Threads

@@ -4,6 +4,23 @@ version(Posix) {
     import core.sys.posix.pthread; 
 }
 
+extern (C) nothrow
+{
+    enum
+    {
+        PTHREAD_PRIO_NONE, 
+        PTHREAD_PRIO_INHERIT, 
+        PTHREAD_PRIO_PROTECT
+    }
+
+    int pthread_mutex_getprioceiling(in pthread_mutex_t*, int*);                
+    int pthread_mutex_setprioceiling(pthread_mutex_t*, int, int*);              
+    int pthread_mutexattr_getprioceiling(in pthread_mutexattr_t*, int*);        
+    int pthread_mutexattr_getprotocol(in pthread_mutexattr_t*, int*);           
+    int pthread_mutexattr_setprioceiling(pthread_mutexattr_t*, int);            
+    int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int); 
+}
+
 class MutexWithPriorityInheritance : Mutex 
 {
     this() nothrow @trusted {
