@@ -41,6 +41,7 @@ class Interruptible
 
         if (Interruptible.sm_thr != 0)
         {
+            // this means we are inside an interruptible section already.
             // Then we need to set the parent Interruptibles child, allowing cancels
             // to propagate.
             Interruptible.getThis.child = this;
