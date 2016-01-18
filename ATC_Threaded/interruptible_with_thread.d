@@ -16,12 +16,10 @@ class Interruptible
 
     private static Interruptible sm_this;
 
-    private pthread_cleanup cleanup; 
+    //private pthread_cleanup cleanup = void; 
 
-    extern (C) void addCleanup(void function(void*) fn, void* arg)
-    {
-        this.cleanup.push(&fn, cast(void*)3);
-    }
+
+
 
     this(void delegate() dg)
     {
@@ -97,4 +95,16 @@ class Interruptible
         }
         pthread_cancel(m_thr.id);
     }
+}
+
+pthread_cleanup cleanup; 
+
+import core.sys.posix.pthread;
+/*extern (C)*/ void addCleanup(_pthread_cleanup_routine fn, void* arg)
+{
+    //pthread_cleanup cleanup = void;
+    cleanup.push(fn, arg);
+
+    import std.stdio;
+    writeln("Pushing extra cleanup: ", cast(int)arg);
 }

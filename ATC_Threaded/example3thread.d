@@ -11,7 +11,7 @@ __gshared Interruptible b;
 __gshared Interruptible c;
 
 
-extern (C) void thread_cleanup(void* arg) 
+extern (C) void thread_cleanup(void* arg) nothrow
 {
     int num = cast(int)arg; 
     printf("cleanup: %i\n", num); 
@@ -22,16 +22,29 @@ void testfn()
     writeln("DAMN");
 }
 
+void addCleanupFunction()
+{
+    pthread_cleanup cleanup = void; 
+    cleanup.push(&thread_cleanup, cast(void*)10);
+}
+
 void myThirdInterruptibleFunction()
 {
     static if (__traits( compiles, pthread_cleanup) )
     {
-        /*
-        pthread_cleanup cleanup = void; 
-        cleanup.push(&thread_cleanup, cast(void*)3); 
-        */
-        Interruptible.getThis.addCleanup(&thread_cleanup, cast(void*)3);
+        
+        //pthread_cleanup cleanup = void; 
+        //cleanup.push(&thread_cleanup, cast(void*)3); 
+        
+        //addCleanup(&thread_cleanup, cast(void*)3);
     }
+
+    addCleanupFunction(); 
+
+    //pthread_cleanup cleanup2 = void; 
+    //cleanup2.push(&thread_cleanup, cast(void*)4);
+    //addCleanup(&thread_cleanup, cast(void*)4);
+
     while(true)
     {
         Thread.sleep(1.seconds);
@@ -41,8 +54,9 @@ void myThirdInterruptibleFunction()
 
 void mySecondInterruptibleFunction()
 {
-    pthread_cleanup cleanup = void; 
-    cleanup.push(&thread_cleanup, cast(void*)2);
+    //pthread_cleanup cleanup = void; 
+    //cleanup.push(&thread_cleanup, cast(void*)2);
+    addCleanup(&thread_cleanup, cast(void*)2);
     c = new Interruptible(&myThirdInterruptibleFunction);
     c.start();
     while(true)
@@ -54,8 +68,9 @@ void mySecondInterruptibleFunction()
 
 void interruptibleFunction()
 {
-    pthread_cleanup cleanup = void; 
-    cleanup.push(&thread_cleanup, cast(void*)1);
+    //pthread_cleanup cleanup = void; 
+    //cleanup.push(&thread_cleanup, cast(void*)1);
+    addCleanup(&thread_cleanup, cast(void*)1);
     b = new Interruptible(&mySecondInterruptibleFunction); 
     b.start(); 
 
