@@ -1,13 +1,17 @@
 
+private Interruptible currentInterruptible;
+
 class Interruptible
 {
     import core.sys.posix.pthread;
     private void function() m_fn;
     private pthread_t m_threadId; 
+    public ATCInterrupt m_error; 
 
     this(void function() fn)
     {
         m_fn = fn; 
+        m_error = new ATCInterrupt(0); 
     }
 
 
@@ -17,6 +21,9 @@ class Interruptible
         m_threadId = Thread.getThis.id;
         try 
         {
+            auto previousInterruptible = currentInterruptible;
+            scope(exit) currentInterruptible = previousInterruptible;
+            currentInterruptible = this; 
             m_fn();
         } 
         catch (ATCInterrupt ex)
@@ -37,11 +44,11 @@ class Interruptible
 import core.exception;
 class ATCInterrupt : Error
 {
-    int depth;
-    this()
+    uint depth;
+    this(uint d)
     {
         super(null, null);
-        depth = 0;
+        depth = d;
     }
 }
 
@@ -52,10 +59,18 @@ void enableInterruptableSections()
     action.sa_handler = &sig_handler; 
     sigemptyset(&action.sa_mask);
     sigaction(36, &action, null); 
+    currentInterruptible = null;
 }
 
 extern (C) @safe void sig_handler(int signum)
 {
-    import std.stdio;
-    writeln("SIGNAL HANDLER");
+    if ( !(currentInterruptible is null) )
+    {
+        throw currentInterruptible.m_error;
+    }
+    else 
+    {
+        import std.stdio;
+        writeln("SIGNAL HANDLER");
+    }
 }

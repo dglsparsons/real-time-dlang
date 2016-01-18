@@ -20,7 +20,6 @@ void interruptingFunction()
 {
     Thread.sleep(5.seconds); 
     a.interrupt();
-
 }
 
 void main()
@@ -31,4 +30,3 @@ void main()
     a.start(); 
     writeln("Back in the main function");
 }
-
