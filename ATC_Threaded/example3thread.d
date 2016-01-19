@@ -19,31 +19,21 @@ extern (C) void thread_cleanup(void* arg) nothrow
 
 void testfn()
 {
-    writeln("DAMN");
-}
-
-void addCleanupFunction()
-{
-    pthread_cleanup cleanup = void; 
-    cleanup.push(&thread_cleanup, cast(void*)10);
+    auto a = addCleanup(&thread_cleanup, cast(void*)10);
+    //scope(exit) a.remove;
+    auto b = addCleanup(&thread_cleanup, cast(void*)11);
+    scope(exit) b.remove;
+    auto c = addCleanup(&thread_cleanup, cast(void*)12);
+    scope(exit) c.remove;
 }
 
 void myThirdInterruptibleFunction()
 {
-    static if (__traits( compiles, pthread_cleanup) )
-    {
-        
-        //pthread_cleanup cleanup = void; 
-        //cleanup.push(&thread_cleanup, cast(void*)3); 
-        
-        //addCleanup(&thread_cleanup, cast(void*)3);
-    }
-
-    addCleanupFunction(); 
-
-    //pthread_cleanup cleanup2 = void; 
-    //cleanup2.push(&thread_cleanup, cast(void*)4);
-    //addCleanup(&thread_cleanup, cast(void*)4);
+    testfn();
+    addCleanup(&thread_cleanup, cast(void*)3);
+    //scope(exit) removeCleanup(0); 
+    addCleanup(&thread_cleanup, cast(void*)4);
+    //scope(exit) removeCleanup(1);
 
     while(true)
     {

@@ -97,14 +97,39 @@ class Interruptible
     }
 }
 
-pthread_cleanup cleanup; 
+void*[] cleanup_array = []; 
 
 import core.sys.posix.pthread;
-/*extern (C)*/ void addCleanup(_pthread_cleanup_routine fn, void* arg)
+pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
 {
-    //pthread_cleanup cleanup = void;
+    import core.memory; 
+    pthread_cleanup* cleanup = cast(pthread_cleanup*)GC.malloc(pthread_cleanup.sizeof);
+
+    cleanup_array ~= cast(void*)cleanup;
+
     cleanup.push(fn, arg);
 
     import std.stdio;
     writeln("Pushing extra cleanup: ", cast(int)arg);
+
+    return cleanup;
+}
+
+void remove(pthread_cleanup* cleanup)
+{
+    if ( cleanup != cleanup_array[$] )
+    {
+        throw new Exception("Last items on the cleanup_stack should be popped first!");
+    }
+    cleanup.pop(0);
+    import std.stdio; 
+    writeln("Popping extra cleanup: ", cast(int)cleanup.buffer.__arg);
+
+}
+
+void removeCleanup(int position)
+{
+    //pthread_cleanup* obj = cast(pthread_cleanup*)cleanup_array[position];
+    //obj.pop(0);
+    //cleanup_array = cleanup_array[0..position-1] ~ cleanup_array[position+1..$];
 }
