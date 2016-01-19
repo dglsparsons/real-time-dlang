@@ -123,6 +123,13 @@ class Interruptible
             _deferred = false;
         }
     }
+
+    void testCancel()
+    {
+        deferred = false; 
+        pthread_testcancel();
+        deferred = true;
+    }
 }
 
 void*[] cleanup_array = []; 

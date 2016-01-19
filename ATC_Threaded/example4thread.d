@@ -18,14 +18,13 @@ void interruptibleFunction()
 {
     writeln("Entered interruptible");
 
-    self.deferred = false; 
+    self.deferred = true; 
 
     for(int i = 0; i < 2_000_000; i++)
     {
         // keep the processor busy for as long as possible..
-        self.deferred = true; 
         writeln("i ", i);
-        self.deferred = false;
+        self.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");
