@@ -1,4 +1,6 @@
 
+alias self = Interruptible.getThis;
+
 class Interruptible
 {
     import core.thread,
@@ -15,10 +17,6 @@ class Interruptible
     Interruptible child;
 
     private static Interruptible sm_this;
-
-    //private pthread_cleanup cleanup = void; 
-
-
 
 
     this(void delegate() dg)
@@ -72,7 +70,10 @@ class Interruptible
     {
         Interruptible.setThis(this);
         Thread.getThis.priority = this.priority;
-        pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null);
+        if( pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null) )
+        {
+            throw new Exception("Unable to set thread cancellation type");
+        }
         if (m_call == Call.FN)
         {
             m_fn(); 
@@ -95,6 +96,33 @@ class Interruptible
         }
         pthread_cancel(m_thr.id);
     }
+
+    private bool _deferred; 
+
+    @property bool deferred()
+    {
+        return _deferred;
+    }
+
+    @property void deferred(bool new_value)
+    {
+        if (new_value) // set this to true
+        {
+            if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+            {
+                throw new Exception("Unable to set thread cancellation type");
+            }
+            _deferred = true;
+        }
+        else 
+        {
+            if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+            {
+                throw new Exception("Unable to set thread cancellation type");
+            }
+            _deferred = false;
+        }
+    }
 }
 
 void*[] cleanup_array = []; 
@@ -112,24 +140,49 @@ pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
     import std.stdio;
     writeln("Pushing extra cleanup: ", cast(int)arg);
 
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
     return cleanup;
+}
+
+private void output_array()
+{
+    import std.stdio; 
+    int[] x; 
+    foreach(void* elem; cleanup_array)
+    {
+        pthread_cleanup* elem2 = cast(pthread_cleanup*)elem;
+        x ~= cast(int)elem2.buffer.__arg;
+    }
+    writeln("current array: ",x, "\n");
 }
 
 void remove(pthread_cleanup* cleanup)
 {
-    if ( cleanup != cleanup_array[$] )
+    if (cleanup_array.length == 0)
     {
-        throw new Exception("Last items on the cleanup_stack should be popped first!");
+        throw new Exception("Nothing to pop from cleanup stack");
     }
+
     cleanup.pop(0);
     import std.stdio; 
     writeln("Popping extra cleanup: ", cast(int)cleanup.buffer.__arg);
+    import std.algorithm.mutation; 
+    uint index = getCleanupIndex(cleanup); 
+    cleanup_array = cleanup_array[0..index];
 
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
 }
 
-void removeCleanup(int position)
+private uint getCleanupIndex(pthread_cleanup* cleanup)
 {
-    //pthread_cleanup* obj = cast(pthread_cleanup*)cleanup_array[position];
-    //obj.pop(0);
-    //cleanup_array = cleanup_array[0..position-1] ~ cleanup_array[position+1..$];
+    foreach (uint i, void* __cleanup; cleanup_array)
+    {
+        if (cast(pthread_cleanup*)__cleanup == cleanup)
+        {
+            return i;
+        }
+    }
+    throw new Exception("Element not found in array");
 }

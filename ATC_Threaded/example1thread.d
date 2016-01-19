@@ -7,29 +7,24 @@ import std.stdio,
 
 __gshared Interruptible a;
 
-void threadFunction()
+void interruptibleFunction()
 {
     while(true) {
-        auto sleepDuration = 1.seconds + 500.msecs;
-        Thread.sleep(sleepDuration);
-        writeln("Hello, World!");
+        Thread.sleep(1.seconds);
+        writeln("Inside an interruptible section");
     }
 }
 
-void thread_to_spawn_interruptible()
+void interruptThread()
 {
-    Thread.getThis.priority = 75; // testing inheriting priority works
-    a = new Interruptible(&threadFunction);  
-    a.start(); 
-    writeln("Thread ending"); 
+    Thread.sleep(5.seconds); 
+    a.interrupt();
 }
 
 void main()
 {
-    setScheduler(SCHED_FIFO, 50);
-    auto mythread = new Thread(&thread_to_spawn_interruptible); 
-    mythread.start();
-    Thread.sleep(5.seconds); 
-    a.interrupt();
-    mythread.join;
+    new Thread(&interruptThread).start();
+    a = new Interruptible(&interruptibleFunction);
+    a.start();
+    writeln("End of process");
 }

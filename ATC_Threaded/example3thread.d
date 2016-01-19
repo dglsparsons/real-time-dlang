@@ -20,7 +20,7 @@ extern (C) void thread_cleanup(void* arg) nothrow
 void testfn()
 {
     auto a = addCleanup(&thread_cleanup, cast(void*)10);
-    //scope(exit) a.remove;
+    scope(exit) a.remove;
     auto b = addCleanup(&thread_cleanup, cast(void*)11);
     scope(exit) b.remove;
     auto c = addCleanup(&thread_cleanup, cast(void*)12);
