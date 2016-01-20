@@ -1,5 +1,4 @@
-
-private Interruptible currentInterruptible;
+alias self = Interruptible.getThis;
 
 class Interruptible
 {
@@ -8,47 +7,90 @@ class Interruptible
     private pthread_t m_threadId; 
     public ATCInterrupt m_error; 
 
+    static private Interruptible sm_this = null;
+    shared static Interruptible toThrow;
+
     this(void function() fn)
     {
         m_fn = fn; 
-        m_error = new ATCInterrupt(0); 
+        m_error = new ATCInterrupt(this); 
     }
 
+    static Interruptible getThis()
+    {
+        return sm_this;
+    }
+
+    private ATCInterrupt m_caughtError;
 
     void start()
     {
         import core.thread; 
         m_threadId = Thread.getThis.id;
+        auto previousInterruptible = sm_this;
+        scope(exit) sm_this = previousInterruptible;
+        sm_this = this; 
         try 
         {
-            auto previousInterruptible = currentInterruptible;
-            scope(exit) currentInterruptible = previousInterruptible;
-            currentInterruptible = this; 
             m_fn();
         } 
         catch (ATCInterrupt ex)
         {
-            import std.stdio : writeln; 
-            writeln("ATCException caught: ", ex.depth); 
+            m_caughtError = ex;
+        }
+        finally 
+        {
+            foreach(int i, fn; cleanup_fns)
+            {
+                fn(cleanup_args[i]);
+            }
+            if (m_caughtError.owner != this)
+            {
+                throw m_caughtError;
+            } else { import std.stdio; writeln("Error Caught"); }
         }
     }
 
     void interrupt()
     {
         import core.sys.posix.signal; 
+        Interruptible.toThrow = cast(shared Interruptible)this;
         if (pthread_kill(m_threadId, 36))
             throw new Exception("Unable to signal the interruptible section");
+    }
+
+    private void function(void*)[] cleanup_fns;
+    private void*[] cleanup_args;
+
+    void* addCleanup(void function(void*) fn, void* arg)
+    {
+        cleanup_fns = fn ~ cleanup_fns;
+        cleanup_args = arg ~ cleanup_args;
+        auto value = (fn, arg);
+        return value;
+    }
+}
+
+struct Cleanup
+{
+    void function(void*) fn;
+    void* arg;
+
+    this(void function(void*) _fn, void* _arg)
+    {
+        fn = _fn; 
+        arg = _arg;
     }
 }
 
 import core.exception;
 class ATCInterrupt : Error
 {
-    uint depth;
-    this(uint d)
+    Interruptible owner;
+    this(Interruptible own)
     {
         super(null, null);
-        depth = d;
+        owner = own;
     }
 }
 
@@ -59,18 +101,17 @@ void enableInterruptibleSections()
     action.sa_handler = &sig_handler; 
     sigemptyset(&action.sa_mask);
     sigaction(36, &action, null); 
-    currentInterruptible = null;
 }
 
 extern (C) @safe void sig_handler(int signum)
 {
-    if ( !(currentInterruptible is null) )
+    if ( !(Interruptible.sm_this is null) )
     {
-        throw currentInterruptible.m_error;
+        throw Interruptible.toThrow.m_error;
     }
     else 
     {
         import std.stdio;
-        writeln("SIGNAL HANDLER");
+        writeln("SIGNAL HANDLER DEFERRED?");
     }
 }
