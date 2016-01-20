@@ -28,3 +28,8 @@ void main()
     a.start();
     writeln("End of process");
 }
+
+/** 
+  * This basic example tests whether a basic interrupt is correctly handled,
+  * causing the interruptible section to get exited
+  **/

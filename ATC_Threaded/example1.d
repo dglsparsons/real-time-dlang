@@ -33,3 +33,8 @@ void main()
     a.interrupt();
     mythread.join;
 }
+
+/** 
+  * This basic example should test that a basic interrupt can be handled,
+  * causing the interruptible section to get cancelled 
+  **/

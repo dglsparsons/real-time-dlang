@@ -95,3 +95,7 @@ void main()
 
     mythread.join;
 }
+
+/** 
+  * Testing that adding cleanup, and removing cleanup works properly.
+  **/

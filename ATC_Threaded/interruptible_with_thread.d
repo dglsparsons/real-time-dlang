@@ -86,9 +86,29 @@ class Interruptible
 
     void interrupt()
     {
+        if( !_deferred )
+        {
+            if ( !(child is null) )
+            {
+                child.undeferrableInterrupt();
+                if ( !(sm_this is null) )
+                {
+                    Interruptible.getThis.child = null;
+                }
+            }
+            pthread_cancel(m_thr.id);
+        }
+        else 
+        {
+            _interrupt_pending = true;
+        }
+    }
+
+    private void undeferrableInterrupt()
+    {
         if ( !(child is null) )
         {
-            child.interrupt();
+            child.undeferrableInterrupt; 
             if ( !(sm_this is null) )
             {
                 Interruptible.getThis.child = null;
@@ -97,7 +117,8 @@ class Interruptible
         pthread_cancel(m_thr.id);
     }
 
-    private bool _deferred; 
+    private bool _deferred = false; 
+    private bool _interrupt_pending = false; 
 
     @property bool deferred()
     {
@@ -108,18 +129,25 @@ class Interruptible
     {
         if (new_value) // set this to true
         {
-            if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
-            {
-                throw new Exception("Unable to set thread cancellation type");
-            }
+            //if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+            // {
+            //     throw new Exception("Unable to set thread cancellation type");
+            //}
             _deferred = true;
         }
+
         else 
         {
-            if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+            if (_interrupt_pending)
             {
-                throw new Exception("Unable to set thread cancellation type");
+                undeferrableInterrupt();
             }
+            /*
+               if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+               {
+               throw new Exception("Unable to set thread cancellation type");
+               }
+             */
             _deferred = false;
         }
     }
