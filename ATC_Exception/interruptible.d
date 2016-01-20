@@ -52,7 +52,7 @@ class ATCInterrupt : Error
     }
 }
 
-void enableInterruptableSections()
+void enableInterruptibleSections()
 {
     import core.sys.posix.signal: sigaction_t, sigemptyset, sigaction; 
     sigaction_t action; 
