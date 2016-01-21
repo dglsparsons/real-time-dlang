@@ -89,10 +89,10 @@ class Interruptible
         {
             import core.sys.posix.signal; 
             Interruptible.toThrow = cast(shared Interruptible)this;
-            if (pthread_kill(m_threadId, 36))
+            if (pthread_kill(m_threadId, _SIGRTMIN))
                 throw new Exception("Unable to signal the interruptible section");
         }
-        
+
     }
 
     private Cleanup[] cleanup_fns;
@@ -152,13 +152,35 @@ void enableInterruptibleSections()
     sigaction_t action; 
     action.sa_handler = &sig_handler; 
     sigemptyset(&action.sa_mask);
-    sigaction(36, &action, null); 
+    sigaction(_SIGRTMIN, &action, null); 
 }
 
-private immutable sigset_t __sigset_clear = sigset_t([34359738368, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+@property int _SIGRTMIN() nothrow @nogc {
+    __gshared static int sig = -1;
+    if (sig == -1) {
+        sig = __libc_current_sigrtmin();
+    }
+    return sig;
+}
+
+private extern (C) nothrow @nogc 
+{
+    int __libc_current_sigrtmin();
+}
+
+private immutable sigset_t __sigset_clear = sigset_t([8589934592, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
 extern (C) /*@safe*/ void sig_handler(int signum)
 {
+    /*
+    sigset_t __sigset_clear;
+    sigemptyset(&__sigset_clear);
+    sigaddset(&__sigset_clear, _SIGRTMIN);
+    import std.stdio;
+    writeln("sigset_t: ", __sigset_clear);
+    */
+
     // since we are exiting on an exception, we need to reenable the signal
     // before throwing the exception. 
     scope(exit) sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
