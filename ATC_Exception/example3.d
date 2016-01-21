@@ -18,9 +18,9 @@ void thread_cleanup(void* arg)
 void testfn()
 {
     auto a = self.addCleanup(&thread_cleanup, cast(void*)10);
-    //scope(exit) a.remove;
+    self.removeCleanup(a);
     auto b = self.addCleanup(&thread_cleanup, cast(void*)11);
-    //scope(exit) b.remove;
+    self.removeCleanup(b);
     auto c = self.addCleanup(&thread_cleanup, cast(void*)12);
     //scope(exit) c.remove;
 }
@@ -86,7 +86,7 @@ void main()
     Thread.sleep(5.seconds); 
     b.interrupt();
 
-    Thread.sleep(1.seconds); 
+    //Thread.sleep(1.seconds); 
     //a.interrupt();
     Thread.sleep(5.seconds);
     //Thread.sleep(5.seconds);

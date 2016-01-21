@@ -1,5 +1,7 @@
 alias self = Interruptible.getThis;
 
+import core.sys.posix.signal;
+
 class Interruptible
 {
     import core.sys.posix.pthread;
@@ -40,14 +42,14 @@ class Interruptible
         }
         finally 
         {
-            foreach(int i, fn; cleanup_fns)
+            foreach(_clean; cleanup_fns)
             {
-                fn(cleanup_args[i]);
+                _clean.fn(_clean.arg);
             }
             if (m_caughtError.owner != this)
             {
                 throw m_caughtError;
-            } else { import std.stdio; writeln("Error Caught"); }
+            } 
         }
     }
 
@@ -59,16 +61,30 @@ class Interruptible
             throw new Exception("Unable to signal the interruptible section");
     }
 
-    private void function(void*)[] cleanup_fns;
-    private void*[] cleanup_args;
+    private Cleanup[] cleanup_fns;
 
-    void* addCleanup(void function(void*) fn, void* arg)
+    Cleanup addCleanup(void function(void*) fn, void* arg)
     {
-        cleanup_fns = fn ~ cleanup_fns;
-        cleanup_args = arg ~ cleanup_args;
-        auto value = (fn, arg);
-        return value;
+        Cleanup __clean = Cleanup(fn, arg); 
+        cleanup_fns = __clean ~ cleanup_fns;
+        return __clean;
     }
+
+    void removeCleanup(Cleanup cleanup)
+    {
+        if (cleanup_fns.length == 0) 
+        {
+            throw new Exception("Unable to remove");
+        }
+        foreach(int i, cln; cleanup_fns)
+        {
+            if (cleanup.fn == cln.fn)
+            {
+                cleanup_fns = cleanup_fns[0..i]; //~ cleanup_fns[i+1..$];
+            }
+        }
+    }
+
 }
 
 struct Cleanup
@@ -103,8 +119,14 @@ void enableInterruptibleSections()
     sigaction(36, &action, null); 
 }
 
-extern (C) @safe void sig_handler(int signum)
+private immutable sigset_t __sigset_clear = sigset_t([34359738368, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+extern (C) /*@safe*/ void sig_handler(int signum)
 {
+    // since we are exiting on an exception, we need to reenable the signal
+    // before throwing the exception. 
+    scope(exit) sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
+
     if ( !(Interruptible.sm_this is null) )
     {
         throw Interruptible.toThrow.m_error;
