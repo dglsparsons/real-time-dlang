@@ -22,8 +22,10 @@ void interruptibleFunction()
     for(int i = 0; i < 2_000_000; i++)
     {
         // keep the processor busy for as long as possible..
+        //self.deferred = true;
         writeln("i ", i);
-        self.testCancel;
+        //self.deferred = false;
+        //self.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");
@@ -31,6 +33,7 @@ void interruptibleFunction()
 
 void main()
 {
+    enableInterruptibleSections();
     new Thread(&interruptThis).start();
     a = new Interruptible(&interruptibleFunction); 
     a.start();

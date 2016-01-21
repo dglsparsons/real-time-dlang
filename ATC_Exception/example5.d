@@ -2,7 +2,7 @@
 
 import std.stdio, 
        core.thread, 
-       interruptible_with_thread, 
+       interruptible, 
        core.sys.posix.pthread;
 
 __gshared Interruptible a;
@@ -23,7 +23,11 @@ void interruptibleFunction()
     for(int i = 0; i < 2_000_000; i++)
     {
         // keep the processor busy for as long as possible..
+        //self.deferred = true; 
+        a.deferred = true;
         printf("i %i\n", i);
+        a.deferred = false;
+        //self.deferred = false;
         //self.testCancel;
     }
 
@@ -38,6 +42,7 @@ void outerInterruptible()
 
 void main()
 {
+    enableInterruptibleSections;
     new Thread(&interruptThis).start();
     a = new Interruptible(&outerInterruptible);
     a.start();

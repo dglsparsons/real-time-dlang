@@ -8,7 +8,8 @@ __gshared Interruptible a;
 
 void interruptibleFunction()
 {
-    while(true) {
+    while(true)
+    {
         Thread.sleep(1.seconds);
         writeln("Inside an interruptible section");
     }
@@ -16,7 +17,7 @@ void interruptibleFunction()
 
 void interruptThread()
 {
-    Thread.sleep(5.seconds); 
+    Thread.sleep(3.seconds); 
     a.interrupt();
 }
 

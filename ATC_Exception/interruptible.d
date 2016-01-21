@@ -46,19 +46,53 @@ class Interruptible
             {
                 _clean.fn(_clean.arg);
             }
-            if (m_caughtError.owner != this)
+            if (!(m_caughtError is null))
             {
-                throw m_caughtError;
-            } 
+                if (m_caughtError.owner != this)
+                {
+                    throw m_caughtError;
+                } 
+            }
         }
+    }
+
+    private bool __deferred = false; 
+    private bool __pending = false; 
+
+    @property void deferred(bool newValue)
+    {
+        if (!newValue) 
+        {
+            //reenabling should check if there are any interrupts pending.
+            if (__pending)
+            {
+                __deferred = false;
+                interrupt();
+            }
+        }
+
+        __deferred = newValue;
+    }
+
+    @property bool deferred()
+    {
+        return __deferred;
     }
 
     void interrupt()
     {
-        import core.sys.posix.signal; 
-        Interruptible.toThrow = cast(shared Interruptible)this;
-        if (pthread_kill(m_threadId, 36))
-            throw new Exception("Unable to signal the interruptible section");
+        if (__deferred)
+        {
+            __pending = true;
+        }
+        else
+        {
+            import core.sys.posix.signal; 
+            Interruptible.toThrow = cast(shared Interruptible)this;
+            if (pthread_kill(m_threadId, 36))
+                throw new Exception("Unable to signal the interruptible section");
+        }
+        
     }
 
     private Cleanup[] cleanup_fns;
@@ -81,7 +115,7 @@ class Interruptible
             if (cleanup.fn == cln.fn)
             {
                 cleanup_fns = i == cleanup_fns.length ? cleanup_fns[0..i]
-                            : cleanup_fns[0..i] ~ cleanup_fns[i+1..$];
+                    : cleanup_fns[0..i] ~ cleanup_fns[i+1..$];
                 break;
             }
         }
