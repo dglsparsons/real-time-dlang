@@ -59,7 +59,7 @@ void main()
     b.interrupt();
 
     Thread.sleep(5.seconds); 
-    //a.interrupt();
+    a.interrupt();
     //Thread.sleep(5.seconds);
     //Thread.sleep(5.seconds);
     //a.interrupt();

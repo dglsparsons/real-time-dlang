@@ -80,7 +80,9 @@ class Interruptible
         {
             if (cleanup.fn == cln.fn)
             {
-                cleanup_fns = cleanup_fns[0..i]; //~ cleanup_fns[i+1..$];
+                cleanup_fns = i == cleanup_fns.length ? cleanup_fns[0..i]
+                            : cleanup_fns[0..i] ~ cleanup_fns[i+1..$];
+                break;
             }
         }
     }
@@ -100,7 +102,7 @@ struct Cleanup
 }
 
 import core.exception;
-class ATCInterrupt : Error
+private class ATCInterrupt : Error
 {
     Interruptible owner;
     this(Interruptible own)
