@@ -1,4 +1,5 @@
 //module rt.realtime; 
+deprecated:
 
 import core.time : MonoTime;//, Duration; 
 import core.thread : Thread; 
@@ -147,7 +148,7 @@ version( Posix )
     int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int);
 
 }
-/+
+
 import core.sync.mutex : Mutex, SyncError; 
 class RTMutex : Mutex 
 {
@@ -184,18 +185,6 @@ class RTMutex : Mutex
         }
     }
 
-    /**
-     * Gets the priority ceiling for the associated mutex. 
-     * 
-     * Returns: 
-     *  The priority ceiling of this thread.
-     * 
-     * Example: 
-     * ---
-     * auto a = new RTMutex(PRIORITY_CEILING); 
-     * int currentPriorityCeiling = a.ceiling();
-     * ---
-     */
     final @property int ceiling()
     {
         int ceiling; 
@@ -204,19 +193,6 @@ class RTMutex : Mutex
         return ceiling; 
     }
 
-    /**
-     * Sets the priority ceiling for the associated mutex. 
-     * 
-     * Params: 
-     *  val = The new priority ceiling of this mutex
-     *
-     * Example: 
-     * ---
-     * auto a = new RTMutex(PRIORITY_CEILING); 
-     * int newCeiling = 50; 
-     * a.ceiling(newCeiling); 
-     * ---
-     */
     final @property void ceiling(int val)
     {
         if(pthread_mutex_setprioceiling(this.handleAddr, val, null))
@@ -235,7 +211,6 @@ unittest
     assert(prio != a.ceiling); 
     assert(newPrio == a.ceiling); 
 }
-+/
 
 /**
  * Sets up the signal handler and sets up signals to be redirected to the

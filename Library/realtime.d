@@ -1,3 +1,19 @@
+/**
+  realtime.d is a set of functionality provided to aid the development of a 
+  real-time system when using the D programming language. It provides support 
+  for the following primitives: 
+  - Ability to change the system scheduler to a priority based scheduler.
+  - Monotonic clock, and ability to sleep a threads execution until an absolute
+  time
+  - Mutexes that provide the Priority inheritance and the Immediate Priority 
+  Ceiling protocols
+  - Two alternate implementations of Asynchronous Transfer of Control. One
+  using threads and cancellation points, the other using Signals to insert an 
+  exception into the context of a thread. 
+
+  This module has been written by Douglas Parsons as part of an Undergraduate 
+  Degree at the University of York, UK. 
+ **/
 
 
 private import core.time;
@@ -133,48 +149,48 @@ unittest
 
 
 /** 
-  * The following function provides a wrapper for POSIX system calls that set
-  * the system scheduler. 
-  * The ability to adjust the system scheduler is a requirement in a real-time
-  * system, as fixed priority scheduling is commonly used. 
-  * Regular 'fair' sharing algorithms are insufficient for a real-time system
-  * as there is no guarantee on the ordering of thread execution. 
-  * 
-  * Params: 
-  * int schedulerType = the time of scheduler to be set. 
-  *     values can be: 
-  *         SCHED_OTHER, 
-  *         SCHED_BATCH, 
-  *         SCHED_IDLE, 
-  *     or for real time applications: 
-  *         SCHED_FIFO, 
-  *         SCHED_RR.
-  * int schedulerPriority = the priority that the scheduler should run at.
-  * 
-  * Example: 
-  * --- 
-  * void main()
-  * {
-  *     setScheduler(SCHED_FIFO, 50);
-  *     auto a = new Thread;
-  *     ...
-  * }
-  * --- 
-  * 
-  * Note: 
-  * Depending on the operating system that this is run on, changing the system
-  * scheduler may require elevated priveledges in order to be run.
-  * 
-  * Note 2: 
-  * The scedulers available depend on the operating system, and all may not be
-  * present. 
-  * 
-  * Note 3: 
-  * In order for this to effect all threads properly, this should be the first
-  * thing run in the main function. If run after a thread has been created, the
-  * thread will have incorrectly set PRIORITY_MAX and PRIORITY_MIN.
-  *
-  **/
+ * The following function provides a wrapper for POSIX system calls that set
+ * the system scheduler. 
+ * The ability to adjust the system scheduler is a requirement in a real-time
+ * system, as fixed priority scheduling is commonly used. 
+ * Regular 'fair' sharing algorithms are insufficient for a real-time system
+ * as there is no guarantee on the ordering of thread execution. 
+ * 
+ * Params: 
+ * int schedulerType = the time of scheduler to be set. 
+ *     values can be: 
+ *         SCHED_OTHER, 
+ *         SCHED_BATCH, 
+ *         SCHED_IDLE, 
+ *     or for real time applications: 
+ *         SCHED_FIFO, 
+ *         SCHED_RR.
+ * int schedulerPriority = the priority that the scheduler should run at.
+ * 
+ * Example: 
+ * --- 
+ * void main()
+ * {
+ *     setScheduler(SCHED_FIFO, 50);
+ *     auto a = new Thread;
+ *     ...
+ * }
+ * --- 
+ * 
+ * Note: 
+ * Depending on the operating system that this is run on, changing the system
+ * scheduler may require elevated priveledges in order to be run.
+ * 
+ * Note 2: 
+ * The scedulers available depend on the operating system, and all may not be
+ * present. 
+ * 
+ * Note 3: 
+ * In order for this to effect all threads properly, this should be the first
+ * thing run in the main function. If run after a thread has been created, the
+ * thread will have incorrectly set PRIORITY_MAX and PRIORITY_MIN.
+ *
+ **/
 
 public import core.sys.posix.sched : SCHED_FIFO, SCHED_OTHER, SCHED_RR;
 
@@ -203,5 +219,352 @@ unittest
 }
 
 
-// TODO - Add in my definition of real-time mutexes, and both methods of
-// asynchronous transfer of control. 
+enum {PROTOCOL_INHERIT = 1, PROTOCOL_CEILING };
+
+version( Posix ) extern (C) nothrow
+{
+    private import core.sys.posix.sys.types; 
+    enum 
+    {
+        PTHREAD_PRIO_NONE, 
+        PTHREAD_PRIO_INHERIT, 
+        PTHREAD_PRIO_PROTECT
+    }
+
+    int pthread_mutex_getprioceiling(in pthread_mutex_t*, int*);
+    int pthread_mutex_setprioceiling(pthread_mutex_t*, int, int*);
+    int pthread_mutexattr_getprioceiling(in pthread_mutexattr_t*, int*);
+    int pthread_mutexattr_getprotocol(in pthread_mutexattr_t*, int*);
+    int pthread_mutexattr_setprioceiling(pthread_mutexattr_t*, int);
+    int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int);
+}
+
+class RTMutex : Object.Monitor
+{
+    private import core.sys.posix.pthread;
+    private import core.sync.exception : SyncError;
+    ////////////////////////////////////////////////////////////////////////////
+    // Initialization
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Initializes a mutex object.
+     *
+     * Throws:
+     *  SyncError on error.
+     */
+    this(int protocol) nothrow @trusted
+    {
+        pthread_mutexattr_t attr = void;
+
+        if( pthread_mutexattr_init( &attr ) )
+            throw new SyncError( "Unable to initialize mutex" );
+        scope(exit) pthread_mutexattr_destroy( &attr );
+
+        if( pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE ) )
+            throw new SyncError( "Unable to initialize mutex" );
+
+        if(protocol == PROTOCOL_CEILING)
+        {
+            if(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_PROTECT))
+            {
+                throw new SyncError("Unable to initialize Priority ceiling protocol"); 
+            }
+        }
+        else if (protocol == PROTOCOL_INHERIT)
+        {
+            if(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT))
+                throw new SyncError("Unable to initialize Priority inheritance protocol"); 
+        }
+
+        if( pthread_mutex_init( &m_hndl, &attr ) )
+            throw new SyncError( "Unable to initialize mutex" );
+        m_proxy.link = this;
+        this.__monitor = &m_proxy;
+    }
+
+
+    /**
+     * Initializes a mutex object and sets it as the monitor for o.
+     *
+     * In:
+     *  o must not already have a monitor.
+     */
+    this( Object o , int protocol ) nothrow @trusted
+        in
+        {
+            assert( o.__monitor is null );
+        }
+    body
+    {
+        this(protocol);
+        o.__monitor = &m_proxy;
+    }
+
+
+    ~this()
+    {
+        int rc = pthread_mutex_destroy( &m_hndl );
+        assert( !rc, "Unable to destroy mutex" );
+        this.__monitor = null;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // General Actions
+    ////////////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * If this lock is not already held by the caller, the lock is acquired,
+     * then the internal counter is incremented by one.
+     *
+     * Throws:
+     *  SyncError on error.
+     */
+    @trusted void lock() 
+    {
+        lock_nothrow();
+    }
+
+    // undocumented function for internal use
+    final void lock_nothrow() nothrow @trusted @nogc
+    {
+        int rc = pthread_mutex_lock( &m_hndl );
+        if( rc )
+        {
+            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
+            syncErr.msg = "Unable to lock mutex.";
+            throw syncErr;
+        }
+    }
+
+    /**
+     * Decrements the internal lock count by one.  If this brings the count to
+     * zero, the lock is released.
+     *
+     * Throws:
+     *  SyncError on error.
+     */
+    @trusted void unlock()
+    {
+        unlock_nothrow();
+    }
+
+    // undocumented function for internal use
+    final void unlock_nothrow() nothrow @trusted @nogc
+    {
+        int rc = pthread_mutex_unlock( &m_hndl );
+        if( rc )
+        {
+            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
+            syncErr.msg = "Unable to unlock mutex.";
+            throw syncErr;
+        }
+    }
+
+    /**
+     * If the lock is held by another caller, the method returns.  Otherwise,
+     * the lock is acquired if it is not already held, and then the internal
+     * counter is incremented by one.
+     *
+     * Throws:
+     *  SyncError on error.
+     *
+     * Returns:
+     *  true if the lock was acquired and false if not.
+     */
+    bool tryLock()
+    {
+        return pthread_mutex_trylock( &m_hndl ) == 0;
+    }
+
+
+    protected:
+    pthread_mutex_t     m_hndl;
+
+    struct MonitorProxy
+    {
+        Object.Monitor link;
+    }
+
+    MonitorProxy            m_proxy;
+
+
+package:
+    pthread_mutex_t* handleAddr()
+    {
+        return &m_hndl;
+    }
+}
+
+unittest
+{
+    /* This unittest is to check that RTMutex works properly when it is set 
+       as a mutex on an object
+       */
+    import core.thread;
+    __gshared int a;
+    auto o = new Object;
+
+    void count(Object o)
+    {
+        // use the object so that we can lock it
+        auto b = o.toString();
+        a++;
+    }
+    auto numTries = 100;
+    void testFn()
+    {
+        for (int i = 0; i < numTries; ++i)
+        {
+            count(o);
+        }
+    }
+
+    auto mut = new RTMutex(o, PROTOCOL_INHERIT);
+
+    auto group = new ThreadGroup;
+
+    int numThreads = 10;
+    for( int i = 0; i < numThreads; ++i )
+        group.create( &testFn );
+
+    group.joinAll();
+    assert( a == numThreads * numTries );
+}
+
+unittest
+{
+    /* This unittest is to determine that the RTMutex with the priority
+     * inheritance protocol is functioning properly */
+    import core.thread;
+    auto mutex      = new RTMutex(PROTOCOL_INHERIT);
+    int  numThreads = 10;
+    int  numTries   = 1000;
+    int  lockCount  = 0;
+
+    void testFn()
+    {
+        for( int i = 0; i < numTries; ++i )
+        {
+            synchronized( mutex )
+            {
+                ++lockCount;
+            }
+        }
+    }
+
+    auto group = new ThreadGroup;
+
+    for( int i = 0; i < numThreads; ++i )
+        group.create( &testFn );
+
+    group.joinAll();
+    assert( lockCount == numThreads * numTries );
+}
+class CeilingMutex 
+{
+    private import core.sync.exception : SyncError;
+    alias ceilingMutex this;
+    RTMutex ceilingMutex;
+    this()
+    {
+        ceilingMutex = new RTMutex(PROTOCOL_CEILING);
+    }
+    final @property int ceiling()
+    {
+        int ceiling; 
+        if(pthread_mutex_getprioceiling(this.handleAddr, &ceiling))
+            throw new SyncError("Unable to fetch the priority ceiling for the associated Mutex"); 
+        return ceiling; 
+    }
+
+    final @property void ceiling(int val)
+    {
+        if(pthread_mutex_setprioceiling(this.handleAddr, val, null))
+            throw new SyncError("Unable to set the priority ceiling for the associated Mutex"); 
+    }
+}
+
+class InheritanceMutex
+{
+    alias inheritMutex this; 
+    RTMutex inheritMutex; 
+    this()
+    {
+        inheritMutex = new RTMutex(PROTOCOL_INHERIT);
+    }
+}
+
+unittest 
+{
+    /* This unittest is to test the properties of the Ceiling Mutex in order to
+     * confirm that they are properly being set 
+     */
+    auto a = new CeilingMutex();
+    int prio = 50; 
+    a.ceiling(prio); 
+    assert(prio == a.ceiling); 
+    int newPrio = 25; 
+    a.ceiling(newPrio); 
+    assert(prio != a.ceiling); 
+    assert(newPrio == a.ceiling); 
+}
+
+unittest
+{
+    /* This unittest is to test that the CeilingMutex class functions properly.
+       */
+    import core.thread;
+    auto mutex      = new CeilingMutex;
+    int  numThreads = 10;
+    int  numTries   = 1000;
+    int  lockCount  = 0;
+    void testFn()
+    {
+        for( int i = 0; i < numTries; ++i )
+        {
+            synchronized( mutex )
+            {
+                ++lockCount;
+            }
+        }
+    }
+    auto group = new ThreadGroup;
+    for( int i = 0; i < numThreads; ++i )
+        group.create( &testFn );
+    group.joinAll();
+    assert( lockCount == numThreads * numTries );
+}
+
+unittest
+{
+    /* This unittest is to test that the InheritanceMutex class functions properly.
+       */
+    import core.thread;
+    auto mutex      = new InheritanceMutex;
+    int  numThreads = 10;
+    int  numTries   = 1000;
+    int  lockCount  = 0;
+    void testFn()
+    {
+        for( int i = 0; i < numTries; ++i )
+        {
+            synchronized( mutex )
+            {
+                ++lockCount;
+            }
+        }
+    }
+    auto group = new ThreadGroup;
+    for( int i = 0; i < numThreads; ++i )
+        group.create( &testFn );
+    group.joinAll();
+    assert( lockCount == numThreads * numTries );
+}
+
+// TODO - check GC profile
+// TODO - Write unittest for trylock() function
+// TODO - add in Interruptible functionality
+// TODO - add in better code commenting for RTMutex, etc.
