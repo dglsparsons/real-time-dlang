@@ -1,0 +1,35 @@
+
+The D programming language inherently provides a capable set of features for the 
+development of real-time systems, such as the ability to interact with low-level 
+hardware, powerful concurrency tools, an interesting approach to memory 
+safety, and the ability to interact with existing C code. 
+However, these alone are not enough to provide the full tool-set required. As such, 
+additional features have been discussed and implemented. 
+By targeting POSIX compliant operating systems, it is possible 
+to provide tools that enable control over the operating systems scheduler, 
+allowing priority based scheduling to be used. 
+Through the 
+language's use of POSIX mutexs, it is also possible to prevent unbounded 
+priority inversion from occurring.
+In order to have high precision timings, access to a monotonic clock is provided 
+as a language feature. This can be used to provide absolute delay timings. 
+Asynchronous Transfer of Control has provided a difficult feature to design and 
+implement in a reliable manner, but can be implemented in X way.
+\par\bigskip\noindent
+The mentioned tools can be implemented in a module, and hence made available as 
+a library. 
+This would enable the development of real-time systems in the D programming 
+language, as well as maintaining compatibility with existing code. 
+\par\bigskip\noindent
+However, there are additional difficulties that the 
+language faces: the use of a stop-the-world garbage collector in the 
+D programming language prevents a reliable estimate of timings from being determined. 
+This is a problem that can be offset through disabling the garbage collector 
+and instead using manual memory management, or through detaching a thread from the 
+runtime and ensuring any GC objects used are referenced from other threads.
+Offsetting the penalty of the garbage collector adds additional complexity for 
+the programmer and can restrict the use of more advanced language features. 
+\par\bigskip\noindent
+As such, it is possible to develop a real-time system in the D programming 
+language using the additional support detailed in this article. However, 
+the Garbage collector remains a significant hurdle in aiding development.
