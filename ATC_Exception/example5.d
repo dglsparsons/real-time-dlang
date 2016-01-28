@@ -18,25 +18,35 @@ void interruptibleFunction()
 {
     writeln("Entered interruptible");
 
-    self.deferred = true; 
+    getInt.deferred = true; 
 
     for(int i = 0; i < 2_000_000; i++)
     {
+        void print_i() 
+        {
+            printf("i %i\n", i);
+        }
         // keep the processor busy for as long as possible..
-        //self.deferred = true; 
-        a.deferred = true;
-        printf("i %i\n", i);
-        a.deferred = false;
-        //self.deferred = false;
-        //self.testCancel;
+        //getInt.deferred = true; 
+        //a.deferred = true;
+        getInt.executeSafely(&print_i);
+        //a.deferred = false;
+        //getInt.deferred = false;
+        //getInt.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");
 }
 
-void outerInterruptible()
+void outerInterruptible() 
 {
-    auto b = new Interruptible(&interruptibleFunction);
+    //getInt.deferred = true;
+    Interruptible b;
+    void initInterruptible() 
+    {
+        b = new Interruptible(&interruptibleFunction);
+    }
+    getInt.executeSafely(&initInterruptible);
     b.start();
 }
 

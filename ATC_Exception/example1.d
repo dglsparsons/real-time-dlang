@@ -15,7 +15,7 @@ void interruptibleFunction()
     }
 }
 
-void interruptThread()
+void interruptThread() 
 {
     Thread.sleep(3.seconds); 
     a.interrupt();

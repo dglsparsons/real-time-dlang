@@ -17,26 +17,29 @@ void thread_cleanup(void* arg)
 
 void testfn()
 {
-    auto a = self.addCleanup(&thread_cleanup, cast(void*)10);
-    //self.removeCleanup(a);
-    auto b = self.addCleanup(&thread_cleanup, cast(void*)11);
-    self.removeCleanup(b);
-    auto c = self.addCleanup(&thread_cleanup, cast(void*)12);
-    self.removeCleanup(c);
+    auto a = getInt.addCleanup(&thread_cleanup, cast(void*)10);
+    //getInt.removeCleanup(a);
+    auto b = getInt.addCleanup(&thread_cleanup, cast(void*)11);
+    getInt.removeCleanup(b);
+    auto c = getInt.addCleanup(&thread_cleanup, cast(void*)12);
+    getInt.removeCleanup(c);
 }
 
 void myThirdInterruptibleFunction()
 {
     testfn();
-    self.addCleanup(&thread_cleanup, cast(void*)3);
+    getInt.addCleanup(&thread_cleanup, cast(void*)3);
     //scope(exit) removeCleanup(0); 
-    self.addCleanup(&thread_cleanup, cast(void*)4);
+    getInt.addCleanup(&thread_cleanup, cast(void*)4);
     //scope(exit) removeCleanup(1);
 
     while(true)
     {
         Thread.sleep(1.seconds);
-        writeln("Third interruptible section");
+        void output() {
+            writeln("Third interruptible section");
+        }
+        getInt.executeSafely(&output);
     }
 }
 
@@ -44,7 +47,7 @@ void mySecondInterruptibleFunction()
 {
     //pthread_cleanup cleanup = void; 
     //cleanup.push(&thread_cleanup, cast(void*)2);
-    self.addCleanup(&thread_cleanup, cast(void*)2);
+    getInt.addCleanup(&thread_cleanup, cast(void*)2);
     c = new Interruptible(&myThirdInterruptibleFunction);
     c.start();
     while(true)
@@ -58,7 +61,7 @@ void interruptibleFunction()
 {
     //pthread_cleanup cleanup = void; 
     //cleanup.push(&thread_cleanup, cast(void*)1);
-    self.addCleanup(&thread_cleanup, cast(void*)1);
+    getInt.addCleanup(&thread_cleanup, cast(void*)1);
     b = new Interruptible(&mySecondInterruptibleFunction); 
     b.start(); 
 

@@ -1,4 +1,4 @@
-alias self = Interruptible.getThis;
+alias getInt = Interruptible.getThis;
 
 import core.sys.posix.signal;
 
@@ -11,26 +11,27 @@ class Interruptible
 
     static private Interruptible sm_this = null;
     shared static Interruptible toThrow;
+    package Interruptible parent = null;
 
-    this(void function() fn)
+    this(void function() fn )
     {
         m_fn = fn; 
         m_error = new ATCInterrupt(this); 
     }
 
-    static Interruptible getThis()
+    static Interruptible getThis() @nogc @safe nothrow
     {
         return sm_this;
     }
 
     private ATCInterrupt m_caughtError;
 
-    void start()
+    void start() @trusted
     {
         import core.thread; 
         m_threadId = Thread.getThis.id;
-        auto previousInterruptible = sm_this;
-        scope(exit) sm_this = previousInterruptible;
+        parent = sm_this;
+        scope(exit) sm_this = parent;
         sm_this = this; 
         try 
         {
@@ -59,7 +60,7 @@ class Interruptible
     private bool __deferred = false; 
     private bool __pending = false; 
 
-    @property void deferred(bool newValue)
+    @property void deferred(bool newValue) @safe
     {
         if (!newValue) 
         {
@@ -74,12 +75,12 @@ class Interruptible
         __deferred = newValue;
     }
 
-    @property bool deferred()
+    @property bool deferred() nothrow @safe
     {
         return __deferred;
     }
 
-    void interrupt()
+    void interrupt() @trusted
     {
         if (__deferred)
         {
@@ -121,6 +122,32 @@ class Interruptible
         }
     }
 
+    private bool previousDeferState;
+
+    private void defer() @safe
+    {
+        if (! (parent is null) )
+        {
+            parent.defer;
+        }
+        previousDeferState = this.deferred;
+        this.deferred = true;
+    }
+    private void restore() @safe
+    {
+        if (! (parent is null))
+        {
+            parent.restore;
+        }
+        this.deferred = previousDeferState;
+    }
+
+    void executeSafely(void delegate() fn) 
+    {
+        defer();
+        scope(exit) restore();
+        fn();
+    }
 }
 
 struct Cleanup
@@ -155,7 +182,7 @@ void enableInterruptibleSections()
     sigaction(_SIGRTMIN, &action, null); 
 }
 
-@property int _SIGRTMIN() nothrow @nogc {
+private @property int _SIGRTMIN() nothrow @nogc {
     __gshared static int sig = -1;
     if (sig == -1) {
         sig = __libc_current_sigrtmin();
@@ -163,7 +190,7 @@ void enableInterruptibleSections()
     return sig;
 }
 
-private extern (C) nothrow @nogc 
+private extern (C) nothrow @nogc
 {
     int __libc_current_sigrtmin();
 }
@@ -174,12 +201,12 @@ private immutable sigset_t __sigset_clear = sigset_t([8589934592, 0, 0, 0, 0,
 extern (C) /*@safe*/ void sig_handler(int signum)
 {
     /*
-    sigset_t __sigset_clear;
-    sigemptyset(&__sigset_clear);
-    sigaddset(&__sigset_clear, _SIGRTMIN);
-    import std.stdio;
-    writeln("sigset_t: ", __sigset_clear);
-    */
+       sigset_t __sigset_clear;
+       sigemptyset(&__sigset_clear);
+       sigaddset(&__sigset_clear, _SIGRTMIN);
+       import std.stdio;
+       writeln("sigset_t: ", __sigset_clear);
+     */
 
     // since we are exiting on an exception, we need to reenable the signal
     // before throwing the exception. 
@@ -195,3 +222,4 @@ extern (C) /*@safe*/ void sig_handler(int signum)
         writeln("SIGNAL HANDLER DEFERRED?");
     }
 }
+
