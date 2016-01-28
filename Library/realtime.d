@@ -219,8 +219,32 @@ unittest
 }
 
 
-enum {PROTOCOL_INHERIT = 1, PROTOCOL_CEILING };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
+   Private enum is used for initialising RTMutex with either the priority ceiling 
+   protocol, or the immediate priority ceiling protocol. This is passed in to the 
+   RTMutex's constructor as an argument when creating either a new CeilingMutex 
+   or InheritanceMutex.
+ */
+
+private enum {PROTOCOL_INHERIT = 1, PROTOCOL_CEILING };
+
+/* 
+   External imports required for the creation of RTMutex 
+ */
 version( Posix ) extern (C) nothrow
 {
     private import core.sys.posix.sys.types; 
@@ -239,99 +263,103 @@ version( Posix ) extern (C) nothrow
     int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int);
 }
 
-class RTMutex : Object.Monitor
+/* 
+   class RTMutex is a private class, used internally within InheritanceMutex and 
+   CeilingMutex along with the alias this trick. 
+   This class is similar to the druntime Mutex, providing features such as an 
+   ability to add a Mutex to an object, and the ability to lock, testLock, and 
+   unlock. 
+   Additionally, an int, representing protcol may be passed into the constructor. 
+   Defining whether the Mutex should implement the Priority Inheritance, or the 
+   Priority Ceiling protocol.
+
+ */
+private class RTMutex : Object.Monitor
 {
     private import core.sys.posix.pthread;
     private import core.sync.exception : SyncError;
-    ////////////////////////////////////////////////////////////////////////////
-    // Initialization
-    ////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Initializes a mutex object.
-     *
-     * Throws:
-     *  SyncError on error.
-     */
+    /* Initialiser
+       protocol = the protocol that the Mutex should implement. see private enum 
+       for the protocol types
+       */
     this(int protocol) nothrow @trusted
     {
-        pthread_mutexattr_t attr = void;
+        pthread_mutexattr_t mutexAttr = void;
 
-        if( pthread_mutexattr_init( &attr ) )
+        if( pthread_mutexattr_init( &mutexAttr ) )
             throw new SyncError( "Unable to initialize mutex" );
-        scope(exit) pthread_mutexattr_destroy( &attr );
+        scope(exit) pthread_mutexattr_destroy( &mutexAttr );
 
-        if( pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE ) )
+        if( pthread_mutexattr_settype( &mutexAttr, PTHREAD_MUTEX_RECURSIVE ) )
             throw new SyncError( "Unable to initialize mutex" );
 
         if(protocol == PROTOCOL_CEILING)
         {
-            if(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_PROTECT))
+            if(pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_PROTECT))
             {
                 throw new SyncError("Unable to initialize Priority ceiling protocol"); 
             }
         }
         else if (protocol == PROTOCOL_INHERIT)
         {
-            if(pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT))
+            if(pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT))
                 throw new SyncError("Unable to initialize Priority inheritance protocol"); 
         }
 
-        if( pthread_mutex_init( &m_hndl, &attr ) )
+        if( pthread_mutex_init( &mutexID, &mutexAttr ) )
             throw new SyncError( "Unable to initialize mutex" );
-        m_proxy.link = this;
-        this.__monitor = &m_proxy;
+        monProxy.link = this;
+        this.__monitor = &monProxy;
     }
 
 
-    /**
-     * Initializes a mutex object and sets it as the monitor for o.
-     *
-     * In:
-     *  o must not already have a monitor.
+    /*
+      Initialiser for creating a monitored object
      */
-    this( Object o , int protocol ) nothrow @trusted
+    this( Object obj , int protocol ) nothrow @trusted
         in
         {
-            assert( o.__monitor is null );
+            assert( obj.__monitor is null );
         }
     body
     {
         this(protocol);
-        o.__monitor = &m_proxy;
+        obj.__monitor = &monProxy;
     }
 
 
+    /* 
+       Destructor - releases any resources
+       */
     ~this()
     {
-        int rc = pthread_mutex_destroy( &m_hndl );
+        int rc = pthread_mutex_destroy( &mutexID );
         assert( !rc, "Unable to destroy mutex" );
         this.__monitor = null;
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////
-    // General Actions
-    ////////////////////////////////////////////////////////////////////////////
-
 
     /**
-     * If this lock is not already held by the caller, the lock is acquired,
-     * then the internal counter is incremented by one.
+     * If the mutex is not locked, then it is locked by the calling thread,
+     * incementing its internal counter by one (it is a recursive mutex). 
+     * Subsequent calls from the same thread will further increment the internal 
+     * counter. 
+     * A call to unlock() will decrement the counter if it is held by the
+     * calling thread. 
      *
-     * Throws:
-     *  SyncError on error.
      */
     @trusted void lock() 
     {
         lock_nothrow();
     }
 
-    // undocumented function for internal use
+    // Internal Function
     final void lock_nothrow() nothrow @trusted @nogc
     {
-        int rc = pthread_mutex_lock( &m_hndl );
-        if( rc )
+        int returnedNumber = pthread_mutex_lock( &mutexID );
+        if( returnedNumber )
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
             syncErr.msg = "Unable to lock mutex.";
@@ -340,22 +368,20 @@ class RTMutex : Object.Monitor
     }
 
     /**
-     * Decrements the internal lock count by one.  If this brings the count to
-     * zero, the lock is released.
-     *
-     * Throws:
-     *  SyncError on error.
+      * If the mutex is locked, a call to unlock() will decrement its internal
+      * counter by one. If the count becomes zero, it is fully released, and
+      * able to be locked by other threads. 
      */
     @trusted void unlock()
     {
         unlock_nothrow();
     }
 
-    // undocumented function for internal use
+    // Internal Function
     final void unlock_nothrow() nothrow @trusted @nogc
     {
-        int rc = pthread_mutex_unlock( &m_hndl );
-        if( rc )
+        int returnedNumber = pthread_mutex_unlock( &mutexID );
+        if( returnedNumber )
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
             syncErr.msg = "Unable to unlock mutex.";
@@ -364,37 +390,31 @@ class RTMutex : Object.Monitor
     }
 
     /**
-     * If the lock is held by another caller, the method returns.  Otherwise,
-     * the lock is acquired if it is not already held, and then the internal
-     * counter is incremented by one.
-     *
-     * Throws:
-     *  SyncError on error.
+     * This function attempts to lock the mutex, immediately returning whether
+     * the attempt was successful or not. 
      *
      * Returns:
-     *  true if the lock was acquired and false if not.
+     *  True if the calling thread was able to lock the mutex. Otherwise, false
      */
     bool tryLock()
     {
-        return pthread_mutex_trylock( &m_hndl ) == 0;
+        return pthread_mutex_trylock( &mutexID ) == 0;
     }
 
 
-    protected:
-    pthread_mutex_t     m_hndl;
+    protected pthread_mutex_t mutexID;
 
     struct MonitorProxy
     {
         Object.Monitor link;
     }
 
-    MonitorProxy            m_proxy;
+    MonitorProxy monProxy;
 
 
-package:
     pthread_mutex_t* handleAddr()
     {
-        return &m_hndl;
+        return &mutexID;
     }
 }
 
@@ -402,36 +422,47 @@ unittest
 {
     /* This unittest is to check that RTMutex works properly when it is set 
        as a mutex on an object
-       */
+     */
     import core.thread;
-    __gshared int a;
-    auto o = new Object;
+    __gshared int a = 0;
 
-    void count(Object o)
+    class MyObject : Object
     {
-        // use the object so that we can lock it
-        auto b = o.toString();
-        a++;
+        int count;
+        this()
+        {
+            count = 0;
+        }
+        void increment()
+        {
+            count++;
+        }
     }
+
+    auto obj = new MyObject; 
+    auto mut = new RTMutex(obj, PROTOCOL_INHERIT);
     auto numTries = 100;
     void testFn()
     {
         for (int i = 0; i < numTries; ++i)
         {
-            count(o);
+            synchronized(obj)
+            {
+                obj.increment;
+            }
         }
     }
 
-    auto mut = new RTMutex(o, PROTOCOL_INHERIT);
 
     auto group = new ThreadGroup;
-
     int numThreads = 10;
     for( int i = 0; i < numThreads; ++i )
         group.create( &testFn );
 
     group.joinAll();
-    assert( a == numThreads * numTries );
+    import std.stdio; 
+    writeln("numThreads: ", numThreads, " numTries: ", numTries, " count: ", obj.count);
+    assert( obj.count == numThreads * numTries );
 }
 
 unittest
@@ -463,15 +494,64 @@ unittest
     group.joinAll();
     assert( lockCount == numThreads * numTries );
 }
+
+
+
+/**
+  * CeilingMutex is a class, representing a Mutex that implements the immediate 
+  * priority ceiling protocol. 
+  * It is a requirement of a real-time system to implement the priority ceiling
+  * protocol, in addition to the priority inheritance protocol. This provides a
+  * bounded limit on the amount of blocking a high priority task may incur when
+  * attempting to access a resource. 
+  * Note that in order for this type of Mutex to correctly function, it should
+  * also have its priority ceiling set using the ceiling property. 
+  * 
+  * Example: 
+  * ---
+  * auto a = new CeilingMutex(); 
+  * a.priority = 50; 
+  * synchronized ( a )
+  * {
+  *     // do something
+  * }
+  * --- 
+  * 
+  * Note: The implementation makes use of the alias this trick, to provide a
+  * simplistic implementation. This has additional overhead for the garbage
+  * collector however. 
+  *
+  **/
 class CeilingMutex 
 {
     private import core.sync.exception : SyncError;
     alias ceilingMutex this;
     RTMutex ceilingMutex;
+
+    /** 
+      * Initializes a new CeilingMutex
+      * 
+      **/
     this()
     {
         ceilingMutex = new RTMutex(PROTOCOL_CEILING);
+        this.ceiling = 0;
     }
+
+    /** 
+      * The property, ceiling provides the value of the priority ceiling that
+      * the protocol implements. When locking the mutex, a Threads priority is
+      * effectively raised to that of the ceiling. This value should be the
+      * highest priority of any Thread that accesses this resource. 
+      * 
+      * Example:
+      * ---
+      * auto a = new CeilingMutex; 
+      * a.ceiling = 99; 
+      * writeln("Ceiling is set to ", a.ceiling);
+      * ---
+      **/
+
     final @property int ceiling()
     {
         int ceiling; 
@@ -487,6 +567,35 @@ class CeilingMutex
     }
 }
 
+
+
+
+
+
+
+/**
+  * InheritanceMutex is a class, representing a Mutex that implements the
+  * priority inheritance protocol.
+  * It is a requirement of a real-time system to implement the priority
+  * inheritance protocol, in addition to the priority ceiling protocol. 
+  * This provides a
+  * bounded limit on the amount of blocking a high priority task may incur when
+  * attempting to access a resource. 
+  * 
+  * Example: 
+  * ---
+  * auto a = new InheritanceMutex(); 
+  * synchronized ( a )
+  * {
+  *     // do something
+  * }
+  * --- 
+  * 
+  * Note: The implementation makes use of the alias this trick, to provide a
+  * simplistic implementation. However, this has additional overhead for the 
+  * garbage collector due to the creation of a second managed object. 
+  *
+  **/
 class InheritanceMutex
 {
     alias inheritMutex this; 
@@ -515,7 +624,7 @@ unittest
 unittest
 {
     /* This unittest is to test that the CeilingMutex class functions properly.
-       */
+     */
     import core.thread;
     auto mutex      = new CeilingMutex;
     int  numThreads = 10;
@@ -541,7 +650,7 @@ unittest
 unittest
 {
     /* This unittest is to test that the InheritanceMutex class functions properly.
-       */
+     */
     import core.thread;
     auto mutex      = new InheritanceMutex;
     int  numThreads = 10;
@@ -564,7 +673,26 @@ unittest
     assert( lockCount == numThreads * numTries );
 }
 
-// TODO - check GC profile
-// TODO - Write unittest for trylock() function
+unittest
+{
+    /* This unittest is to test the ability of tryLock to return immediately
+     * and return true only if the mutex is successfully locked */
+    import core.thread; 
+    auto mutex = new InheritanceMutex;
+    __gshared int i;
+    void testFn()
+    {
+        Thread.sleep(100.msecs);
+        auto b = mutex.tryLock(); 
+        assert(!b);
+    }
+    new Thread(&testFn).start();
+    auto a = mutex.inheritMutex.tryLock();
+    if (a)
+        i++; 
+    thread_joinAll;
+    mutex.unlock;
+    assert(i == 1);
+}
+
 // TODO - add in Interruptible functionality
-// TODO - add in better code commenting for RTMutex, etc.
