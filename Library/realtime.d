@@ -460,8 +460,6 @@ unittest
         group.create( &testFn );
 
     group.joinAll();
-    import std.stdio; 
-    writeln("numThreads: ", numThreads, " numTries: ", numTries, " count: ", obj.count);
     assert( obj.count == numThreads * numTries );
 }
 
@@ -535,7 +533,7 @@ class CeilingMutex
     this()
     {
         ceilingMutex = new RTMutex(PROTOCOL_CEILING);
-        this.ceiling = 0;
+        this.ceiling = 1;
     }
 
     /** 
