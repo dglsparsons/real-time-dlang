@@ -18,13 +18,17 @@ void interruptibleFunction()
 {
     writeln("Entered interruptible");
 
-    self.deferred = true; 
+    //getInt.deferred = true; 
 
     for(int i = 0; i < 2_000_000; i++)
     {
         // keep the processor busy for as long as possible..
-        printf("i %i\n", i);
-        //self.testCancel;
+        void output()
+        {
+            printf("i %i\n", i);
+        }
+        getInt.executeSafely(&output);
+        //getInt.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");
@@ -48,4 +52,6 @@ void main()
   * Using this test, the inner function should be cancelled, even though 
   * it is set to defer interrupts. This is beacuse the outmost one is
   * cancelled. 
+  * Additionally, this should not cause the system to crash, due to the use of
+  * executeSafely. 
   **/

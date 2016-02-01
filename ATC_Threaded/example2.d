@@ -66,3 +66,9 @@ void main()
 
     mythread.join;
 }
+
+/** 
+  * This basic example seeks to test that interrupts can occur within a nested
+  * example, and that cancelling an outer interruptible section will also
+  * cancel inner sections. 
+  **/

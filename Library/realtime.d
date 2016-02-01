@@ -282,7 +282,7 @@ private class RTMutex : Object.Monitor
     /* Initialiser
        protocol = the protocol that the Mutex should implement. see private enum 
        for the protocol types
-       */
+     */
     this(int protocol) nothrow @trusted
     {
         pthread_mutexattr_t mutexAttr = void;
@@ -315,7 +315,7 @@ private class RTMutex : Object.Monitor
 
 
     /*
-      Initialiser for creating a monitored object
+       Initialiser for creating a monitored object
      */
     this( Object obj , int protocol ) nothrow @trusted
         in
@@ -331,7 +331,7 @@ private class RTMutex : Object.Monitor
 
     /* 
        Destructor - releases any resources
-       */
+     */
     ~this()
     {
         int rc = pthread_mutex_destroy( &mutexID );
@@ -368,9 +368,9 @@ private class RTMutex : Object.Monitor
     }
 
     /**
-      * If the mutex is locked, a call to unlock() will decrement its internal
-      * counter by one. If the count becomes zero, it is fully released, and
-      * able to be locked by other threads. 
+     * If the mutex is locked, a call to unlock() will decrement its internal
+     * counter by one. If the count becomes zero, it is fully released, and
+     * able to be locked by other threads. 
      */
     @trusted void unlock()
     {
@@ -496,30 +496,30 @@ unittest
 
 
 /**
-  * CeilingMutex is a class, representing a Mutex that implements the immediate 
-  * priority ceiling protocol. 
-  * It is a requirement of a real-time system to implement the priority ceiling
-  * protocol, in addition to the priority inheritance protocol. This provides a
-  * bounded limit on the amount of blocking a high priority task may incur when
-  * attempting to access a resource. 
-  * Note that in order for this type of Mutex to correctly function, it should
-  * also have its priority ceiling set using the ceiling property. 
-  * 
-  * Example: 
-  * ---
-  * auto a = new CeilingMutex(); 
-  * a.priority = 50; 
-  * synchronized ( a )
-  * {
-  *     // do something
-  * }
-  * --- 
-  * 
-  * Note: The implementation makes use of the alias this trick, to provide a
-  * simplistic implementation. This has additional overhead for the garbage
-  * collector however. 
-  *
-  **/
+ * CeilingMutex is a class, representing a Mutex that implements the immediate 
+ * priority ceiling protocol. 
+ * It is a requirement of a real-time system to implement the priority ceiling
+ * protocol, in addition to the priority inheritance protocol. This provides a
+ * bounded limit on the amount of blocking a high priority task may incur when
+ * attempting to access a resource. 
+ * Note that in order for this type of Mutex to correctly function, it should
+ * also have its priority ceiling set using the ceiling property. 
+ * 
+ * Example: 
+ * ---
+ * auto a = new CeilingMutex(); 
+ * a.priority = 50; 
+ * synchronized ( a )
+ * {
+ *     // do something
+ * }
+ * --- 
+ * 
+ * Note: The implementation makes use of the alias this trick, to provide a
+ * simplistic implementation. This has additional overhead for the garbage
+ * collector however. 
+ *
+ **/
 class CeilingMutex 
 {
     private import core.sync.exception : SyncError;
@@ -527,9 +527,9 @@ class CeilingMutex
     RTMutex ceilingMutex;
 
     /** 
-      * Initializes a new CeilingMutex
-      * 
-      **/
+     * Initializes a new CeilingMutex
+     * 
+     **/
     this()
     {
         ceilingMutex = new RTMutex(PROTOCOL_CEILING);
@@ -537,18 +537,18 @@ class CeilingMutex
     }
 
     /** 
-      * The property, ceiling provides the value of the priority ceiling that
-      * the protocol implements. When locking the mutex, a Threads priority is
-      * effectively raised to that of the ceiling. This value should be the
-      * highest priority of any Thread that accesses this resource. 
-      * 
-      * Example:
-      * ---
-      * auto a = new CeilingMutex; 
-      * a.ceiling = 99; 
-      * writeln("Ceiling is set to ", a.ceiling);
-      * ---
-      **/
+     * The property, ceiling provides the value of the priority ceiling that
+     * the protocol implements. When locking the mutex, a Threads priority is
+     * effectively raised to that of the ceiling. This value should be the
+     * highest priority of any Thread that accesses this resource. 
+     * 
+     * Example:
+     * ---
+     * auto a = new CeilingMutex; 
+     * a.ceiling = 99; 
+     * writeln("Ceiling is set to ", a.ceiling);
+     * ---
+     **/
 
     final @property int ceiling()
     {
@@ -572,28 +572,28 @@ class CeilingMutex
 
 
 /**
-  * InheritanceMutex is a class, representing a Mutex that implements the
-  * priority inheritance protocol.
-  * It is a requirement of a real-time system to implement the priority
-  * inheritance protocol, in addition to the priority ceiling protocol. 
-  * This provides a
-  * bounded limit on the amount of blocking a high priority task may incur when
-  * attempting to access a resource. 
-  * 
-  * Example: 
-  * ---
-  * auto a = new InheritanceMutex(); 
-  * synchronized ( a )
-  * {
-  *     // do something
-  * }
-  * --- 
-  * 
-  * Note: The implementation makes use of the alias this trick, to provide a
-  * simplistic implementation. However, this has additional overhead for the 
-  * garbage collector due to the creation of a second managed object. 
-  *
-  **/
+ * InheritanceMutex is a class, representing a Mutex that implements the
+ * priority inheritance protocol.
+ * It is a requirement of a real-time system to implement the priority
+ * inheritance protocol, in addition to the priority ceiling protocol. 
+ * This provides a
+ * bounded limit on the amount of blocking a high priority task may incur when
+ * attempting to access a resource. 
+ * 
+ * Example: 
+ * ---
+ * auto a = new InheritanceMutex(); 
+ * synchronized ( a )
+ * {
+ *     // do something
+ * }
+ * --- 
+ * 
+ * Note: The implementation makes use of the alias this trick, to provide a
+ * simplistic implementation. However, this has additional overhead for the 
+ * garbage collector due to the creation of a second managed object. 
+ *
+ **/
 class InheritanceMutex
 {
     alias inheritMutex this; 
@@ -693,4 +693,239 @@ unittest
     assert(i == 1);
 }
 
-// TODO - add in Interruptible functionality
+// TODO - add in ThreadedInterruptible functionality
+
+class ThreadedInterruptible
+{
+    import core.thread, 
+           core.sys.posix.pthread;
+
+    void function() m_fn; 
+    void delegate() m_dg; 
+    private Call m_call;
+    private enum Call {NO, FN, DG};
+
+    private Thread m_thr;
+    private int priority;
+
+    ThreadedInterruptible child;
+
+    private static ThreadedInterruptible sm_this;
+
+
+    this(void delegate() dg)
+    {
+        m_dg = dg; 
+        m_call = Call.DG; 
+    }
+
+    this(void function() fn) 
+    {
+        m_fn = fn; 
+        m_call = Call.FN; 
+    }
+
+    void setThis(ThreadedInterruptible intr)
+    {
+        sm_this = intr;
+    }
+
+    static ThreadedInterruptible getThis()
+    {
+        return sm_this;
+    }
+
+    void start()
+    {
+        m_thr = new Thread(&run);
+        priority = Thread.getThis.priority;
+
+        // If sm_this is null, we are not inside an interruptible section
+        // currently. If we are inside an interruptible section, we need to set
+        // the child of the parent interruptible to this. 
+        if ( !(sm_this is null) )
+        {
+            ThreadedInterruptible.getThis.child = this;
+        }
+
+        m_thr.start(); 
+        m_thr.join();
+
+        //cleanup
+        m_thr.destroy();
+        // no longer has a child.
+        if ( !(sm_this is null) )
+        {
+            ThreadedInterruptible.getThis.child = null;
+        }
+    }
+
+    private void run()
+    {
+        ThreadedInterruptible.setThis(this);
+        Thread.getThis.priority = this.priority;
+        if( pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null) )
+        {
+            throw new Exception("Unable to set thread cancellation type");
+        }
+        if (m_call == Call.FN)
+        {
+            m_fn(); 
+        }
+        else if (m_call == Call.DG)
+        {
+            m_dg();
+        }
+    }
+
+    void interrupt()
+    {
+        if( !_deferred )
+        {
+            if ( !(child is null) )
+            {
+                child.undeferrableInterrupt();
+                if ( !(sm_this is null) )
+                {
+                    ThreadedInterruptible.getThis.child = null;
+                }
+            }
+            pthread_cancel(m_thr.id);
+        }
+        else 
+        {
+            _interrupt_pending = true;
+        }
+    }
+
+    private void undeferrableInterrupt()
+    {
+        if ( !(child is null) )
+        {
+            child.undeferrableInterrupt; 
+            if ( !(sm_this is null) )
+            {
+                ThreadedInterruptible.getThis.child = null;
+            }
+        }
+        pthread_cancel(m_thr.id);
+    }
+
+    private bool _deferred = false; 
+    private bool _interrupt_pending = false; 
+
+    @property bool deferred()
+    {
+        return _deferred;
+    }
+
+    @property void deferred(bool new_value)
+    {
+        if (new_value) // set this to true
+        {
+            //if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+            // {
+            //     throw new Exception("Unable to set thread cancellation type");
+            //}
+            _deferred = true;
+        }
+
+        else 
+        {
+            if (_interrupt_pending)
+            {
+                undeferrableInterrupt();
+            }
+            /*
+               if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+               {
+               throw new Exception("Unable to set thread cancellation type");
+               }
+             */
+            _deferred = false;
+        }
+    }
+
+    void testCancel()
+    {
+        bool a = this.deferred;
+        deferred = false; 
+        pthread_testcancel();
+        deferred = a;
+    }
+
+    void executeSafely(void delegate() fn)
+    {
+        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+        fn();
+        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+    }
+}
+
+void*[] cleanup_array = []; 
+
+import core.sys.posix.pthread;
+pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
+{
+    import core.memory; 
+    pthread_cleanup* cleanup = cast(pthread_cleanup*)GC.malloc(pthread_cleanup.sizeof);
+
+    cleanup_array ~= cast(void*)cleanup;
+
+    cleanup.push(fn, arg);
+
+    import std.stdio;
+    writeln("Pushing extra cleanup: ", cast(int)arg);
+
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
+    return cleanup;
+}
+
+private void output_array()
+{
+    import std.stdio; 
+    int[] x; 
+    foreach(void* elem; cleanup_array)
+    {
+        pthread_cleanup* elem2 = cast(pthread_cleanup*)elem;
+        x ~= cast(int)elem2.buffer.__arg;
+    }
+    writeln("current array: ",x, "\n");
+}
+
+void remove(pthread_cleanup* cleanup)
+{
+    if (cleanup_array.length == 0)
+    {
+        throw new Exception("Nothing to pop from cleanup stack");
+    }
+
+    cleanup.pop(0);
+    import std.stdio; 
+    writeln("Popping extra cleanup: ", cast(int)cleanup.buffer.__arg);
+    import std.algorithm.mutation; 
+    uint index = getCleanupIndex(cleanup); 
+    cleanup_array = cleanup_array[0..index];
+
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
+}
+
+private uint getCleanupIndex(pthread_cleanup* cleanup)
+{
+    foreach (uint i, void* __cleanup; cleanup_array)
+    {
+        if (cast(pthread_cleanup*)__cleanup == cleanup)
+        {
+            return i;
+        }
+    }
+    throw new Exception("Element not found in array");
+}

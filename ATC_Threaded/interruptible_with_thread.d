@@ -1,7 +1,7 @@
 
-alias self = Interruptible.getThis;
+alias getInt = Interruptible.getThis;
 
-class Interruptible
+struct Interruptible
 {
     import core.thread,
            core.sys.posix.pthread;
@@ -11,12 +11,12 @@ class Interruptible
     private Call m_call;
     private enum Call {NO, FN, DG};
 
-    private Thread m_thr;
+    __gshared private Thread m_thr;
     private int priority;
 
-    Interruptible child;
+    Interruptible* child;
 
-    private static Interruptible sm_this;
+    private static Interruptible* sm_this;
 
 
     this(void delegate() dg)
@@ -33,12 +33,12 @@ class Interruptible
 
     void setThis(Interruptible intr)
     {
-        sm_this = intr;
+        sm_this = &intr;
     }
 
     static Interruptible getThis()
     {
-        return sm_this;
+        return *sm_this;
     }
 
     void start()
@@ -51,7 +51,7 @@ class Interruptible
         // the child of the parent interruptible to this. 
         if ( !(sm_this is null) )
         {
-            Interruptible.getThis.child = this;
+            Interruptible.getThis.child = &this;
         }
 
         m_thr.start(); 
@@ -86,17 +86,21 @@ class Interruptible
 
     void interrupt()
     {
+        import std.stdio;
         if( !_deferred )
         {
             if ( !(child is null) )
             {
+                writeln("HAS CHILD");
                 child.undeferrableInterrupt();
                 if ( !(sm_this is null) )
                 {
                     Interruptible.getThis.child = null;
                 }
             }
+            writeln("WUH");
             pthread_cancel(m_thr.id);
+            writeln("HUH");
         }
         else 
         {
@@ -154,9 +158,23 @@ class Interruptible
 
     void testCancel()
     {
+        bool a = this.deferred;
         deferred = false; 
         pthread_testcancel();
-        deferred = true;
+        deferred = a;
+    }
+
+    void executeSafely(void delegate() fn)
+    {
+        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+        fn();
+        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
     }
 }
 

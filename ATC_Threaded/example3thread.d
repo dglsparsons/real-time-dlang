@@ -85,15 +85,16 @@ void main()
     mythread.start();
 
     Thread.sleep(5.seconds); 
-    a.interrupt();
+    b.interrupt();
 
     Thread.sleep(1.seconds); 
-    //a.interrupt();
+    a.interrupt();
     //Thread.sleep(5.seconds);
     //Thread.sleep(5.seconds);
     //a.interrupt();
 
     mythread.join;
+    thread_joinAll();
 }
 
 /** 

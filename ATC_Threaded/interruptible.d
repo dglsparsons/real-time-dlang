@@ -1,3 +1,4 @@
+alias getInt = Interruptible.getThis;
 
 class Interruptible
 {
@@ -8,11 +9,11 @@ class Interruptible
 
     private void delegate() m_dg;
     private void function() m_fn;
-
     private Call m_call;
     private enum Call {NO, FN, DG};
 
     private pthread_t m_thr;
+    private int priority;
 
     private static pthread_t sm_thr; 
     private static Interruptible sm_this;
@@ -39,7 +40,7 @@ class Interruptible
             throw new Error("Unable to initialise thread attributes"); 
         }
 
-        if (Interruptible.sm_thr != 0)
+        if (!(Interruptible.sm_this is null))
         {
             // this means we are inside an interruptible section already.
             // Then we need to set the parent Interruptibles child, allowing cancels
@@ -61,18 +62,106 @@ class Interruptible
 
 
         pthread_join(m_thr, null); 
+
+        m_thr.destroy;
+
+        if ( !(sm_this is null) )
+        {
+            Interruptible.getThis.child = null;
+        }
     }
 
     void interrupt()
     {
-        pthread_cancel(m_thr); 
-        if( !(child is null) )
+        if( !_deferred )
         {
-            child.interrupt(); 
+            if ( !(child is null) )
+            {
+                child.undeferrableInterrupt();
+                if ( !(sm_this is null) )
+                {
+                    Interruptible.getThis.child = null;
+                }
+            }
+            pthread_cancel(m_thr);
+        }
+        else 
+        {
+            _interrupt_pending = true;
         }
     }
 
-    int getParentPriority()
+    private void undeferrableInterrupt()
+    {
+        if ( !(child is null) )
+        {
+            child.undeferrableInterrupt; 
+            if ( !(sm_this is null) )
+            {
+                Interruptible.getThis.child = null;
+            }
+        }
+        pthread_cancel(m_thr);
+    }
+
+    private bool _deferred = false; 
+    private bool _interrupt_pending = false; 
+
+    @property bool deferred()
+    {
+        return _deferred;
+    }
+
+    @property void deferred(bool new_value)
+    {
+        if (new_value) // set this to true
+        {
+            //if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+            // {
+            //     throw new Exception("Unable to set thread cancellation type");
+            //}
+            _deferred = true;
+        }
+
+        else 
+        {
+            if (_interrupt_pending)
+            {
+                undeferrableInterrupt();
+            }
+            /*
+               if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+               {
+               throw new Exception("Unable to set thread cancellation type");
+               }
+             */
+            _deferred = false;
+        }
+    }
+
+    void executeSafely(void delegate() fn)
+    {
+        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+        fn();
+        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+    }
+
+    void testCancel()
+    {
+        bool a = this.deferred;
+        deferred = false; 
+        pthread_testcancel();
+        deferred = a;
+    }
+
+
+    private int getParentPriority()
     {
         if (Interruptible.sm_thr == 0) 
         {
@@ -93,6 +182,7 @@ class Interruptible
             return param.sched_priority;
         }
     }
+
 
     static void setTid(pthread_t inr)
     {
@@ -136,4 +226,71 @@ extern (C) void* run(void* arg)
         obj.m_dg(); 
     }
     return null; 
+}
+
+
+
+/** Cleanup Functions **/
+
+
+void*[] cleanup_array = []; 
+
+import core.sys.posix.pthread;
+pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
+{
+    import core.memory; 
+    pthread_cleanup* cleanup = cast(pthread_cleanup*)GC.malloc(pthread_cleanup.sizeof);
+
+    cleanup_array ~= cast(void*)cleanup;
+
+    cleanup.push(fn, arg);
+
+    import std.stdio;
+    writeln("Pushing extra cleanup: ", cast(int)arg);
+
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
+    return cleanup;
+}
+
+private void output_array()
+{
+    import std.stdio; 
+    int[] x; 
+    foreach(void* elem; cleanup_array)
+    {
+        pthread_cleanup* elem2 = cast(pthread_cleanup*)elem;
+        x ~= cast(int)elem2.buffer.__arg;
+    }
+    writeln("current array: ",x, "\n");
+}
+
+void remove(pthread_cleanup* cleanup)
+{
+    if (cleanup_array.length == 0)
+    {
+        throw new Exception("Nothing to pop from cleanup stack");
+    }
+
+    cleanup.pop(0);
+    import std.stdio; 
+    writeln("Popping extra cleanup: ", cast(int)cleanup.buffer.__arg);
+    import std.algorithm.mutation; 
+    uint index = getCleanupIndex(cleanup); 
+    cleanup_array = cleanup_array[0..index];
+
+    writeln("cleanup_array length:", cleanup_array.length);
+    output_array();
+}
+
+private uint getCleanupIndex(pthread_cleanup* cleanup)
+{
+    foreach (uint i, void* __cleanup; cleanup_array)
+    {
+        if (cast(pthread_cleanup*)__cleanup == cleanup)
+        {
+            return i;
+        }
+    }
+    throw new Exception("Element not found in array");
 }

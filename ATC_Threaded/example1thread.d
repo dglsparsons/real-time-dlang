@@ -24,7 +24,7 @@ void interruptThread()
 void main()
 {
     new Thread(&interruptThread).start();
-    a = new Interruptible(&interruptibleFunction);
+    Interruptible a = Interruptible(&interruptibleFunction);
     a.start();
     writeln("End of process");
 }
