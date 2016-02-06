@@ -29,7 +29,7 @@ void interruptibleFunction()
         }
         Interruptible.getThis.executeSafely(&output);
         //getInt.deferred = false;
-        //getInt.testCancel;
+        getInt.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");

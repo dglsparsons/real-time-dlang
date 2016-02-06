@@ -93,7 +93,17 @@ class Interruptible
             if (pthread_kill(m_threadId, _SIGRTMIN))
                 throw new Exception("Unable to signal the interruptible section");
         }
+    }
 
+    public void testCancel() 
+    {
+        if (__pending)
+        {
+            import core.sys.posix.signal; 
+            Interruptible.toThrow = cast(shared Interruptible) this; 
+            if (pthread_kill(m_threadId, _SIGRTMIN))
+                throw new Exception("Unable to signal the interruptible section");
+        }
     }
 
     private Cleanup[] cleanup_fns;
