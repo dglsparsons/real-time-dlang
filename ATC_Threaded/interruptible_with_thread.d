@@ -1,7 +1,7 @@
 
 alias getInt = Interruptible.getThis;
 
-struct Interruptible
+class Interruptible
 {
     import core.thread,
            core.sys.posix.pthread;
@@ -11,12 +11,12 @@ struct Interruptible
     private Call m_call;
     private enum Call {NO, FN, DG};
 
-    __gshared private Thread m_thr;
+    private Thread m_thr;
     private int priority;
 
-    Interruptible* child;
+    Interruptible child;
 
-    private static Interruptible* sm_this;
+    private static Interruptible sm_this;
 
 
     this(void delegate() dg)
@@ -33,12 +33,12 @@ struct Interruptible
 
     void setThis(Interruptible intr)
     {
-        sm_this = &intr;
+        sm_this = intr;
     }
 
     static Interruptible getThis()
     {
-        return *sm_this;
+        return sm_this;
     }
 
     void start()
@@ -51,7 +51,7 @@ struct Interruptible
         // the child of the parent interruptible to this. 
         if ( !(sm_this is null) )
         {
-            Interruptible.getThis.child = &this;
+            Interruptible.getThis.child = this;
         }
 
         m_thr.start(); 
@@ -86,21 +86,17 @@ struct Interruptible
 
     void interrupt()
     {
-        import std.stdio;
         if( !_deferred )
         {
             if ( !(child is null) )
             {
-                writeln("HAS CHILD");
                 child.undeferrableInterrupt();
                 if ( !(sm_this is null) )
                 {
                     Interruptible.getThis.child = null;
                 }
             }
-            writeln("WUH");
             pthread_cancel(m_thr.id);
-            writeln("HUH");
         }
         else 
         {
@@ -190,14 +186,10 @@ pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
 
     cleanup.push(fn, arg);
 
-    import std.stdio;
-    writeln("Pushing extra cleanup: ", cast(int)arg);
-
-    writeln("cleanup_array length:", cleanup_array.length);
-    output_array();
     return cleanup;
 }
 
+/* debug function to print the cleanup_array */
 private void output_array()
 {
     import std.stdio; 
@@ -218,14 +210,9 @@ void remove(pthread_cleanup* cleanup)
     }
 
     cleanup.pop(0);
-    import std.stdio; 
-    writeln("Popping extra cleanup: ", cast(int)cleanup.buffer.__arg);
     import std.algorithm.mutation; 
     uint index = getCleanupIndex(cleanup); 
     cleanup_array = cleanup_array[0..index];
-
-    writeln("cleanup_array length:", cleanup_array.length);
-    output_array();
 }
 
 private uint getCleanupIndex(pthread_cleanup* cleanup)
@@ -238,4 +225,250 @@ private uint getCleanupIndex(pthread_cleanup* cleanup)
         }
     }
     throw new Exception("Element not found in array");
+}
+
+
+
+
+
+
+
+/* ------------------- Unittests ------------------------- */
+unittest
+{
+    /** 
+     * This basic example should test that a basic interrupt can be handled,
+     * causing the interruptible section to get cancelled 
+     **/
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared int x = 0; 
+
+    void threadFunction()
+    {
+        while(true) {
+            x = 1;
+            Thread.sleep(200.msecs);
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        a = new Interruptible(&threadFunction);  
+        a.start(); 
+    }
+
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(1.seconds);
+    auto time_a = MonoTime.currTime + 0.seconds;
+    a.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds; 
+    assert(x == 1);
+    assert(time_b <= time_a + 1.seconds);
+}
+
+
+unittest
+{
+    /** 
+      This unittest should check that the priority of the calling thread is 
+      correctly passed through to the Interruptible section
+     */
+    import core.thread;
+
+
+    import core.sys.posix.sched : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
+
+    void setScheduler(int scheduler_type, int scheduler_priority)
+    {
+        import core.sys.posix.sched : sched_param, sched_setscheduler; 
+        sched_param sp = { sched_priority: scheduler_priority }; 
+        int ret = sched_setscheduler(0, scheduler_type, &sp); 
+        if (ret == -1) {
+            throw new Exception("scheduler did not properly set");
+        }
+    }
+
+    __gshared Interruptible a;
+    __gshared int x = 0; 
+    int prio = 70;
+
+    void threadFunction()
+    {
+        while(true) {
+            x = Thread.getThis.priority;
+            Thread.sleep(200.msecs);
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = prio;
+        a = new Interruptible(&threadFunction);  
+        a.start(); 
+    }
+
+    //import RealTime : setScheduler, SCHED_FIFO;
+    setScheduler(SCHED_FIFO, 50);
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(1.seconds);
+    auto time_a = MonoTime.currTime + 0.seconds;
+    a.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds; 
+    assert(x == prio);
+    assert(time_b <= time_a + 1.seconds);
+}
+
+
+unittest
+{
+    /** 
+     * This basic example seeks to test that interrupts can occur within a nested
+     * example, and that cancelling an outer interruptible section will also
+     * cancel inner sections. 
+     **/
+
+    import core.thread;
+
+    __gshared Interruptible athr;
+    __gshared Interruptible bthr;
+    __gshared Interruptible cthr;
+
+    __gshared int xval = 0;
+    int endValue = 100;
+
+    void myThirdInterruptibleFunction()
+    {
+        while(true)
+        {
+            xval = endValue; 
+            Thread.sleep(200.msecs);
+        }
+    }
+
+    void mySecondInterruptibleFunction()
+    {
+        cthr = new Interruptible(&myThirdInterruptibleFunction);
+        cthr.start();
+        while(true)
+        {
+            xval = 10;
+            Thread.sleep(200.msecs); 
+        }
+    }
+
+    void interruptibleFunction()
+    {
+        bthr = new Interruptible(&mySecondInterruptibleFunction); 
+        bthr.start(); 
+
+        while(true)
+        {
+            xval = 20;
+            Thread.sleep(200.msecs); 
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = 10;
+        athr = new Interruptible(&interruptibleFunction);  
+        athr.start(); 
+    }
+
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(1.seconds); 
+    auto time_a = MonoTime.currTime + 0.seconds;
+    athr.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds;
+    assert(xval == endValue);
+    assert(time_b <= time_a + 1.seconds);
+}
+
+
+unittest
+{
+    /* Testing cleanup routines work properly, along with ability to pop
+     * cleanup routines */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared Interruptible b;
+    __gshared Interruptible c;
+    __gshared int[] myArray;
+
+    extern (C) void thread_cleanup(void* arg) nothrow
+    {
+        int x = cast(int)arg;
+        myArray ~= x;
+    }
+
+    void testfn()
+    {
+        auto a = addCleanup(&thread_cleanup, cast(void*)10);
+        scope(exit) a.remove;
+        auto b = addCleanup(&thread_cleanup, cast(void*)11);
+        scope(exit) b.remove;
+        auto c = addCleanup(&thread_cleanup, cast(void*)12);
+        scope(exit) c.remove;
+    }
+
+    void myThirdInterruptibleFunction()
+    {
+        testfn();
+        addCleanup(&thread_cleanup, cast(void*)3);
+        addCleanup(&thread_cleanup, cast(void*)4);
+        while(true)
+        {
+            Thread.sleep(100.msecs);
+        }
+    }
+
+    void mySecondInterruptibleFunction()
+    {
+        addCleanup(&thread_cleanup, cast(void*)2);
+        c = new Interruptible(&myThirdInterruptibleFunction);
+        c.start();
+        while(true)
+        {
+            Thread.sleep(100.msecs); 
+        }
+    }
+
+    void interruptibleFunction()
+    {
+        addCleanup(&thread_cleanup, cast(void*)1);
+        b = new Interruptible(&mySecondInterruptibleFunction); 
+        b.start(); 
+
+        while(true)
+        {
+            Thread.sleep(100.msecs); 
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = 10;
+        a = new Interruptible(&interruptibleFunction);  
+        a.start(); 
+    }
+
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(1.seconds); 
+    b.interrupt();
+    Thread.sleep(1.seconds); 
+    a.interrupt();
+    mythread.join;
+    assert(myArray.length == 4);
+    assert(myArray == [4,3,2,1]);
 }

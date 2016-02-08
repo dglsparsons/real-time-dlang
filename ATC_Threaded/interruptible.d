@@ -63,7 +63,7 @@ class Interruptible
 
         pthread_join(m_thr, null); 
 
-        m_thr.destroy;
+        //m_thr.destroy;
 
         if ( !(sm_this is null) )
         {
@@ -216,6 +216,9 @@ extern (C) void* run(void* arg)
 
     int oldtype; 
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype); 
+
+    import core.thread : thread_attachThis;
+    auto x = thread_attachThis();
 
     if (obj.m_call == obj.Call.FN)
     {

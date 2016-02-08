@@ -11,6 +11,7 @@ void threadFunction()
     while(true) {
         Thread.sleep(200.msecs);
         writeln("Hello, World!");
+        writeln("Thread: ", Thread.getThis);
     }
 }
 

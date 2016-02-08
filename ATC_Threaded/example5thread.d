@@ -2,8 +2,7 @@
 
 import std.stdio, 
        core.thread, 
-       interruptible_with_thread, 
-       core.sys.posix.pthread;
+       interruptible_with_thread;
 
 __gshared Interruptible a;
 

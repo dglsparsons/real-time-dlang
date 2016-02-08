@@ -2,34 +2,35 @@
 
 import std.stdio, 
        core.thread, 
-       interruptible_with_thread,
-       RealTime : setScheduler, SCHED_FIFO; 
+       interruptible_with_thread;
 
 __gshared Interruptible a;
 
-void interruptibleFunction()
+void threadFunction()
 {
     while(true) {
-        Thread.sleep(1.seconds);
-        writeln("Inside an interruptible section");
+        Thread.sleep(200.msecs);
+        writeln("Interruptible Section");
     }
 }
 
-void interruptThread()
+void thread_to_spawn_interruptible()
 {
-    Thread.sleep(5.seconds); 
-    a.interrupt();
+    a = new Interruptible(&threadFunction);  
+    a.start(); 
+    writeln("Thread ending"); 
 }
 
 void main()
 {
-    new Thread(&interruptThread).start();
-    Interruptible a = Interruptible(&interruptibleFunction);
-    a.start();
-    writeln("End of process");
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(1.seconds);
+    a.interrupt();
+    mythread.join;
 }
 
 /** 
-  * This basic example tests whether a basic interrupt is correctly handled,
-  * causing the interruptible section to get exited
+  * This basic example should test that a basic interrupt can be handled,
+  * causing the interruptible section to get cancelled 
   **/
