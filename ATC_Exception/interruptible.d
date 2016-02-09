@@ -2,16 +2,6 @@ alias getInt = Interruptible.getThis;
 
 private import core.sys.posix.signal;
 
-/*
-   extern (C) nothrow @nogc 
-   {
-   int pthread_sigqueue(pthread_t thread, int sig, const union sigval value);
-   }
- */
-
-import core.sync.mutex;
-__gshared Mutex mut;
-
 class Interruptible
 {
     import core.sys.posix.pthread;
@@ -50,14 +40,8 @@ class Interruptible
 
     void start() @trusted
     {
-        if (!mut) 
-        {
-            import std.stdio; 
-            writeln("CREATING MUTEX");
-            mut = new Mutex();
-        }
         import core.thread; 
-        m_threadId = pthread_self;//Thread.getThis.id;
+        m_threadId = pthread_self;
         parent = sm_this;
         scope(exit) sm_this = parent;
         sm_this = this; 
@@ -74,8 +58,6 @@ class Interruptible
         } 
         catch (ATCInterrupt ex)
         {
-            import std.stdio;
-            writeln("CATCHING");
             sigset_t __sigset_clear;
             sigemptyset(&__sigset_clear);
             sigaddset(&__sigset_clear, _SIGRTMIN); 
@@ -113,7 +95,6 @@ class Interruptible
                 interrupt();
             }
         }
-
         __deferred = newValue;
     }
 
@@ -124,35 +105,27 @@ class Interruptible
 
     void interrupt() @trusted 
     {
-        //synchronized(mut)
-        //{
-            import std.stdio;
-            writeln("entering sync section");
-            if (__deferred)
-            {
-                import std.stdio;
-                writeln("SETTING DEFERRED NOW");
-                __pending = true;
-            }
-            else
-            {
+        if (__deferred)
+        {
+            __pending = true;
+        }
+        else
+        {
                 import core.sys.posix.signal; 
                 Interruptible.toThrow = cast(shared Interruptible)this;
                 if (pthread_kill(m_threadId, _SIGRTMIN))
                     throw new Exception("Unable to signal the interruptible section");
-            }
-            writeln("exiting sync section");
-       // }
+        }
     }
 
     public void testCancel() 
     {
         if (__pending)
         {
-            import core.sys.posix.signal; 
-            Interruptible.toThrow = cast(shared Interruptible) this; 
-            if (pthread_kill(m_threadId, _SIGRTMIN))
-                throw new Exception("Unable to signal the interruptible section");
+                import core.sys.posix.signal; 
+                Interruptible.toThrow = cast(shared Interruptible) this; 
+                if (pthread_kill(m_threadId, _SIGRTMIN))
+                    throw new Exception("Unable to signal the interruptible section");
         }
     }
 
@@ -287,32 +260,12 @@ private extern (C) nothrow @nogc
 private immutable sigset_t __sigset_clear = sigset_t([8589934592, 0, 0, 0, 0, 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-extern (C) /*@safe*/ void sig_handler(int signum) @nogc //nothrow
+extern (C) @safe void sig_handler(int signum) @nogc //nothrow
 {
-    //synchronized(mut)
-    //
-    import core.stdc.stdio;
-        printf("ENTERING\n");
-        scope(exit) printf("EXITING\n");
-        import std.stdio;
-        // since we are exiting on an exception, we need to reenable the signal
-        // before throwing the exception. 
-        //scope(exit) sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
-        /*
-        sigset_t __sigset_clear;
-        sigemptyset(&__sigset_clear);
-        sigaddset(&__sigset_clear, _SIGRTMIN); 
-        sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
-        */
-        //signal(_SIGRTMIN, &sig_handler);
-        //printf("ENABLED\n");
-        //writeln("ENABLED");
-
-        if ( !(Interruptible.sm_this is null) )
-        {
-            throw Interruptible.toThrow.m_error;
-        }
-    //}
+    if ( !(Interruptible.sm_this is null) )
+    {
+        throw Interruptible.toThrow.m_error;
+    }
 }
 
 
@@ -586,7 +539,6 @@ unittest
      * with executeSafely, it is possible to defer the inner cancel too.
      */
     import core.thread;
-    import std.stdio;
 
     __gshared Interruptible a;
     __gshared int x; 
@@ -595,7 +547,6 @@ unittest
     void interruptThis()
     {
         Thread.sleep(50.msecs);
-        writeln("2 interrupt");
         a.interrupt();
     }
 
@@ -607,6 +558,7 @@ unittest
         {
             void update() 
             {
+                Thread.sleep(10.msecs);
                 x = i;
                 i = i * 7;
             }
@@ -642,26 +594,21 @@ unittest
     /** Check that deferrable sections cancel when we stop being deferred
      */
     import core.thread;
-    import std.stdio;
     __gshared Interruptible myIntr;
     __gshared bool boolValue = false;
 
     void intSection()
     {
         getInt.deferred = true;
-        writeln("asleep");
         Thread.sleep(2.seconds);    
         boolValue = true;
-        writeln("woken");
         getInt.deferred = false;
         assert(false); // should never get here
     }
 
     void intThis()
     {
-        writeln("in the thread");
         Thread.sleep(50.msecs);
-        writeln("Interrupt!");
         myIntr.interrupt(); // should get deferred
     }
 
@@ -670,6 +617,33 @@ unittest
     myIntr = new Interruptible(&intSection);
     new Thread(&intThis).start();
     myIntr.start();
-    //assert(x);
+    assert(boolValue);
 }
 
+
+unittest
+{
+    /** Unittest to determine testCancel works properly when a cancel has 
+      been deferred. */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+
+    void intThis()
+    {
+        Thread.sleep(10.msecs); 
+        a.interrupt();
+    }
+
+    void intSection()
+    {
+        getInt.deferred = true; 
+        Thread.sleep(50.msecs);
+        getInt.testCancel;
+    }
+
+    a = new Interruptible(&intSection); 
+    new Thread(&intThis).start();
+    a.start();
+}
