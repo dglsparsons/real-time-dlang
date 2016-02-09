@@ -10,14 +10,14 @@ void interruptibleFunction()
 {
     while(true)
     {
-        Thread.sleep(1.seconds);
+        Thread.sleep(200.msecs);
         writeln("Inside an interruptible section");
     }
 }
 
 void interruptThread() 
 {
-    Thread.sleep(3.seconds); 
+    Thread.sleep(1.seconds); 
     a.interrupt();
 }
 

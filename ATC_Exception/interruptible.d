@@ -1,11 +1,25 @@
 alias getInt = Interruptible.getThis;
 
-import core.sys.posix.signal;
+private import core.sys.posix.signal;
+
+/*
+   extern (C) nothrow @nogc 
+   {
+   int pthread_sigqueue(pthread_t thread, int sig, const union sigval value);
+   }
+ */
+
+import core.sync.mutex;
+__gshared Mutex mut;
 
 class Interruptible
 {
     import core.sys.posix.pthread;
     private void function() m_fn;
+    private void delegate() m_dg;
+    private Call m_call;
+    private enum Call {NO, FN, DG};
+
     private pthread_t m_threadId; 
     public ATCInterrupt m_error; 
 
@@ -16,6 +30,14 @@ class Interruptible
     this(void function() fn )
     {
         m_fn = fn; 
+        m_call = Call.FN;
+        m_error = new ATCInterrupt(this); 
+    }
+
+    this(void delegate() dg )
+    {
+        m_dg = dg; 
+        m_call = Call.DG;
         m_error = new ATCInterrupt(this); 
     }
 
@@ -28,24 +50,44 @@ class Interruptible
 
     void start() @trusted
     {
+        if (!mut) 
+        {
+            import std.stdio; 
+            writeln("CREATING MUTEX");
+            mut = new Mutex();
+        }
         import core.thread; 
-        m_threadId = Thread.getThis.id;
+        m_threadId = pthread_self;//Thread.getThis.id;
         parent = sm_this;
         scope(exit) sm_this = parent;
         sm_this = this; 
         try 
         {
-            m_fn();
+            if (m_call == Call.FN)
+            {
+                m_fn();
+            }
+            if (m_call == Call.DG)
+            {
+                m_dg();
+            }
         } 
         catch (ATCInterrupt ex)
         {
+            import std.stdio;
+            writeln("CATCHING");
+            sigset_t __sigset_clear;
+            sigemptyset(&__sigset_clear);
+            sigaddset(&__sigset_clear, _SIGRTMIN); 
+            sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
+
             m_caughtError = ex;
         }
         finally 
         {
             foreach(_clean; cleanup_fns)
             {
-                _clean.fn(_clean.arg);
+                _clean.exec;
             }
             if (!(m_caughtError is null))
             {
@@ -80,19 +122,27 @@ class Interruptible
         return __deferred;
     }
 
-    void interrupt() @trusted
+    void interrupt() @trusted 
     {
-        if (__deferred)
-        {
-            __pending = true;
-        }
-        else
-        {
-            import core.sys.posix.signal; 
-            Interruptible.toThrow = cast(shared Interruptible)this;
-            if (pthread_kill(m_threadId, _SIGRTMIN))
-                throw new Exception("Unable to signal the interruptible section");
-        }
+        //synchronized(mut)
+        //{
+            import std.stdio;
+            writeln("entering sync section");
+            if (__deferred)
+            {
+                import std.stdio;
+                writeln("SETTING DEFERRED NOW");
+                __pending = true;
+            }
+            else
+            {
+                import core.sys.posix.signal; 
+                Interruptible.toThrow = cast(shared Interruptible)this;
+                if (pthread_kill(m_threadId, _SIGRTMIN))
+                    throw new Exception("Unable to signal the interruptible section");
+            }
+            writeln("exiting sync section");
+       // }
     }
 
     public void testCancel() 
@@ -108,9 +158,16 @@ class Interruptible
 
     private Cleanup[] cleanup_fns;
 
+    import core.sys.posix.pthread;
     Cleanup addCleanup(void function(void*) fn, void* arg)
     {
         Cleanup __clean = Cleanup(fn, arg); 
+        cleanup_fns = __clean ~ cleanup_fns;
+        return __clean;
+    }
+    Cleanup addCleanup(void delegate(void*) dg, void* arg)
+    {
+        Cleanup __clean = Cleanup(dg, arg); 
         cleanup_fns = __clean ~ cleanup_fns;
         return __clean;
     }
@@ -162,13 +219,33 @@ class Interruptible
 
 struct Cleanup
 {
-    void function(void*) fn;
-    void* arg;
+    private void function(void*) fn;
+    private void delegate(void*) dg;
+    private void* arg;
+
+    private Call m_call;
+    private enum Call {NO, FN, DG};
+
+    this(void delegate(void*) _fn, void* _arg)
+    {
+        dg = _fn; 
+        arg = _arg;
+        m_call = Call.DG;
+    }
 
     this(void function(void*) _fn, void* _arg)
     {
         fn = _fn; 
         arg = _arg;
+        m_call = Call.FN;
+    }
+
+    void exec()
+    {
+        if (m_call == Call.FN)
+            fn(arg);
+        if (m_call == Call.DG)
+            dg(arg);
     }
 }
 
@@ -192,9 +269,11 @@ void enableInterruptibleSections()
     sigaction(_SIGRTMIN, &action, null); 
 }
 
-private @property int _SIGRTMIN() nothrow @nogc {
+private @property int _SIGRTMIN() nothrow @nogc 
+{
     __gshared static int sig = -1;
-    if (sig == -1) {
+    if (sig == -1) 
+    {
         sig = __libc_current_sigrtmin();
     }
     return sig;
@@ -208,28 +287,389 @@ private extern (C) nothrow @nogc
 private immutable sigset_t __sigset_clear = sigset_t([8589934592, 0, 0, 0, 0, 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-extern (C) /*@safe*/ void sig_handler(int signum)
+extern (C) /*@safe*/ void sig_handler(int signum) @nogc //nothrow
 {
-    /*
-       sigset_t __sigset_clear;
-       sigemptyset(&__sigset_clear);
-       sigaddset(&__sigset_clear, _SIGRTMIN);
-       import std.stdio;
-       writeln("sigset_t: ", __sigset_clear);
-     */
-
-    // since we are exiting on an exception, we need to reenable the signal
-    // before throwing the exception. 
-    scope(exit) sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
-
-    if ( !(Interruptible.sm_this is null) )
-    {
-        throw Interruptible.toThrow.m_error;
-    }
-    else 
-    {
+    //synchronized(mut)
+    //
+    import core.stdc.stdio;
+        printf("ENTERING\n");
+        scope(exit) printf("EXITING\n");
         import std.stdio;
-        writeln("SIGNAL HANDLER DEFERRED?");
+        // since we are exiting on an exception, we need to reenable the signal
+        // before throwing the exception. 
+        //scope(exit) sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
+        /*
+        sigset_t __sigset_clear;
+        sigemptyset(&__sigset_clear);
+        sigaddset(&__sigset_clear, _SIGRTMIN); 
+        sigprocmask(SIG_UNBLOCK, &__sigset_clear, null);
+        */
+        //signal(_SIGRTMIN, &sig_handler);
+        //printf("ENABLED\n");
+        //writeln("ENABLED");
+
+        if ( !(Interruptible.sm_this is null) )
+        {
+            throw Interruptible.toThrow.m_error;
+        }
+    //}
+}
+
+
+/* ------------------- Unittests ------------------------- */
+unittest
+{
+    /** 
+     * This basic example should test that a basic interrupt can be handled,
+     * causing the interruptible section to get cancelled 
+     **/
+    import core.thread;
+    enableInterruptibleSections;
+
+    __gshared Interruptible a;
+    __gshared int x = 0; 
+
+    void threadFunction()
+    {
+        while(true) {
+            x = 1;
+            Thread.sleep(50.msecs);
+        }
     }
+
+    void thread_to_spawn_interruptible()
+    {
+        a = new Interruptible(&threadFunction);  
+        a.start(); 
+    }
+
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(200.msecs);
+    auto time_a = MonoTime.currTime + 0.seconds;
+    a.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds; 
+    assert(x == 1);
+    assert(time_b <= time_a + 200.msecs);
+}
+
+
+unittest
+{
+    /** 
+      This unittest should check that the priority of the calling thread is 
+      correctly passed through to the Interruptible section
+     */
+    import core.thread;
+    import core.sys.posix.sched : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
+
+    void setScheduler(int scheduler_type, int scheduler_priority)
+    {
+        import core.sys.posix.sched : sched_param, sched_setscheduler; 
+        sched_param sp = { sched_priority: scheduler_priority }; 
+        int ret = sched_setscheduler(0, scheduler_type, &sp); 
+        if (ret == -1) {
+            throw new Exception("scheduler did not properly set");
+        }
+    }
+
+    __gshared Interruptible a;
+    __gshared int x = 0; 
+    int prio = 70;
+
+    void threadFunction()
+    {
+        while(true) {
+            x = Thread.getThis.priority;
+            Thread.sleep(50.msecs);
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = prio;
+        a = new Interruptible(&threadFunction);  
+        a.start(); 
+    }
+
+    enableInterruptibleSections;
+    //import RealTime : setScheduler, SCHED_FIFO;
+    setScheduler(SCHED_FIFO, 50);
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(200.msecs);
+    auto time_a = MonoTime.currTime + 0.seconds;
+    a.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds; 
+    assert(x == prio);
+    assert(time_b <= time_a + 200.msecs);
+}
+
+
+
+unittest
+{
+    /** 
+     * This basic example seeks to test that interrupts can occur within a nested
+     * example, and that cancelling an outer interruptible section will also
+     * cancel inner sections. 
+     **/
+
+    import core.thread;
+
+    __gshared Interruptible athr;
+    __gshared Interruptible bthr;
+    __gshared Interruptible cthr;
+
+    __gshared int xval = 0;
+    int endValue = 100;
+
+    void myThirdInterruptibleFunction()
+    {
+        while(true)
+        {
+            xval = endValue; 
+            Thread.sleep(50.msecs);
+        }
+    }
+
+    void mySecondInterruptibleFunction()
+    {
+        cthr = new Interruptible(&myThirdInterruptibleFunction);
+        cthr.start();
+    }
+
+    void interruptibleFunction()
+    {
+        bthr = new Interruptible(&mySecondInterruptibleFunction); 
+        bthr.start(); 
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = 10;
+        athr = new Interruptible(&interruptibleFunction);  
+        athr.start(); 
+    }
+
+    enableInterruptibleSections;
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(300.msecs); 
+    auto time_a = MonoTime.currTime + 0.seconds;
+    athr.interrupt();
+    mythread.join;
+    auto time_b = MonoTime.currTime + 0.seconds;
+    assert(xval == endValue);
+    assert(time_b <= time_a + 100.msecs);
+}
+
+
+unittest
+{
+    /* Testing cleanup routines work properly, along with ability to pop
+     * cleanup routines */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared Interruptible b;
+    __gshared Interruptible c;
+    __gshared int[] myArray;
+
+    void thread_cleanup(void* arg) nothrow
+    {
+        int x = cast(int)arg;
+        myArray ~= x;
+    }
+
+    void testfn()
+    {
+        auto p = getInt.addCleanup(&thread_cleanup, cast(void*)10);
+        scope(exit) getInt.removeCleanup(p);
+        auto q = getInt.addCleanup(&thread_cleanup, cast(void*)11);
+        scope(exit) getInt.removeCleanup(q);
+        auto r = getInt.addCleanup(&thread_cleanup, cast(void*)12);
+        scope(exit) getInt.removeCleanup(r);
+    }
+
+    void myThirdInterruptibleFunction()
+    {
+        testfn();
+        getInt.addCleanup(&thread_cleanup, cast(void*)3);
+        getInt.addCleanup(&thread_cleanup, cast(void*)4);
+        while(true)
+        {
+            Thread.sleep(50.msecs);
+        }
+    }
+
+    void mySecondInterruptibleFunction()
+    {
+        getInt.addCleanup(&thread_cleanup, cast(void*)2);
+        c = new Interruptible(&myThirdInterruptibleFunction);
+        c.start();
+    }
+
+    void interruptibleFunction()
+    {
+        getInt.addCleanup(&thread_cleanup, cast(void*)1);
+        b = new Interruptible(&mySecondInterruptibleFunction); 
+        b.start(); 
+
+        while(true)
+        {
+            Thread.sleep(50.msecs); 
+        }
+    }
+
+    void thread_to_spawn_interruptible()
+    {
+        Thread.getThis.priority = 10;
+        a = new Interruptible(&interruptibleFunction);  
+        a.start(); 
+    }
+
+    auto mythread = new Thread(&thread_to_spawn_interruptible); 
+    mythread.start();
+    Thread.sleep(300.msecs); 
+    b.interrupt();
+    Thread.sleep(300.msecs); 
+    a.interrupt();
+    mythread.join;
+    assert(myArray.length == 4);
+    assert(myArray == [4,3,2,1]);
+}
+
+
+unittest 
+{
+    /** Checking the ability to testCancel a function inside an infinite loop, 
+      and the ability to defer interrupts */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared int x;
+    int maxVal = 2_000_000;
+
+    void interruptThis()
+    {
+        Thread.sleep(50.msecs);
+        a.interrupt();
+    }
+
+    void interruptibleFunction() 
+    {
+        getInt.deferred = true; 
+        for(int i = 0; i < maxVal; i++)
+        {
+            x = i;
+            i = i*x;
+            getInt.testCancel;
+        }
+    }
+
+    enableInterruptibleSections();
+    new Thread(&interruptThis).start();
+    a = new Interruptible(&interruptibleFunction); 
+    a.start();
+    assert(x != maxVal);
+}
+
+unittest
+{
+    /* checking the ability to cancel a nested interruptible section, even if
+     * the nested interruptible section is set to defer interrupts. - note,
+     * with executeSafely, it is possible to defer the inner cancel too.
+     */
+    import core.thread;
+    import std.stdio;
+
+    __gshared Interruptible a;
+    __gshared int x; 
+    int maxVal = 2_000_000;
+
+    void interruptThis()
+    {
+        Thread.sleep(50.msecs);
+        writeln("2 interrupt");
+        a.interrupt();
+    }
+
+    void interruptibleFunction() 
+    {
+
+        getInt.deferred = true; 
+        for(int i = 0; i < maxVal; i++)
+        {
+            void update() 
+            {
+                x = i;
+                i = i * 7;
+            }
+            getInt.executeSafely(&update);
+        }
+
+    }
+
+    void outerInterruptible() 
+    {
+        //getInt.deferred = true;
+        Interruptible b;
+
+        void initInterruptible() 
+        {
+            b = new Interruptible(&interruptibleFunction);
+        }
+        getInt.executeSafely(&initInterruptible);
+        b.start();
+    }
+
+    enableInterruptibleSections;
+    new Thread(&interruptThis).start();
+    a = new Interruptible(&outerInterruptible);
+    a.start();
+    assert(x != maxVal);
+}
+
+
+
+unittest
+{
+    /** Check that deferrable sections cancel when we stop being deferred
+     */
+    import core.thread;
+    import std.stdio;
+    __gshared Interruptible myIntr;
+    __gshared bool boolValue = false;
+
+    void intSection()
+    {
+        getInt.deferred = true;
+        writeln("asleep");
+        Thread.sleep(2.seconds);    
+        boolValue = true;
+        writeln("woken");
+        getInt.deferred = false;
+        assert(false); // should never get here
+    }
+
+    void intThis()
+    {
+        writeln("in the thread");
+        Thread.sleep(50.msecs);
+        writeln("Interrupt!");
+        myIntr.interrupt(); // should get deferred
+    }
+
+    //Thread.sleep(50.msecs);
+    enableInterruptibleSections;
+    myIntr = new Interruptible(&intSection);
+    new Thread(&intThis).start();
+    myIntr.start();
+    //assert(x);
 }
 

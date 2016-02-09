@@ -21,17 +21,13 @@ void interruptibleFunction()
 
     for(int i = 0; i < 2_000_000; i++)
     {
-        // keep the processor busy for as long as possible..
-        //getInt.deferred = true;
         void output()
         {
             writeln("i ", i);
         }
         Interruptible.getThis.executeSafely(&output);
-        //getInt.deferred = false;
         getInt.testCancel;
     }
-
     writeln("Thread wasn't cancelled!");
 }
 

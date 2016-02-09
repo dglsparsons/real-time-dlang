@@ -8,17 +8,17 @@ __gshared Interruptible a;
 __gshared Interruptible b;
 __gshared Interruptible c;
 
-
 void thread_cleanup(void* arg)
 {
     int num = cast(int)arg; 
     printf("cleanup: %i\n", num); 
 }
 
+
 void testfn()
 {
     auto a = getInt.addCleanup(&thread_cleanup, cast(void*)10);
-    //getInt.removeCleanup(a);
+    getInt.removeCleanup(a);
     auto b = getInt.addCleanup(&thread_cleanup, cast(void*)11);
     getInt.removeCleanup(b);
     auto c = getInt.addCleanup(&thread_cleanup, cast(void*)12);
@@ -35,7 +35,7 @@ void myThirdInterruptibleFunction()
 
     while(true)
     {
-        Thread.sleep(1.seconds);
+        Thread.sleep(200.msecs);
         void output() {
             writeln("Third interruptible section");
         }
@@ -52,7 +52,7 @@ void mySecondInterruptibleFunction()
     c.start();
     while(true)
     {
-        Thread.sleep(1.seconds); 
+        Thread.sleep(200.msecs); 
         writeln("Nested Interrupt!");
     }
 }
@@ -67,7 +67,7 @@ void interruptibleFunction()
 
     while(true)
     {
-        Thread.sleep(1.seconds); 
+        Thread.sleep(200.msecs); 
         writeln("Outer interruptible");
     }
 
@@ -86,12 +86,12 @@ void main()
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
 
-    Thread.sleep(5.seconds); 
+    Thread.sleep(1.seconds); 
     b.interrupt();
 
     //Thread.sleep(1.seconds); 
     //a.interrupt();
-    Thread.sleep(5.seconds);
+    Thread.sleep(1.seconds);
     //Thread.sleep(5.seconds);
     a.interrupt();
 

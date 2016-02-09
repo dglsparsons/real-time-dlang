@@ -13,7 +13,7 @@ void myThirdInterruptibleFunction()
 {
     while(true)
     {
-        Thread.sleep(1.seconds);
+        Thread.sleep(200.msecs);
         void output()
         {
             writeln("Third interruptible section");
@@ -27,11 +27,14 @@ void mySecondInterruptibleFunction()
     auto fn = delegate{ 
         c = new Interruptible(&myThirdInterruptibleFunction);
     };
-    getInt.executeSafely(fn);
+    getInt.executeSafely({ 
+            c = new Interruptible(&myThirdInterruptibleFunction);
+            }
+            );
     c.start();
     while(true)
     {
-        Thread.sleep(1.seconds); 
+        Thread.sleep(200.msecs); 
         auto output = delegate {
             writeln("Nested Interrupt!"); 
         };
@@ -54,7 +57,7 @@ void interruptibleFunction()
         {
             writeln("Outer interruptible");
         }
-        Thread.sleep(1.seconds); 
+        Thread.sleep(200.msecs); 
         getInt.executeSafely(&output);
     }
 
@@ -73,10 +76,10 @@ void main()
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
 
-    Thread.sleep(5.seconds); 
+    Thread.sleep(1.seconds); 
     b.interrupt();
 
-    Thread.sleep(5.seconds); 
+    Thread.sleep(1.seconds); 
     a.interrupt();
     //Thread.sleep(5.seconds);
     //Thread.sleep(5.seconds);

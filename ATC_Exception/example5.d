@@ -26,13 +26,7 @@ void interruptibleFunction()
         {
             printf("i %i\n", i);
         }
-        // keep the processor busy for as long as possible..
-        //getInt.deferred = true; 
-        //a.deferred = true;
         getInt.executeSafely(&print_i);
-        //a.deferred = false;
-        //getInt.deferred = false;
-        //getInt.testCancel;
     }
 
     writeln("Thread wasn't cancelled!");
