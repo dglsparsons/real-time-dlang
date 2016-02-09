@@ -1,4 +1,24 @@
-% Article writing on how real-time features are provided to Dlang
+% The Design and Implementation Section - plenty to discuss in here - how 
+% each different part of the system has been designed and implemented, as well
+% as what the original design aims were. 
+
+% Word Count Estimate - 2500 Words
+
+
+
+\section{Design Aims}
+% Using D Way that D works - hooks into C standard libraries in order to 
+% provide support for things. 
+
+% Targeting POSIX operating Systems - real time features, not many other OS 
+% can do this. 
+
+% Ability to target different compilers, not require custom runtimes. 
+% GIVES THE ESSENTIAL - Program written with no knowledge of the Real-time
+% systems additions I am creating will not be effected. This means support can 
+% be added in through importing a library. 
+
+\section{Implementation}
 
 In the previous section, the characteristics a real-time 
 systems programming language would need to provide in order to enable the 
@@ -227,6 +247,3 @@ and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error
 prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not 
 followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
 In addition, this does not permit the ability to nest interruptible sections. 
-
-
-

@@ -1,3 +1,9 @@
+%Problem description and analysis for my project. 
+
+% Word Count Guide - 1500 words.
+
+
+\section{Features of the D Programming Language}
 As mentioned in the introduction, the D programming language has many 
 characteristics that lend it nicely to the development of real-time systems.
 These are outlined in further detail in this section. 
@@ -107,3 +113,100 @@ In addition, D provides a Java style model for Exceptions and Errors, enabling
 a much simpler error handling system than the C style ERRNOs 
 \cite{ddili-book}. 
 %TODO - Compare with C++ exceptions.
+
+
+
+
+
+
+\section{Features of a Real-time System}
+% Problem Description / Analysis of components that are needed in order to 
+% constitute a Real-time system. 
+
+
+In order to supply support for programming real-time systems, we must first 
+consider the characteristics of a real-time system. This section aims to outline
+any necessary primitives for a programming language, explaining why they are 
+necessary. 
+
+\subsection{Threads and Interprocess Communication}
+Real-time systems are inherently parallel. They are concerned heavily with 
+the notion of timing and scheduling many different components across a system. 
+The ability to schedule these components in isolation through the medium 
+of threads therefore provides a valuable tool in reducing the complexity in 
+constructing the system and additionally increases the readability of the 
+final system 
+\cite[p132]{real-time-systems}. It is therefore a requirement of a real-time systems 
+programming language to provide support for an abstraction into isolating 
+concurrent events and their control into separate entities. 
+In Java and 
+C with POSIX threads, this concurrency mechanism is provided by threads or processes. 
+In Ada this mechanism is provided by Tasks 
+\cite[p251]{gehani1989concurrent}.
+
+\subsection{Priority Scheduling}
+In addition to the creation and isolation of processes through the use of 
+threads, it is a requirement of real-time systems 
+that control over their scheduling is provided. 
+While many algorithms exist that enable real-time systems to be scheduled, such 
+as earliest deadline first (EDF), priority based scheduling approaches are the 
+most commonly used
+\cite{real-time-systems}. 
+It is therefore a requirement of the programming language to provide support 
+for a priority based scheduling algorithm or allowing the scheduler to be 
+selected. Additional complication is introduced when we consider if scheduling 
+is the domain of the programming language or of the operating system:
+threads may be either language controlled or operating system controlled. 
+If threads are language controlled, then it is necessary to provide 
+language functionality enabling threads to have priorities and scheduling threads 
+based on their priority.
+If the threads are operating system controlled, then the language needs 
+support for interacting with the underlying operating system in order to 
+adjust the scheduler. 
+
+\subsection{Bounded Priority Inversion}
+When using shared resources in a priority based system it is possible for 
+a high priority task to become blocked from making progress due to a low
+priority task holding a resource. Additionally, the low priority task may be 
+preempted and prevented from making progress. In this instance, the high priority task is 
+effectively running at the lowest priority of the system: it has to wait for all other 
+tasks to complete before it can progress. This is a well studied phenomenon known 
+as priority inversion 
+\cite{real-time-systems}. 
+In order to provide a reliable response in a priority based system, it is 
+therefore necessary that priority inversion is bounded.
+Two main protocols exist that solve this problem: the priority inheritance protocol 
+and the priority ceiling protocol. Each protocol has its own respective 
+strengths and weaknesses, but enable reliable behaviour of the system 
+\cite{mall2009real}.
+It is therefore a requirement of a real-time systems programming language 
+that the underlying data sharing system is not subject to unbounded priority 
+inversion: the ability to specify the use of either the priority inheritance 
+protocol or the priority ceiling protocol is a necessary feature.  
+
+\subsection{Monotonic Clocks and Absolute Sleep}
+%TODO - fix this section
+In general programming, when a worker thread has no computation to be 
+performing, a call is made to a sleep method. This will cause the thread
+to hand over any computation resources for a defined period of time. In a 
+real-time system however, we often require fine-grained control of exactly
+when a thread will awaken. The typical approach involving a relative sleep 
+time can be imprecise due to preemption. In order to achieve a predictable 
+sleep function, as required in a real time system, it is therefore necessary 
+to have the ability to wait until an absolute time. Further complication 
+occurs with the definition of time: many implementations of time are subject 
+to phenomena such as daylights savings time or leap seconds. 
+In order to counteract these, a Monotonic clock must be used. This ticks at a 
+predefined constant rate, giving predictable behaviour. 
+
+\subsection{Asynchronous Transfer of Control}
+Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
+implementation in many languages, yet it is deemed a useful, if not necessary 
+feature of a real-time system 
+\cite{atc-article}. ATC is the transfer 
+of control within a thread, that has been triggered by an external event or thread, 
+its effect may be instantaneous, or deferred until a safe section has been reached. 
+In addition, sections of code susceptible to ATC may be nested, causing a 
+complex problem in terms of semantics, methodology, and implementation. 
+However, the use of ATC extends to many purposes such as low latency responses to events, timing 
+out a thread of computation, or terminating threads, making it an invaluable feature. 

@@ -12,8 +12,12 @@ clean:
 view: 
 	google-chrome-stable writeup.pdf
 
-
 spell: 
 	ispell *.tex
 
+cb: 
+	cp writeup.pdf ~/Downloads/writeup.pdf
+
+count: 
+	texcount *.tex
 
