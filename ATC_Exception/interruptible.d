@@ -361,7 +361,6 @@ unittest
 }
 
 
-
 unittest
 {
     /** 
@@ -392,12 +391,14 @@ unittest
     {
         cthr = new Interruptible(&myThirdInterruptibleFunction);
         cthr.start();
+        assert(false);
     }
 
     void interruptibleFunction()
     {
         bthr = new Interruptible(&mySecondInterruptibleFunction); 
         bthr.start(); 
+        assert(false);
     }
 
     void thread_to_spawn_interruptible()
@@ -410,7 +411,7 @@ unittest
     enableInterruptibleSections;
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
-    Thread.sleep(300.msecs); 
+    Thread.sleep(100.msecs); 
     auto time_a = MonoTime.currTime + 0.seconds;
     athr.interrupt();
     mythread.join;
@@ -487,9 +488,9 @@ unittest
 
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
-    Thread.sleep(300.msecs); 
+    Thread.sleep(100.msecs); 
     b.interrupt();
-    Thread.sleep(300.msecs); 
+    Thread.sleep(100.msecs); 
     a.interrupt();
     mythread.join;
     assert(myArray.length == 4);

@@ -192,14 +192,12 @@ pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
 /* debug function to print the cleanup_array */
 private void output_array()
 {
-    import std.stdio; 
     int[] x; 
     foreach(void* elem; cleanup_array)
     {
         pthread_cleanup* elem2 = cast(pthread_cleanup*)elem;
         x ~= cast(int)elem2.buffer.__arg;
     }
-    writeln("current array: ",x, "\n");
 }
 
 void remove(pthread_cleanup* cleanup)
@@ -249,7 +247,7 @@ unittest
     {
         while(true) {
             x = 1;
-            Thread.sleep(200.msecs);
+            Thread.sleep(50.msecs);
         }
     }
 
@@ -267,7 +265,7 @@ unittest
     mythread.join;
     auto time_b = MonoTime.currTime + 0.seconds; 
     assert(x == 1);
-    assert(time_b <= time_a + 1.seconds);
+    assert(time_b <= time_a + 200.msecs);
 }
 
 
@@ -278,8 +276,6 @@ unittest
       correctly passed through to the Interruptible section
      */
     import core.thread;
-
-
     import core.sys.posix.sched : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
 
     void setScheduler(int scheduler_type, int scheduler_priority)
@@ -300,7 +296,7 @@ unittest
     {
         while(true) {
             x = Thread.getThis.priority;
-            Thread.sleep(200.msecs);
+            Thread.sleep(50.msecs);
         }
     }
 
@@ -315,13 +311,13 @@ unittest
     setScheduler(SCHED_FIFO, 50);
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
-    Thread.sleep(1.seconds);
+    Thread.sleep(100.msecs);
     auto time_a = MonoTime.currTime + 0.seconds;
     a.interrupt();
     mythread.join;
     auto time_b = MonoTime.currTime + 0.seconds; 
     assert(x == prio);
-    assert(time_b <= time_a + 1.seconds);
+    assert(time_b <= time_a + 100.msecs);
 }
 
 
@@ -347,7 +343,7 @@ unittest
         while(true)
         {
             xval = endValue; 
-            Thread.sleep(200.msecs);
+            Thread.sleep(50.msecs);
         }
     }
 
@@ -355,23 +351,14 @@ unittest
     {
         cthr = new Interruptible(&myThirdInterruptibleFunction);
         cthr.start();
-        while(true)
-        {
-            xval = 10;
-            Thread.sleep(200.msecs); 
-        }
+        assert(false);
     }
 
     void interruptibleFunction()
     {
         bthr = new Interruptible(&mySecondInterruptibleFunction); 
         bthr.start(); 
-
-        while(true)
-        {
-            xval = 20;
-            Thread.sleep(200.msecs); 
-        }
+        assert(false);
     }
 
     void thread_to_spawn_interruptible()
@@ -383,13 +370,13 @@ unittest
 
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
-    Thread.sleep(1.seconds); 
+    Thread.sleep(100.msecs); 
     auto time_a = MonoTime.currTime + 0.seconds;
     athr.interrupt();
     mythread.join;
     auto time_b = MonoTime.currTime + 0.seconds;
     assert(xval == endValue);
-    assert(time_b <= time_a + 1.seconds);
+    assert(time_b <= time_a + 100.msecs);
 }
 
 
@@ -399,6 +386,7 @@ unittest
      * cleanup routines */
 
     import core.thread;
+    import core.sync.mutex;
 
     __gshared Interruptible a;
     __gshared Interruptible b;
@@ -428,7 +416,7 @@ unittest
         addCleanup(&thread_cleanup, cast(void*)4);
         while(true)
         {
-            Thread.sleep(100.msecs);
+            Thread.sleep(50.msecs);
         }
     }
 
@@ -437,10 +425,6 @@ unittest
         addCleanup(&thread_cleanup, cast(void*)2);
         c = new Interruptible(&myThirdInterruptibleFunction);
         c.start();
-        while(true)
-        {
-            Thread.sleep(100.msecs); 
-        }
     }
 
     void interruptibleFunction()
@@ -451,7 +435,7 @@ unittest
 
         while(true)
         {
-            Thread.sleep(100.msecs); 
+            Thread.sleep(50.msecs); 
         }
     }
 
@@ -464,11 +448,165 @@ unittest
 
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
-    Thread.sleep(1.seconds); 
+    Thread.sleep(100.msecs); 
     b.interrupt();
-    Thread.sleep(1.seconds); 
+    Thread.sleep(100.msecs); 
     a.interrupt();
     mythread.join;
+    Thread.sleep(100.msecs); // give time for routines to run
     assert(myArray.length == 4);
-    assert(myArray == [4,3,2,1]);
+    //assert(myArray == [4,3,2,1]); // not able to sort the ordering in this
+    //because it is across different threads.
+}
+
+
+unittest 
+{
+    /** Checking the ability to testCancel a function inside an infinite loop, 
+      and the ability to defer interrupts */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared int x;
+    int maxVal = 2_000_000;
+
+    void interruptThis()
+    {
+        Thread.getThis.priority = 10;
+        Thread.sleep(50.msecs);
+        a.interrupt();
+    }
+
+    void interruptibleFunction() 
+    {
+        getInt.deferred = true; 
+        for(int i = 0; i < maxVal; i++)
+        {
+            Thread.sleep(2.msecs);
+            x = i;
+            i = i*x;
+            getInt.testCancel;
+        }
+    }
+
+    Thread.getThis.priority = 5;
+    new Thread(&interruptThis).start();
+    a = new Interruptible(&interruptibleFunction); 
+    a.start();
+    assert(x != maxVal);
+}
+
+unittest
+{
+    /* checking the ability to cancel a nested interruptible section, even if
+     * the nested interruptible section is set to defer interrupts. - note,
+     * with executeSafely, it is possible to defer the inner cancel too.
+     */
+    import core.thread;
+
+    __gshared Interruptible a;
+    __gshared int x; 
+    int maxVal = 2_000_000;
+
+    void interruptThis()
+    {
+        Thread.sleep(50.msecs);
+        a.interrupt();
+    }
+
+    void interruptibleFunction() 
+    {
+
+        getInt.deferred = true; 
+        for(int i = 0; i < maxVal; i++)
+        {
+            void update() 
+            {
+                Thread.sleep(10.msecs);
+                x = i;
+                i = i * 7;
+            }
+            getInt.executeSafely(&update);
+        }
+
+    }
+
+    void outerInterruptible() 
+    {
+        //getInt.deferred = true;
+        Interruptible b;
+
+        void initInterruptible() 
+        {
+            b = new Interruptible(&interruptibleFunction);
+        }
+        getInt.executeSafely(&initInterruptible);
+        b.start();
+    }
+
+    new Thread(&interruptThis).start();
+    a = new Interruptible(&outerInterruptible);
+    a.start();
+    assert(x != maxVal);
+}
+
+
+
+unittest
+{
+    /** Check that deferrable sections cancel when we stop being deferred
+     */
+    import core.thread;
+    __gshared Interruptible myIntr;
+    __gshared bool boolValue = false;
+
+    void intSection()
+    {
+        getInt.deferred = true;
+        Thread.sleep(2.seconds);    
+        boolValue = true;
+        getInt.deferred = false;
+        assert(false); // should never get here
+    }
+
+    void intThis()
+    {
+        Thread.sleep(50.msecs);
+        myIntr.interrupt(); // should get deferred
+    }
+
+    //Thread.sleep(50.msecs);
+    myIntr = new Interruptible(&intSection);
+    new Thread(&intThis).start();
+    myIntr.start();
+    assert(boolValue);
+}
+
+
+unittest
+{
+    /** Unittest to determine testCancel works properly when a cancel has 
+      been deferred. */
+
+    import core.thread;
+
+    __gshared Interruptible a;
+
+    void intThis()
+    {
+        Thread.sleep(10.msecs); 
+        a.interrupt();
+    }
+
+    void intSection()
+    {
+        getInt.deferred = true; 
+        Thread.sleep(50.msecs);
+        getInt.testCancel;
+    }
+
+    a = new Interruptible(&intSection); 
+    new Thread(&intThis).start();
+    a.start();
 }
