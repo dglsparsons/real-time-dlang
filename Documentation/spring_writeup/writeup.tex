@@ -8,14 +8,22 @@
 %\usepackage[nottoc,numbib]{tocbibind}
 \usepackage{listings} % for code examples
 \usepackage[margin=1.2in]{geometry}
+%\usepackage{pdfpages}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+
+% Sorting out the headers 
 \usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhf{}
+\setlength{\headheight}{15.2pt}
+\fancyhead[LE,RO]{}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,CE]{Chapter \thechapter}
+\fancyfoot[CO,RE]{Douglas Parsons}
 \setlength{\headheight}{15.2pt}
 \pagestyle{fancyplain}
-%\fancyfoot[LE,RO]{\thepage}
-%\fancyfoot[LO,CE]{Chapter \thechapter}
-%\fancyfoot[CO,RE]{Douglas Parsons}
-%\usepackage{pdfpages}
+
 
 % Settings for code examples
 \usepackage{color}
@@ -30,11 +38,35 @@ stringstyle=\color{redstrings},
 basicstyle=\ttfamily
 }
 
-%\title{Real Time Programming in the 
-%            D Programming Language}
-%\author{Douglas Parsons}
-%\date{\today}
+% Rewritten the Chapter settings, in order to remove the stupid 50Space 
+% Indent from the top of the page. 
+\makeatletter
+\def\@makechapterhead#1{%
+    \vspace*{10\p@}% %%% removed!
+    {\parindent \z@ \raggedright \normalfont
+        \ifnum \c@secnumdepth >\m@ne
+        \huge\bfseries \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 20\p@
+        \fi
+        \interlinepenalty\@M
+        \Huge \bfseries #1\par\nobreak
+        \vskip 40\p@
+}}
+\def\@makeschapterhead#1{%
+    \vspace*{10\p@}%
+    %%% removed!
+    {\parindent \z@ \raggedright
+        \normalfont
+        \interlinepenalty\@M
+        \Huge \bfseries  #1\par\nobreak
+        \vskip 40\p@
+}}
+\makeatother
 
+% Setting a bigskip noindent by default for paragraphs
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0pt}
 
 \begin{document}
 %\maketitle

@@ -1,8 +1,8 @@
 #!/usr/bin/rdmd
 
 import std.stdio,
-       core.thread,
-       RealTime;
+       core.thread, 
+       rt;
 
 __gshared MonoTime start_time; 
 

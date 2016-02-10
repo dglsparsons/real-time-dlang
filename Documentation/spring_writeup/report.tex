@@ -1,17 +1,21 @@
 
-\documentclass[a4paper, 11pt]{article}
+\documentclass[a4paper, 11pt]{report}
 \usepackage[utf8]{inputenc}
 %\usepackage[pdftex]{graphicx}
 %\usepackage[nottoc,numbib]{tocbibind}
 \usepackage{listings} % for code examples
 \usepackage[margin=1.2in]{geometry}
-%\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+% Sorting out the headers 
 \usepackage{fancyhdr}
-\setlength{\headheight}{15.2pt}
 \pagestyle{fancyplain}
-%\fancyfoot[LE,RO]{\thepage}
-%\fancyfoot[LO,CE]{Chapter \thechapter}
-%\fancyfoot[CO,RE]{Douglas Parsons}
+\fancyhf{}
+\setlength{\headheight}{15.2pt}
+\fancyhead[LE,RO]{}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,CE]{Chapter \thechapter}
+\fancyfoot[CO,RE]{Douglas Parsons}
 %\usepackage{pdfpages}
 
 % Settings for code examples
@@ -20,12 +24,39 @@
 \definecolor{greencomments}{rgb}{0,0.5,0}
 \definecolor{redstrings}{rgb}{0.9,0,0}
 \lstset{language=C++,
-showstringspaces=false,
-commentstyle=\color{greencomments},
-keywordstyle=\color{bluekeywords}\bfseries,
-stringstyle=\color{redstrings},
-basicstyle=\ttfamily
+    showstringspaces=false,
+    commentstyle=\color{greencomments},
+    keywordstyle=\color{bluekeywords}\bfseries,
+    stringstyle=\color{redstrings},
+    basicstyle=\ttfamily
 }
+
+% Rewritten the Chapter settings, in order to remove the stupid 50Space 
+% Indent from the top of the page. 
+\makeatletter
+\def\@makechapterhead#1{%
+    \vspace*{10\p@}% %%% removed!
+    {\parindent \z@ \raggedright \normalfont
+        \ifnum \c@secnumdepth >\m@ne
+        \huge\bfseries \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 20\p@
+        \fi
+        \interlinepenalty\@M
+        \Huge \bfseries #1\par\nobreak
+        \vskip 40\p@
+}}
+\def\@makeschapterhead#1{%
+    \vspace*{10\p@}%
+    %%%
+    removed!
+    {\parindent \z@ \raggedright
+        \normalfont
+        \interlinepenalty\@M
+        \Huge \bfseries  #1\par\nobreak
+        \vskip 40\p@
+}}
+\makeatother
 
 \title{Real Time Programming in the D Programming Language}
 \author{Douglas Parsons}
