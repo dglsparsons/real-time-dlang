@@ -7,18 +7,18 @@ Real-time systems are an area of increasing relevance and interest in the field
 of Computer Science. Generally stated, a real-time system is a type of information 
 processing system in which a response to an externally generated input stimuli 
 has to be generated within a finite and specified time period. Correctness of the 
-system can depend not only the result, but also the time that it was delivered. 
-Such systems are commonplace, and can be found in a wide range of 
-situations, such as manufacturing processes, automotive vehicles and embedded 
-sensors. 
+system may depend not only the result, but also the time that it was delivered. 
+Such systems are commonplace and are found in a wide range of 
+situations such as manufacturing processes, automotive vehicles and embedded 
+sensoring.
 
 The development of real-time systems typically involves the use of a programming 
 language providing explicit support for real-time systems. 
-This support involves the provision of protocols that allow the behaviour of the 
-system to be guaranteed, such as asynchronous transfer of control or bounded priority inversion. 
-My project entails the provision of such support to a new programming language
-without existing support for the development of real-time systems: 
-the D programming language. 
+This support involves the provision of protocols that allow the system to 
+behave in a more reliable manner, such as asynchronous transfer of control or 
+bounded priority inversion. 
+My project entails the provision of such support to a new programming language: 
+D. D currently has very limited support for the development of real-time systems. 
 
 Several programming languages already exist that provide support for the 
 development of real-time systems. The most notable of which are 
@@ -26,23 +26,22 @@ real-time Java, Ada and C with POSIX Threads. These languages are well researche
 with a rich field of study comparing their approaches and behaviour. 
 However, comparatively little research has gone into providing new programming 
 languages with support for the development of real-time systems. My project 
-targets this omission by extending real-time support to the D programming language. 
+targets this omission by extending real-time support a previously unsupported 
+language.
 
 By examining existing programming languages and research on real-time systems, a core set 
 of functionality for any real-time system supporting language was defined. 
 In some aspects, such as concurrent programming, support was already provided in D. 
-However, for the majority of real-time programming language features 
-additional support required providing. Different approaches for the implementation 
-of these features was considered, and then the functionality was implemented into 
+However, for the majority of real-time programming language features,
+additional support was required. Different approaches for the implementation 
+of these features was considered, and functionality was implemented into 
 a library. With regards to asynchronous transfer of control, there was no clear 
-best approach for implementation. As a result, two alternative approaches have 
-been implemented. 
+approach for implementation. As a result, two alternative approaches have 
+been considered, profiled and implemented. A comparison between the two approaches 
+has shown that a POSIX signal based approach leads to a higher performance 
+solution. 
 
-A comparison between signal, and thread cancellation based asynchronous transfer 
-of control has been undertaken. This shows, as expected, that the signal based 
-model provides a higher performance solution, at the cost of reduced system support. 
-
-In addition, a series of experiments compares behaviour of a D program written 
+Furthermore, a series of experiments compares behaviour of a D program written 
 using the added features with an equivalent real-time Ada program. This found 
 that\ldots. 
 
