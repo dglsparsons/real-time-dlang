@@ -107,6 +107,7 @@ void delayUntil(MonoTime timeIn)
     if (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, 
                                     &sleep_time, null)) {
         throw new Exception("Failed to sleep as expected!"); 
+    }
 }
 \end{lstlisting}
 This allows a simplistic use from a real-time application. An absolute sleep can 

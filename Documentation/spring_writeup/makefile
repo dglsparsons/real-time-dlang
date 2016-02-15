@@ -11,7 +11,7 @@ clean:
 	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf
 
 view: 
-	google-chrome-stable writeup.pdf
+	okular writeup.pdf&
 
 spell: 
 	ispell *.tex
