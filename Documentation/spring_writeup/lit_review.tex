@@ -141,34 +141,36 @@ synchronising these systems \cite{37958}. However, the crucial aspect is the
 access of a monotonic clock: a clock that ticks at a constant rate, and does not 
 vary the way a calendar clock does. Baker and Pazy in their 1991 paper, \emph{
 Real-time Features for Ada 9X} cite the need for high precision, non-changing 
-clocks as a language feature \cite{160371}.
-
-
-% Talk about implementations of them? 
-In general programming, when a worker thread has no computation to be 
-performing, a call is made to a sleep method. This will cause the thread
-to hand over any computation resources for a defined period of time. In a 
-real-time system however, we often require fine-grained control of exactly
-when a thread will awaken. The typical approach involving a relative sleep 
-time can be imprecise due to preemption. In order to achieve a predictable 
-sleep function, as required in a real time system, it is therefore necessary 
-to have the ability to wait until an absolute time. Further complication 
-occurs with the definition of time: many implementations of time are subject 
-to phenomena such as daylights savings time or leap seconds. 
-In order to counteract these, a Monotonic clock must be used. This ticks at a 
-predefined constant rate, giving predictable behaviour. 
+clocks as a language feature \cite{160371}. 
+\par\bigskip\noindent
+It is therefore clear that it is a requirement of a real-time systems programming 
+language to provide access to monotonic clocks, so that high precision timing 
+requirements can be met. 
+\par\bigskip\noindent
+Additionally, the ability to awaken threads at times stated by a clock is a 
+requirement of real-time systems. A typical \texttt{sleep} function will cause 
+the calling thread to hand over any computation resources for a defined period of time. 
+In a real-time system, the timing that the thread awakens must be precise. 
+However, the typical approach involving a relative sleep time can be imprecise 
+due to preemption \cite{real-time-systems}. In order to achieve a predictable 
+sleep function, as required in a real-time system, it is therefore necessary 
+to have the ability to wait until an absolute time.  
 
 \subsection{Asynchronous Transfer of Control}
+% Introduction to ATC 
 Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
 implementation in many languages, yet it is deemed a useful, if not necessary 
 feature of a real-time system 
-\cite{atc-article}. ATC is the transfer 
+\cite{atc-article}. 
+ATC is the transfer 
 of control within a thread, that has been triggered by an external event or thread, 
 its effect may be instantaneous, or deferred until a safe section has been reached. 
 In addition, sections of code susceptible to ATC may be nested, causing a 
 complex problem in terms of semantics, methodology, and implementation. 
 However, the use of ATC extends to many purposes such as low latency responses to events, timing 
 out a thread of computation, or terminating threads, making it an invaluable feature. 
+% Have 2-3 articles on the different approaches to ATC within real-time systems
+% programming languages
 
 \section{Abstractions}
 \subsection{Periodic Tasks}
