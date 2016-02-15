@@ -5,6 +5,7 @@ all:
 	bibtex writeup.aux
 	pdflatex writeup.tex
 	pdflatex writeup.tex
+	pdflatex writeup.tex
 
 clean: 
 	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf
