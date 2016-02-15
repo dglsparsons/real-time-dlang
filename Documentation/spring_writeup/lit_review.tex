@@ -131,7 +131,20 @@ inversion: the ability to specify the use of either the priority inheritance
 protocol or the priority ceiling protocol is a necessary feature.  
 
 \subsection{Monotonic Clocks and Absolute Sleep}
-%TODO - fix this section
+% Talk about studies of clocks, and drift for real-time systems. 
+Up to this point, it has been assumed that the real-time systems are able to 
+interact with precise timing requirements down to a very fine degree of accuracy.
+In practice, this is not always the case, in particular with the use of 
+distributed systems. There is a large field of research surrounding the 
+synchronisation of multiple devices, with algorithms such as Christian's for 
+synchronising these systems \cite{37958}. However, the crucial aspect is the 
+access of a monotonic clock: a clock that ticks at a constant rate, and does not 
+vary the way a calendar clock does. Baker and Pazy in their 1991 paper, \emph{
+Real-time Features for Ada 9X} cite the need for high precision, non-changing 
+clocks as a language feature \cite{160371}.
+
+
+% Talk about implementations of them? 
 In general programming, when a worker thread has no computation to be 
 performing, a call is made to a sleep method. This will cause the thread
 to hand over any computation resources for a defined period of time. In a 
