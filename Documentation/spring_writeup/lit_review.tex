@@ -151,29 +151,67 @@ Additionally, the ability to awaken threads at times stated by a clock is a
 requirement of real-time systems. A typical \texttt{sleep} function will cause 
 the calling thread to hand over any computation resources for a defined period of time. 
 In a real-time system, the timing that the thread awakens must be precise. 
-However, the typical approach involving a relative sleep time can be imprecise 
-due to preemption \cite{real-time-systems}. In order to achieve a predictable 
-sleep function, as required in a real-time system, it is therefore necessary 
-to have the ability to wait until an absolute time.  
+The typical approach involves the use of a relative sleep time, and therefore can 
+be imprecise due to preemption \cite{real-time-systems}: calculating the sleep time
+and then being preempted before the call to \textt{sleep} will lead to incorrect 
+timings. Therefore, in order to achieve a predictable 
+sleep function as required in a real-time system, it is necessary 
+to have the ability to wait until an absolute time using a high precision 
+system clock, such as a monotonic clock.
 
 \subsection{Asynchronous Transfer of Control}
 % Introduction to ATC 
 Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
 implementation in many languages, yet it is deemed a useful, if not necessary 
-feature of a real-time system 
-\cite{atc-article}. 
+feature of a real-time system \cite{atc-article}. 
 ATC is the transfer 
-of control within a thread, that has been triggered by an external event or thread, 
-its effect may be instantaneous, or deferred until a safe section has been reached. 
-In addition, sections of code susceptible to ATC may be nested, causing a 
+of control within a thread, that has been triggered by an external event or thread. 
+Its effect may be instantaneous, or deferred until a safe section in the code has 
+been reached. In addition, sections of code susceptible to ATC may be nested, causing a 
 complex problem in terms of semantics, methodology, and implementation. 
 However, the use of ATC extends to many purposes such as low latency responses to events, timing 
 out a thread of computation, or terminating threads, making it an invaluable feature. 
 % Have 2-3 articles on the different approaches to ATC within real-time systems
 % programming languages
+The various methods of implementing Asynchronous Transfer of Control have been well 
+studied, with implementations existing in both Java and Ada. Brosgol and Wellings 
+detail the differences between the Ada and Real-time Java implementations, with 
+Java favoring a class based approach to the protocol, where Ada instead provides 
+an explicit language syntax \cite{atc-article}. Both solutions favor safety of 
+the system, and do not necessarily provide immediate cancellation. In \cite{Brosgol:2002:ATC}, 
+Brosgol details that there are two alternative implementations for ATC. The first 
+concept is aborting a thread. This contains a statement that will abort a thread, 
+and there is a notion of an abort-deferred region. This method avoids complex rules 
+that come with ATC, and avoids more complex rules such as propagation. However, 
+it has an additional overhead of thread management, and thread dependencies. 
+The second approach discussed is an exception based model. In this, ATC is 
+captured by allowing a thread to ``arbitrarily throw an exception at a target thread``.
+This method avoids the overhead of additional thread creation, however, it requires 
+additional safety to prevent exceptions from thrown when the target thread is not 
+ready to handle it. 
+\par\bigskip\noindent
+It is therefore possible to determine that Asynchronous Transfer of Control is a 
+fundamental notion for a real-time system. The ability to time out a computation, 
+or terminate a thread during processing is very useful. However, the implementation 
+of this principal requires careful consideration. In order to maintain a safe 
+system, Threads may not be terminated at any moment in time, they must have the 
+ability to defer interrupts when desired. Additionally, there are two main methods 
+of implementation, either a thread cancellation based model, or an asynchronous 
+exception model. While the thread model has additional overhead due to the creation 
+of new threads, the exception based approach has additional complexity requiring 
+the ability to safely defer throwing the exception. 
 
 \section{Abstractions}
+
+Combined with the fundamental ability for a programming language to provide support 
+for real-time systems programming principals, the language must provide abstractions 
+for many principles in order to avoid unnecessary overcomplication, and hence to 
+ease development.
+
 \subsection{Periodic Tasks}
+Ada and Real-time Java provide mechanisms for easily creating a periodic task. 
+In Java,
+
 \subsection{Sporadic, Aperiodic Tasks}
 \subsection{Jitter}
 
