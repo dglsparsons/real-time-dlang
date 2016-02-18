@@ -153,7 +153,7 @@ the calling thread to hand over any computation resources for a defined period o
 In a real-time system, the timing that the thread awakens must be precise. 
 The typical approach involves the use of a relative sleep time, and therefore can 
 be imprecise due to preemption \cite{real-time-systems}: calculating the sleep time
-and then being preempted before the call to \textt{sleep} will lead to incorrect 
+and then being preempted before the call to \texttt{sleep} will lead to incorrect 
 timings. Therefore, in order to achieve a predictable 
 sleep function as required in a real-time system, it is necessary 
 to have the ability to wait until an absolute time using a high precision 
@@ -202,26 +202,72 @@ of new threads, the exception based approach has additional complexity requiring
 the ability to safely defer throwing the exception. 
 
 \section{Abstractions}
+% Maybe this section should be scrapped?!
 
 Combined with the fundamental ability for a programming language to provide support 
-for real-time systems programming principals, the language must provide abstractions 
+for real-time systems programming principles, the language must provide abstractions 
 for many principles in order to avoid unnecessary overcomplication, and hence to 
 ease development.
 
 \subsection{Periodic Tasks}
-Ada and Real-time Java provide mechanisms for easily creating a periodic task. 
-In Java,
+While Ada does not provide a mechanic for abstracting periodic tasks, and relies 
+instead of the manual construction, real-time Java directly provides mechanisms 
+for easily creating a periodic task through the \texttt{PeriodicParameters} class 
+\cite{real-time-systems}. In \cite{periodic-java-thread}, Bruno introduces the 
+concept of a periodic task, and explains how it might be implemented using the 
+Java defined structures. 
+Furthermore, Ravenscar-Java implements a \texttt{PeriodicThread} class. Using 
+this class, the run method is periodically invoked, enabling a periodic task to 
+be executed \cite{ravenscar-java}.
+Similarly, in \cite{burns1998concurrency}, Burns and Wellings introduce how a 
+periodic task can be manually configured in Ada through the use 
+of the \texttt{delay\textunderscore{}until} statement. 
+Furthermore, they demonstrate how separation of concern can be achieved through 
+extracting timing information out of the body of the periodic task. 
+\par\bigskip\noindent
+It is therefore possible to see that both Ada and Real-Time Java provide a mechanism for 
+the programming of periodic tasks. Java achieves this through the abstraction of 
+the \texttt{PeriodicParameters} and \texttt{PeriodicThread} classes. 
+This allows the programmer to easily and effectively adjust the parameters as needed. 
+Through a more low-level approach, Ada instead provides a \texttt{delay\textunderscore{}until}
+statement. This provides the basic building block for a periodic task. Furthermore, 
+separation of concerns can be achieved using this approach by creating an alternative 
+control structure that manages any timing requirements.
 
-\subsection{Sporadic, Aperiodic Tasks}
-\subsection{Jitter}
+\subsection{Sporadic Tasks}
+% Todo- add in some detail about 
+In addition to providing tools that support the development of periodic tasks, 
+both real-time Java and Ada have implementations that permit the 
+programming of sporadic tasks. 
+Sporadic tasks are defined as a type of task that may be released at any moment in 
+time, and is typically event triggered. However, there is a limit on the rate at 
+which a sporadic task may occur. This is typically specified through a minimum 
+time between releases \cite{11111101}. 
+Using the Ravenscar-Java profile described in \cite{ravenscar-java}, a predefined 
+class, \texttt{SporadicEventHandler} is detailed. Schoeberl details how this may 
+be used to achieve an event-triggered computation in an embedded system using 
+real-time Java with the Ravenscar-Java profile \cite{1300334}. 
+\par\bigskip\noindent
+Ada takes a similar approach as for periodic tasks. Burns and Wellings detail the 
+potential implementation in \emph{Real-Time Systems and Their Programming Languages}
+\cite[p341]{real-time-systems}. 
+This approach uses a protected object in order to handle an interrupt that releases a 
+task.
+As a result, it is clear to see that both Ada and Real-Time Java have implementations 
+allowing a sporadic task to be programmed. 
 
 \section{Language Design}
-\subsection{Interprocess Communication and Synchronisation}
-\subsection{Atomic actions}
-\subsection{Exception and Error Handling}
-\subsection{Low Level Capabilities}
+In addition to real-time capabilities and abstractions, programming languages have 
+been a wide topic of study in the field of Computer Science. With significant 
+research going into providing capable, efficient and yet readable programming 
+languages. While this project does not aim to compare the merits of programming 
+language research, the feature and literature surrounding aspects of programming 
+languages that are of interest for this project have been highlighted. 
 
-\section{Alternative Languages}
-\subsection{Real-Time Java}
-\subsection{Ada}
-\subsection{C with Real-Time POSIX}
+\subsection{Interprocess Communication and Synchronisation} % 200 words
+
+
+\subsection{Atomic actions} % 200 words
+\subsection{Exception and Error Handling} % 200 words
+\subsection{Low Level Capabilities} % 200 words
+
