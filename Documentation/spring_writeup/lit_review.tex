@@ -5,277 +5,361 @@
 % One or more review chapters, describing the research I did at the beginning
 % of the project period. 
 
-%Demonstrate that they have acquired specialisation in a particular part of the subject area, 
-%including enhanced or new technical skills that build on taught theory. 
-%Examined in the overall project report. 
+%Demonstrate that they have acquired specialisation in a particular part of the
+%subject area, including enhanced or new technical skills that build on taught
+%theory.  Examined in the overall project report. 
 
-In this chapter, the literature surrounding real-time systems shall be reviewed. 
-Each of the various programming language constructs that are to be provided in 
-order to program a real-time system will be examined. 
+In this chapter, the literature surrounding real-time systems shall be
+reviewed.  Each of the various programming language constructs that are to be
+provided in order to program a real-time system will be examined. 
 
 \section{Features of a Real-Time System}
 
-A significant amount of research has gone into the addition of features to 
-real-time languages. Through the use of these, a multi-processor system can be 
-programmed in such a way that all tasks in the system will operate within a finite 
-and predictable timespan. Furthermore, these allow precise timings to be used, 
-ensuring that deadlines within a system can be reliably met. 
-Burns and Wellings 
-provide a detailed overview of development for real-time systems in their book, 
-\emph{Real Time Systems and Programming Languages} \cite{real-time-systems}. 
-This provides a detailed and complete set of information, informing the reader 
-of the base requirements of a real-time system, the implementation of 
-real-time systems in various programming languages, along with any theory, 
-such as scheduling theory, surrounding the field. In providing a detailed overview 
-of the real-time programming concepts required in a programming language, this 
-book provides a detailed overview of what implementation is required in my project.
+A significant amount of research has gone into the addition of features to
+real-time languages. Through the use of these, a multi-processor system can be
+programmed in such a way that all tasks in the system will operate within a
+finite and predictable timespan. Furthermore, these allow precise timings to be
+used, ensuring that deadlines within a system can be reliably met.  Burns and
+Wellings provide a detailed overview of development for real-time systems in
+their book, \emph{Real Time Systems and Programming Languages}
+\cite{real-time-systems}.  This provides a detailed and complete set of
+information, informing the reader of the base requirements of a real-time
+system, the implementation of real-time systems in various programming
+languages, along with any theory, such as scheduling theory, surrounding the
+field. In providing a detailed overview of the real-time programming concepts
+required in a programming language, this book provides a detailed overview of
+what implementation is required in my project.
 
 \subsection{Concurrent Programming}
 % Dijkstra
-Ever since Dijkstra introduced the concepts of mutual exclusion, 
-processes, semaphores, deadlock, preconditions and guards in his 1968 seminal paper, 
-\emph{Cooperating Sequential Processes}, 
-concurrent programming has seen an explosion in popularity 
-\cite{Dijkstra}. 
-The aspects of synchronisation and concurrency have become fundamental issues 
-of computing science, with a wide variety of research exploring, and attempting to 
-maximise the field's potential, as well as providing mechanisms that aid the development 
-of concurrent programs \cite{Sutter:2005:SCR:1095408.1095421,Hansen:1972:SM:361454.361473}. 
-The most notable example of which is perhaps the introduction of monitors by Tony Hoare, 
-these enable a simplification of logic and are used in the introduction of many abstractions 
-such as Ada's protected objects \cite{Hoare:1974:MOS:355620.361161}. 
+Ever since Dijkstra introduced the concepts of mutual exclusion, processes,
+semaphores, deadlock, preconditions and guards in his 1968 seminal paper,
+\emph{Cooperating Sequential Processes}, concurrent programming has seen an
+explosion in popularity \cite{Dijkstra}.  The aspects of synchronisation and
+concurrency have become fundamental issues of computing science, with a wide
+variety of research exploring, and attempting to maximise the field's
+potential, as well as providing mechanisms that aid the development of
+concurrent programs
+\cite{Sutter:2005:SCR:1095408.1095421,Hansen:1972:SM:361454.361473}.  The most
+notable example of which is perhaps the introduction of monitors by Tony Hoare,
+these enable a simplification of logic and are used in the introduction of many
+abstractions such as Ada's protected objects
+\cite{Hoare:1974:MOS:355620.361161}.  
 \par\bigskip\noindent
 % Then apply the concurrent aspect of this to a real-time system! 
-Real-time systems benefit greatly from parallelism. Inherently, they are concerned with 
-the notion of timing and scheduling many different components across a system. 
-The ability to schedule these components concurrently and in isolation 
-therefore provides a valuable tool. Concurrent programming serves to not only 
-enable complex systems to be more simply developed, but provides much more 
-readable, modular systems. Furthermore, concurrency reduces the complexity of 
-scheduling these systems \cite{real-time-systems}. 
-It is therefore a requirement of a real-time systems 
-programming language to provide support for an abstraction into isolating 
-concurrent events and their control into separate entities. 
-In Java and C with real-time POSIX, this concurrency mechanism is provided by 
-threads or processes. In Ada this mechanism is provided by Tasks 
+Real-time systems benefit greatly from parallelism. Inherently, they are
+concerned with the notion of timing and scheduling many different components
+across a system.  The ability to schedule these components concurrently and in
+isolation therefore provides a valuable tool. Concurrent programming serves to
+not only enable complex systems to be more simply developed, but provides much
+more readable, modular systems. Furthermore, concurrency reduces the complexity
+of scheduling these systems \cite{real-time-systems}.  It is therefore a
+requirement of a real-time systems programming language to provide support for
+an abstraction into isolating concurrent events and their control into separate
+entities.  In Java and C with real-time POSIX, this concurrency mechanism is
+provided by threads or processes. In Ada this mechanism is provided by Tasks
 \cite[p251]{gehani1989concurrent}.
 
 \subsection{Priority Scheduling}
 %Some theory on priority based scheduling.
-In addition to the separation of concerns in real-time systems through 
-concurrent programming, the ability to schedule system components in a predictable 
-manner is of interest. 
-Much research has gone into the development of many different fair scheduling 
-algorithms, such as those of the Linux scheduler \cite{6043273,7280991}. However, 
-these do not provide guarantees on the schedulers behaviour, and tasks with short 
-deadlines may have to wait for extended periods of time. Instead, real-time systems 
-do not care about the scheduler implementing a fair algorithm. Instead, 
-scheduling policies have been developed that focus on ensuring short deadline tasks 
-are executed in preference to others, so they still meet their deadlines. 
+In addition to the separation of concerns in real-time systems through
+concurrent programming, the ability to schedule system components in a
+predictable manner is of interest.  Much research has gone into the development
+of many different fair scheduling algorithms, such as those of the Linux
+scheduler \cite{6043273,7280991}. However, these do not provide guarantees on
+the schedulers behaviour, and tasks with short deadlines may have to wait for
+extended periods of time. Instead, real-time systems do not care about the
+scheduler implementing a fair algorithm. Instead, scheduling policies have been
+developed that focus on ensuring short deadline tasks are executed in
+preference to others, so they still meet their deadlines. 
 % Apply it to real-time systems
+
 \par\bigskip\noindent
-Many algorithms exist that enable real-time systems to be scheduled, such 
-as earliest deadline first (EDF) Least Laxity First (LLF), or Fixed Priority 
-scheduling
-\cite{real-time-systems}. 
-However, each policy requires separate computational analysis in order to determine 
-whether the system will meet all its deadlines.
-The field of schedulability analysis is based around this, with research 
-aiming to provide tests to determine if a system will behave as expected
-\cite{4815215,burns-sched-analysis}.
-While Burns posits a test for the schedulability of EDF systems, such systems are 
-more difficult to implement in practice: priorities are dynamic, and may change 
-at any time. Furthermore, not all tasks may have a deadline, making 
-them difficult to incorporate into such a system.
-As a result, the most commonly used scheme is fixed-priority scheduling. 
+Many algorithms exist that enable real-time systems to be
+scheduled, such as earliest deadline first (EDF) Least Laxity First (LLF), or
+Fixed Priority scheduling \cite{real-time-systems}.  However, each policy
+requires separate computational analysis in order to determine whether the
+system will meet all its deadlines.  The field of schedulability analysis is
+based around this, with research aiming to provide tests to determine if a
+system will behave as expected \cite{4815215,burns-sched-analysis}.  While
+Burns posits a test for the schedulability of EDF systems, such systems are
+more difficult to implement in practice: priorities are dynamic, and may change
+at any time. Furthermore, not all tasks may have a deadline, making them
+difficult to incorporate into such a system.  As a result, the most commonly
+used scheme is fixed-priority scheduling.  
 \par\bigskip\noindent
-It is therefore a requirement of a real-time systems programming language to 
-provide support for a priority based scheduling algorithm or allowing the 
-scheduler to be customised. 
+It is
+therefore a requirement of a real-time systems programming language to provide
+support for a priority based scheduling algorithm or allowing the scheduler to
+be customised. 
 
 \subsection{Bounded Priority Inversion}
-% Talk about the priority inversion problem. Introduce it. 
-% Talk about existing solutions to the priority inversion problem - Priority
-% Ceiling protocol, and the Priority Inheritance protocol. % Show the research
-% that they come from.
-Concurrent components of a system are rarely truly isolated from each other, often 
-requiring some shared information or data between different parts of the system. 
-Using priority based scheduling, it is possible for 
-a high priority task to become blocked from making progress due to a low
-priority task holding a resource. Additionally, the low priority task may be 
-preempted and prevented from making progress. In this instance, the high priority task is 
-effectively running at the lowest priority of the system: it has to wait for all other 
-tasks to complete before it can progress. This is a well studied phenomenon known 
-as priority inversion 
-\cite{real-time-systems}. 
+% Talk about the priority inversion problem. Introduce it.  Talk about existing
+% solutions to the priority inversion problem - Priority Ceiling protocol, and
+% the Priority Inheritance protocol. % Show the research that they come from.
+Concurrent components of a system are rarely truly isolated from each other,
+often requiring some shared information or data between different parts of the
+system.  Using priority based scheduling, it is possible for a high priority
+task to become blocked from making progress due to a low priority task holding
+a resource. Additionally, the low priority task may be preempted and prevented
+from making progress. In this instance, the high priority task is effectively
+running at the lowest priority of the system: it has to wait for all other
+tasks to complete before it can progress. This is a well studied phenomenon
+known as priority inversion \cite{real-time-systems}.  
 \par\bigskip\noindent
-In order to provide a reliable response in a priority based system, it is 
-therefore necessary that priority inversion is bounded.
-Two main protocols exist that solve this problem: the priority inheritance protocol 
-and the priority ceiling protocol. 
-In \cite{57058}, a priority inheritance protocol is defined along with the priority 
-ceiling protocol. 
-The priority inheritance protocol works by raising the priority of a task 
-holding a resource to the priority of any task that attempts to gain access 
-to the resource.
-Contrastingly, the priority ceiling protocol raises the priority of the task as 
-it first accesses 
-the resource to the highest priority of any task that may access the resource. 
-Each protocol has its own respective 
-strengths and weaknesses, but enable reliable behaviour of the system 
-\cite{mall2009real}.
-It is therefore a requirement of a real-time systems programming language 
-that the underlying data sharing system is not subject to unbounded priority 
-inversion: the ability to specify the use of either the priority inheritance 
+In
+order to provide a reliable response in a priority based system, it is
+therefore necessary that priority inversion is bounded.  Two main protocols
+exist that solve this problem: the priority inheritance protocol and the
+priority ceiling protocol.  In \cite{57058}, a priority inheritance protocol is
+defined along with the priority ceiling protocol.  The priority inheritance
+protocol works by raising the priority of a task holding a resource to the
+priority of any task that attempts to gain access to the resource.
+Contrastingly, the priority ceiling protocol raises the priority of the task as
+it first accesses the resource to the highest priority of any task that may
+access the resource.  Each protocol has its own respective strengths and
+weaknesses, but enable reliable behaviour of the system \cite{mall2009real}.
+It is therefore a requirement of a real-time systems programming language that
+the underlying data sharing system is not subject to unbounded priority
+inversion: the ability to specify the use of either the priority inheritance
 protocol or the priority ceiling protocol is a necessary feature.  
 
 \subsection{Monotonic Clocks and Absolute Sleep}
 % Talk about studies of clocks, and drift for real-time systems. 
-Up to this point, it has been assumed that the real-time systems are able to 
-interact with precise timing requirements down to a very fine degree of accuracy.
-In practice, this is not always the case, in particular with the use of 
-distributed systems. There is a large field of research surrounding the 
-synchronisation of multiple devices, with algorithms such as Christian's for 
-synchronising these systems \cite{37958}. However, the crucial aspect is the 
-access of a monotonic clock: a clock that ticks at a constant rate, and does not 
-vary the way a calendar clock does. Baker and Pazy in their 1991 paper, \emph{
-Real-time Features for Ada 9X} cite the need for high precision, non-changing 
-clocks as a language feature \cite{160371}. 
+Up to this point, it has been assumed that the real-time systems are able to
+interact with precise timing requirements down to a very fine degree of
+accuracy.  In practice, this is not always the case, in particular with the use
+of distributed systems. There is a large field of research surrounding the
+synchronisation of multiple devices, with algorithms such as Christian's for
+synchronising these systems \cite{37958}. However, the crucial aspect is the
+access of a monotonic clock: a clock that ticks at a constant rate, and does
+not vary the way a calendar clock does. Baker and Pazy in their 1991 paper,
+\emph{ Real-time Features for Ada 9X} cite the need for high precision,
+non-changing clocks as a language feature \cite{160371}.  
 \par\bigskip\noindent
-It is therefore clear that it is a requirement of a real-time systems programming 
-language to provide access to monotonic clocks, so that high precision timing 
-requirements can be met. 
+It is therefore clear that it is a requirement of a real-time systems
+programming language to provide access to monotonic clocks, so that high
+precision timing requirements can be met.  
 \par\bigskip\noindent
-Additionally, the ability to awaken threads at times stated by a clock is a 
-requirement of real-time systems. A typical \texttt{sleep} function will cause 
-the calling thread to hand over any computation resources for a defined period of time. 
-In a real-time system, the timing that the thread awakens must be precise. 
-The typical approach involves the use of a relative sleep time, and therefore can 
-be imprecise due to preemption \cite{real-time-systems}: calculating the sleep time
-and then being preempted before the call to \texttt{sleep} will lead to incorrect 
-timings. Therefore, in order to achieve a predictable 
-sleep function as required in a real-time system, it is necessary 
-to have the ability to wait until an absolute time using a high precision 
-system clock, such as a monotonic clock.
+Additionally,
+the ability to awaken threads at times stated by a clock is a requirement of
+real-time systems. A typical \texttt{sleep} function will cause the calling
+thread to hand over any computation resources for a defined period of time.  In
+a real-time system, the timing that the thread awakens must be precise.  The
+typical approach involves the use of a relative sleep time, and therefore can
+be imprecise due to preemption \cite{real-time-systems}: calculating the sleep
+time and then being preempted before the call to \texttt{sleep} will lead to
+incorrect timings. Therefore, in order to achieve a predictable sleep function
+as required in a real-time system, it is necessary to have the ability to wait
+until an absolute time using a high precision system clock, such as a monotonic
+clock.
 
 \subsection{Asynchronous Transfer of Control}
 % Introduction to ATC 
-Asynchronous Transfer of Control (ATC) is a controversial topic with regards to its 
-implementation in many languages, yet it is deemed a useful, if not necessary 
-feature of a real-time system \cite{atc-article}. 
-ATC is the transfer 
-of control within a thread, that has been triggered by an external event or thread. 
-Its effect may be instantaneous, or deferred until a safe section in the code has 
-been reached. In addition, sections of code susceptible to ATC may be nested, causing a 
-complex problem in terms of semantics, methodology, and implementation. 
-However, the use of ATC extends to many purposes such as low latency responses to events, timing 
-out a thread of computation, or terminating threads, making it an invaluable feature. 
+Asynchronous Transfer of Control (ATC) is a controversial topic with regards to
+its implementation in many languages, yet it is deemed a useful, if not
+necessary feature of a real-time system \cite{atc-article}.  ATC is the
+transfer of control within a thread, that has been triggered by an external
+event or thread.  Its effect may be instantaneous, or deferred until a safe
+section in the code has been reached. In addition, sections of code susceptible
+to ATC may be nested, causing a complex problem in terms of semantics,
+methodology, and implementation.  However, the use of ATC extends to many
+purposes such as low latency responses to events, timing out a thread of
+computation, or terminating threads, making it an invaluable feature. 
 % Have 2-3 articles on the different approaches to ATC within real-time systems
 % programming languages
-The various methods of implementing Asynchronous Transfer of Control have been well 
-studied, with implementations existing in both Java and Ada. Brosgol and Wellings 
-detail the differences between the Ada and Real-time Java implementations, with 
-Java favoring a class based approach to the protocol, where Ada instead provides 
-an explicit language syntax \cite{atc-article}. Both solutions favor safety of 
-the system, and do not necessarily provide immediate cancellation. In \cite{Brosgol:2002:ATC}, 
-Brosgol details that there are two alternative implementations for ATC. The first 
-concept is aborting a thread. This contains a statement that will abort a thread, 
-and there is a notion of an abort-deferred region. This method avoids complex rules 
-that come with ATC, and avoids more complex rules such as propagation. However, 
-it has an additional overhead of thread management, and thread dependencies. 
-The second approach discussed is an exception based model. In this, ATC is 
-captured by allowing a thread to ``arbitrarily throw an exception at a target thread``.
-This method avoids the overhead of additional thread creation, however, it requires 
-additional safety to prevent exceptions from thrown when the target thread is not 
-ready to handle it. 
+
 \par\bigskip\noindent
-It is therefore possible to determine that Asynchronous Transfer of Control is a 
-fundamental notion for a real-time system. The ability to time out a computation, 
-or terminate a thread during processing is very useful. However, the implementation 
-of this principal requires careful consideration. In order to maintain a safe 
-system, Threads may not be terminated at any moment in time, they must have the 
-ability to defer interrupts when desired. Additionally, there are two main methods 
-of implementation, either a thread cancellation based model, or an asynchronous 
-exception model. While the thread model has additional overhead due to the creation 
-of new threads, the exception based approach has additional complexity requiring 
-the ability to safely defer throwing the exception. 
+The various methods of implementing Asynchronous Transfer
+of Control have been well studied, with implementations existing in both Java
+and Ada. Brosgol and Wellings detail the differences between the Ada and
+Real-time Java implementations, with Java favoring a class based approach to
+the protocol, where Ada instead provides an explicit language syntax
+\cite{atc-article}. Both solutions favor safety of the system, and do not
+necessarily provide immediate cancellation. In \cite{Brosgol:2002:ATC}, Brosgol
+details that there are two alternative implementations for ATC. The first
+concept is aborting a thread. This contains a statement that will abort a
+thread, and there is a notion of an abort-deferred region. This method avoids
+complex rules that come with ATC, and avoids more complex rules such as
+propagation. However, it has an additional overhead of thread management, and
+thread dependencies.  The second approach discussed is an exception based
+model. In this, ATC is captured by allowing a thread to ``arbitrarily throw an
+exception at a target thread``.  This method avoids the overhead of additional
+thread creation, however, it requires additional safety to prevent exceptions
+from thrown when the target thread is not ready to handle it.
+
+\par\bigskip\noindent
+It is therefore possible to determine that Asynchronous
+Transfer of Control is a fundamental notion for a real-time system. The ability
+to time out a computation, or terminate a thread during processing is very
+useful. However, the implementation of this principal requires careful
+consideration. In order to maintain a safe system, Threads may not be
+terminated at any moment in time, they must have the ability to defer
+interrupts when desired. Additionally, there are two main methods of
+implementation, either a thread cancellation based model, or an asynchronous
+exception model. While the thread model has additional overhead due to the
+creation of new threads, the exception based approach has additional complexity
+requiring the ability to safely defer throwing the exception. 
 
 \section{Abstractions}
 % Maybe this section should be scrapped?!
 
-Combined with the fundamental ability for a programming language to provide support 
-for real-time systems programming principles, the language must provide abstractions 
-for many principles in order to avoid unnecessary overcomplication, and hence to 
-ease development.
+Combined with the fundamental ability for a programming language to provide
+support for real-time systems programming principles, the language must provide
+abstractions for many principles in order to avoid unnecessary
+overcomplication, and hence to ease development.
 
-\subsection{Periodic Tasks}
-While Ada does not provide a mechanic for abstracting periodic tasks, and relies 
-instead of the manual construction, real-time Java directly provides mechanisms 
-for easily creating a periodic task through the \texttt{PeriodicParameters} class 
-\cite{real-time-systems}. In \cite{periodic-java-thread}, Bruno introduces the 
-concept of a periodic task, and explains how it might be implemented using the 
-Java defined structures. 
-Furthermore, Ravenscar-Java implements a \texttt{PeriodicThread} class. Using 
-this class, the run method is periodically invoked, enabling a periodic task to 
-be executed \cite{ravenscar-java}.
-Similarly, in \cite{burns1998concurrency}, Burns and Wellings introduce how a 
-periodic task can be manually configured in Ada through the use 
-of the \texttt{delay\textunderscore{}until} statement. 
-Furthermore, they demonstrate how separation of concern can be achieved through 
-extracting timing information out of the body of the periodic task. 
+\subsection{Periodic Tasks} While Ada does not provide a mechanic for
+abstracting periodic tasks, and relies instead of the manual construction,
+real-time Java directly provides mechanisms for easily creating a periodic task
+through the \texttt{PeriodicParameters} class \cite{real-time-systems}. In
+\cite{periodic-java-thread}, Bruno introduces the concept of a periodic task,
+and explains how it might be implemented using the Java defined structures.
+Furthermore, Ravenscar-Java implements a \texttt{PeriodicThread} class. Using
+this class, the run method is periodically invoked, enabling a periodic task to
+be executed \cite{ravenscar-java}.  Similarly, in \cite{burns1998concurrency},
+Burns and Wellings introduce how a periodic task can be manually configured in
+Ada through the use of the \texttt{delay\textunderscore{}until} statement.
+Furthermore, they demonstrate how separation of concern can be achieved through
+extracting timing information out of the body of the periodic task.
+
 \par\bigskip\noindent
-It is therefore possible to see that both Ada and Real-Time Java provide a mechanism for 
-the programming of periodic tasks. Java achieves this through the abstraction of 
-the \texttt{PeriodicParameters} and \texttt{PeriodicThread} classes. 
-This allows the programmer to easily and effectively adjust the parameters as needed. 
-Through a more low-level approach, Ada instead provides a \texttt{delay\textunderscore{}until}
-statement. This provides the basic building block for a periodic task. Furthermore, 
-separation of concerns can be achieved using this approach by creating an alternative 
-control structure that manages any timing requirements.
+It is therefore possible to see that both Ada and
+Real-Time Java provide a mechanism for the programming of periodic tasks. Java
+achieves this through the abstraction of the \texttt{PeriodicParameters} and
+\texttt{PeriodicThread} classes.  This allows the programmer to easily and
+effectively adjust the parameters as needed.  Through a more low-level
+approach, Ada instead provides a \texttt{delay\textunderscore{}until}
+statement. This provides the basic building block for a periodic task.
+Furthermore, separation of concerns can be achieved using this approach by
+creating an alternative control structure that manages any timing requirements.
 
 \subsection{Sporadic Tasks}
 % Todo- add in some detail about 
-In addition to providing tools that support the development of periodic tasks, 
-both real-time Java and Ada have implementations that permit the 
-programming of sporadic tasks. 
-Sporadic tasks are defined as a type of task that may be released at any moment in 
-time, and is typically event triggered. However, there is a limit on the rate at 
-which a sporadic task may occur. This is typically specified through a minimum 
-time between releases \cite{11111101}. 
-Using the Ravenscar-Java profile described in \cite{ravenscar-java}, a predefined 
-class, \texttt{SporadicEventHandler} is detailed. Schoeberl details how this may 
-be used to achieve an event-triggered computation in an embedded system using 
-real-time Java with the Ravenscar-Java profile \cite{1300334}. 
+In addition to providing tools that support the development of periodic tasks,
+both real-time Java and Ada have implementations that permit the programming of
+sporadic tasks.  Sporadic tasks are defined as a type of task that may be
+released at any moment in time, and is typically event triggered. However,
+there is a limit on the rate at which a sporadic task may occur. This is
+typically specified through a minimum time between releases \cite{11111101}.
+Using the Ravenscar-Java profile described in \cite{ravenscar-java}, a
+predefined class, \texttt{SporadicEventHandler} is detailed. Schoeberl details
+how this may be used to achieve an event-triggered computation in an embedded
+system using real-time Java with the Ravenscar-Java profile \cite{1300334}.
+
 \par\bigskip\noindent
-Ada takes a similar approach as for periodic tasks. Burns and Wellings detail the 
-potential implementation in \emph{Real-Time Systems and Their Programming Languages}
-\cite[p341]{real-time-systems}. 
-This approach uses a protected object in order to handle an interrupt that releases a 
-task.
-As a result, it is clear to see that both Ada and Real-Time Java have implementations 
-allowing a sporadic task to be programmed. 
+Ada takes a similar approach as for periodic tasks. Burns
+and Wellings detail the potential implementation in \emph{Real-Time Systems and
+Their Programming Languages} \cite[p341]{real-time-systems}.  This approach
+uses a protected object in order to handle an interrupt that releases a task.
+As a result, it is clear to see that both Ada and Real-Time Java have
+implementations allowing a sporadic task to be programmed. 
 
-\section{Language Design}
-In addition to real-time capabilities and abstractions, programming languages have 
-been a wide topic of study in the field of Computer Science. With significant 
-research going into providing capable, efficient and yet readable programming 
-languages. While this project does not aim to compare the merits of programming 
-language research, the feature and literature surrounding aspects of programming 
-languages that are of interest for this project have been highlighted. 
+\section{Language Design} In addition to real-time capabilities and
+abstractions, programming languages have been a wide topic of study in the
+field of Computer Science. With significant research going into providing
+capable, efficient and yet readable programming languages. While this project
+does not aim to compare the merits of programming language research, the
+feature and literature surrounding aspects of programming languages that are of
+interest for this project have been highlighted. 
 
-\subsection{Interprocess Communication and Synchronisation} % 200 words
-As previously mentioned, sharing memory between processes has long been an import 
-consideration. Hoare's concepts of monitors, coupled with the use of mutexes is a 
-common approach sharing information between threads or processes 
-\cite{Hoare:1974:MOS:355620,361161}. 
-However, message passing provides an alternative method of interprocess communication. 
-It's use in programming languages such as Erlang is well studied. Vinoski 
-details the concurrent capabilities of the Erlang message passing system 
-\cite{6216341}.
+\subsection{Interprocess Communication and Synchronisation} % 200 words 
+As previously mentioned, sharing memory between processes has long been an import
+consideration. Hoare's concepts of monitors, coupled with the use of semaphores
+and mutexes is a common approach for sharing information between threads
+\cite{Hoare:1974:MOS:355620.361161}.  However, message passing provides an
+alternative method of interprocess communication, relying on message boxes for
+each task, rather than sharing memory locations between tasks.  The use of
+message passing in programming languages such as Erlang is well studied, with
+Erlang being renowned for its concurrency capabilities. This is highlighted by
+Vinoski in his study of the concurrent capabilities of the Erlang message
+passing system \cite{6216341}. A similar approach is taken in Ada's model of
+concurrency. Ada uses a rendezvous, a special form of synchronous
+message-passing, in order to communicate between tasks. This method allows
+messages to be passed without the need for locks and mutexes. However, unlike
+Erlang, Ada also implements shared memory. This allows the use of semaphores
+and mutexes in order to communicate between processes
+\cite{burns1998concurrency}.  
+\par\bigskip\noindent
+As such, language design
+may seek to implement two alternative approaches for the communication of data
+between tasks: message passing, or shared memory. Some programming languages
+implement both of these, such as Ada.
 
+\subsection{Atomic actions} % 200 words 
+Rather than simply having the ability
+to control access to shared memory using locks and mutexes, as described above,
+many languages that implement shared memory also have support for atomic
+operations. An atomic operation may be described as an operation that is
+indivisible, and can be considered as happening in an uninterruptible manner
+\cite{preshing}. Many languages implement these features as part of their
+standard libraries or packages, as seen in Java  and Ada \cite{java-atomic,
+ada-atomic}.  
+\par\bigskip\noindent
+As atomic operations are indivisible, they
+allow concurrent reading and writing of shared data without the need for
+protection against concurrent access. Goetz has analysed the capabilities of
+Java using atomic operations to access shared  data, in his study he finds that
+atomic access to variables can provide a "high-performance" replacement for
+many control structures that would typically require synchronization
+\cite{java-ibm-atomic}.  
+\par\bigskip\noindent
+The use of atomic operations in
+real-time systems is of even more relevance.  A common issue in the development
+of real-time systems is the need to consider the amount of blocking a task
+might receive when accessing a shared resource. Using atomic operations, tasks 
+do not block when waiting to access a shared memory location. Huang, Pillai and 
+Shin demonstrate the importance of non-blocking and wait free approaches to 
+synchronization in their paper \cite{Huang:2002:IWA:647057.713863}.
+Furthermore, Wellings and Romanovsky detail how atomic actions may lead to the safer
+execution of a real-time system \cite{Romanovsky1997}.
+The use of atomic actions enables a real-time system to have high-performance
+access to shared data, as well as improving the fault-tolerance of a system,
+and ensuring that a system does not suffer from priority inversion. 
+As a result, the inclusion of atomic actions in a programming language is 
+desirable for a real-time system. 
 
-
-\subsection{Atomic actions} % 200 words
 \subsection{Exception and Error Handling} % 200 words
-\subsection{Low Level Capabilities} % 200 words
+In real-time systems, the ability to handle errors caused through execution of
+the system, and the ability to affect the normal flow of control is of
+interest. Programming languages offer various different implementations of
+error or exception handling, but the most commonly used approach is a 
+\texttt{try\{\} catch\{\} } method. Kiniry has studied the implementation in 
+Eiffel, and Java, citing those as the ``extremes in design and application``. 
+Kiniry states that most modern programming languages can be divided into two
+groups based on whether the exceptions are typically used in as flow control
+structures, or to handle abnormal situations
+\cite{Kiniry:2006:EJE:2124243.2124264}. 
+\par\bigskip\noindent
+Despite the widespread use of Exception semantics in programming languages,
+they have received critical attention. Weimer and Necula's studies revealed
+that the exception semantics are a common cause of errors, with error handling
+often being ``quite labyrinthine`` \cite{Weimer:2008:ESP:1330017.1330019}. 
+Similarly, Hoare has criticised Ada's use of exceptions, referring to them as
+``dangerous`` \cite{Hoare:1981:EOC:358549.358561}. Despite this criticism,
+exception handling an extremely popular mechanism for fault handling, and its
+use in Ada and Real-time Java shows the viability for the development of
+real-time systems.
 
+\subsection{Low Level Capabilities} % 200 words
+The final consideration of a programming language is the ability to handle low
+level concerns without unnecessary abstractions. Generally this refers to the
+ability to use assembler, or manually manipulate hardware. For a real-time
+system, the concern is primarily with interrupts, and IO operations. With many
+modern languages running in a virtual machine environment, access to hardware
+is somewhat limited. As a result, significant effort has gone into providing
+real-time Java with increased support for low-level access \cite{4519616,real-java}. 
+Comparatively, both C and Ada do not run in a virtual machine, and have direct
+access to interrupt handlers \cite{real-time-systems}.
+
+\section{Summary}
+This literature review has looked at three areas of relevance to this project.
+First, the existing literature surrounding real-time systems has been examined,
+with the different concepts defining a real-time system examined. Secondly,
+abstractions that aid the development of real-time systems have been examined.
+Finally, language design features that are of interest to real-time systems
+have been examined. In the  literature surrounding real-time systems and their
+programming languages, there is a heavy focus on two
+programming languages: Java and Ada. While infrequent references also include C, 
+there is little literature seeking to expand the pool of languages in which 
+real-time systems are developed. 
