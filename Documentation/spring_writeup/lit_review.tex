@@ -9,7 +9,6 @@
 %including enhanced or new technical skills that build on taught theory. 
 %Examined in the overall project report. 
 
-
 In this chapter, the literature surrounding real-time systems shall be reviewed. 
 Each of the various programming language constructs that are to be provided in 
 order to program a real-time system will be examined. 
@@ -265,6 +264,15 @@ language research, the feature and literature surrounding aspects of programming
 languages that are of interest for this project have been highlighted. 
 
 \subsection{Interprocess Communication and Synchronisation} % 200 words
+As previously mentioned, sharing memory between processes has long been an import 
+consideration. Hoare's concepts of monitors, coupled with the use of mutexes is a 
+common approach sharing information between threads or processes 
+\cite{Hoare:1974:MOS:355620,361161}. 
+However, message passing provides an alternative method of interprocess communication. 
+It's use in programming languages such as Erlang is well studied. Vinoski 
+details the concurrent capabilities of the Erlang message passing system 
+\cite{6216341}.
+
 
 
 \subsection{Atomic actions} % 200 words
