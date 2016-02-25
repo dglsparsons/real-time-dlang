@@ -1,37 +1,94 @@
 %Problem description and analysis for my project. 
-
 % Word Count Guide - 1500 words.
+
+This chapter aims to set out a description of the features of the D
+programming language, before analysing the target criteria of this project.
+For each goal, this chapter will offer a discussion on how it might be 
+implemented in D.
 
 \section{Features of the D Programming Language}
 As mentioned in the introduction, the D programming language has many 
 characteristics that lend it nicely to the development of real-time systems.
 These are outlined in further detail in this section. 
-However, D also has certain features that are less desirable for a real-time 
-system, such as the use of a garbage collector. These less desirable features 
-are also detailed in this section.
+However, D also has contains certain characteristics that are less desirable for 
+real-time systems, such as the use of a garbage collector. 
+These less desirable features are similarly detailed in order to highlight the 
+shortcomings of D. 
 
 \subsection{High and Low-Level}
 % Aims to achieve everything that is possible with other languages such as C++
 % Contains high level abstractions
 The D programming language is primarily inspired by C++, aiming to be a ``C++ done
 right'' 
-\cite{qznc-tutorial}. This explains the 
-power that the language possesses: D is primarily a high level language, with
-a large number of abstractions that aid in the speed and ease of development. 
-%TODO - EASE OF DEVELOPMENT OF WHAT.
-However, D still maintains low level capabilities: the language still has access 
-to inline assembler, system calls, interrupts, and low level I/O in addition to 
-being a compiled language.
+\cite{qznc-tutorial}. 
+This explains the power that the language possesses. D is a high level, compiled 
+language with support for object oriented programming. In addition, D boasts 
+native efficiency: as with C and C++, there is no virtual 
+machine hosting the languages environment and causing additional overhead. 
+Furthermore, D aims to provide
+powerful abstractions that aid in the speed and ease of development of general systems. 
+The following code example, taken from dlang.org, cleanly and efficiently 
+sorts lines of a file and outputs them. 
+\begin{lstlisting}
+import std.stdio, std.array, std.algorithm;
+
+void main()
+{
+    stdin
+        .byLineCopy
+        .array
+        .sort
+        .each!writeln;
+}
+\end{lstlisting}
+However, in addition to providing high-level abstractions, D maintains low 
+level capabilities: the language still retains access to inline assembler, 
+system calls, interrupts, and low level I/O.
 \par\bigskip\noindent
-The flexibility of D is one of its greatest advantages. It ``allows its user to tap 
+This flexibility of D is one of its greatest advantages. It ``allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
-idiosyncrasies in the way''
-\cite{ddili-book}, 
-while simultaneously generating code that can be aggressively optimized by the
-compiler 
-\cite{dlang-overview}. D maintains a readable syntax, and 
-user-friendly approach to development, making it a powerful and highly capable 
-language.
+idiosyncrasies in the way'' \cite{ddili-book}. 
+These features also make D well suited to the development of real-time systems, 
+as stated in the literature review, the ability to program sporadic tasks
+may depend on the ability to handle interrupts in a timely and predictable manner.
+Furthermore, the ability to perform IO operations using hardware allows the
+system to interact with special purpose hardware, another crucial feature of
+real-time systems.
+D's multipurpose approach therefore allows the language to handle low-level concerns,
+while simultaneously benefiting from code that can be aggressively optimized by the
+compiler \cite{dlang-overview}, maintaining a readable and user-friendly
+syntax. D is therefore a powerful and highly capable language.
+
+\subsection{Concurrency}
+%Message passing
+D is often referred to as a language that implements the message passing model 
+of concurrency, rather than the more standard lock and mutex approach 
+\cite{ddili-book}. D's message passing API 
+allows asynchronous messages to be transferred between threads of control using 
+message boxes. This allows a high-level of abstraction and provides an 
+interface that is simplistic to use. However, it is also misleading: the underlying 
+model of D uses the more typical lock and mutex approach 
+\cite{dlang-github-mutex}, 
+with the message passing interface simply built on top of this 
+\cite{dlang-github-concurrency}. 
+As such, when developing in D, the programmer has the option to choose between 
+the higher level message passing interface or the lower level lock and mutex 
+approach. It is even true that a mix approach can be taken, using both.
+\par\bigskip\noindent
+D also has an interesting approach to sharing memory between threads. In D 
+global variables are not shared between different threads as they are in 
+other languages. Instead, each thread has a local copy of the global variable. 
+This is a concept that is known as Thread Local Storage (TLS) 
+\cite{migrate-to-shared}. 
+If resources are to be shared between different threads, D provides a way of 
+achieving this: the \texttt{shared} and
+\texttt{\textunderscore{}\textunderscore{}gshared} keywords.
+\par\bigskip\noindent
+The core runtime for D provides an additional interesting feature: an atomicop 
+library 
+\cite{core-atomic}. 
+This provides a mechanism for some degree of sharing to be performed without the 
+need for locks, allowing many operations to be performed indivisibly.
 
 \subsection{Memory Safe Programming}
 % Concept of memory safe programming that D supports.
@@ -47,44 +104,17 @@ manual manipulation of pointers, or the use of unsafe types. A major difference
 with regards to other languages is that D provides sufficient power so that many complex 
 operations can be performed and used, while still remaining completely safe.
 
-\subsection{Concurrency}
-%Message passing
-D is often referred to as a language that implements the message passing model 
-of concurrency, rather than the more standard Lock and Mutex approach 
-\cite{ddili-book}. D's message passing API 
-allows asynchronous messages to be transferred between threads of control using 
-message boxes. This allows a high-level of abstraction and provides an 
-interface that is simplistic to use. However, it is also misleading: the underlying 
-model of D uses the more typical lock and mutex approach 
-\cite{dlang-github-mutex}, 
-with the message passing interface simply built on top of this 
-\cite{dlang-github-concurrency}. 
-As such, when developing in D, the programmer has the option to choose between 
-the higher level message passing interface or the lower level lock and mutex 
-approach. It is even true that the two can both be used, taking a mixed approach. 
-\par\bigskip\noindent
-D also has an interesting approach to sharing memory between threads. In D 
-global variables are not shared between threads of control, as they are in 
-other languages. Instead, each thread has a local copy of the global variable. 
-This is a concept that is known as Thread Local Storage (TLS) 
-\cite{migrate-to-shared}. 
-If resources are to be shared between different threads, D provides a way of 
-achieving this: the \texttt{shared} and \texttt{\_\_gshared} keywords. In addition, 
-\texttt{immutable} variables are shared by default. 
-\par\bigskip\noindent
-The core runtime for D provides an additional interesting feature: an atomicop 
-library 
-\cite{core-atomic}. 
-This provides a mechanism for some degree of sharing to be performed without the 
-need for locks, allowing many operations to be performed indivisibly.
-
-
 \subsection{Garbage Collector}
 %GC
-One significant problem with developing a real-time system in D is the need to 
-overcome D's garbage collector. The current implementation of the garbage 
+Coupled with the safety of the SafeD subset, D provides additional memory
+safety through its use of a garbage collector. A garbage collector
+automatically manages heap allocated memory. It is responsible for managing
+the lifetime of data, and cleaning up unused memory. 
+However, this safety comes at a cost. One significant problem with developing a 
+real-time system in D is the need to bypass D's garbage collector. 
+The current implementation of the garbage 
 collector is a `stop the world' approach: when garbage collection is occurring, 
-all different threads are halted from making progress 
+all threads are halted from making progress 
 \cite{dlang-garbage}. This causes problems with 
 real-time systems. A real-time system must be able to guarantee a maximum response 
 time on any operation performed, predictable behaviour is therefore fundamental to this. 
@@ -96,9 +126,9 @@ or by calling \texttt{GC.disable()}. However, this is not without drawbacks:
 many of D's higher level features and libraries use garbage collection. 
 %TODO - An alternative approach, i.e detaching a thread from the runtime
 Another possibility is to replace D's garbage collector with a real-time 
-garbage collector. This would provide realiable behaviour, thus preventing these 
-issues. However, 
-due to the amount of further work required, tackling the issue of the garbage 
+garbage collector. This would provide predictable behaviour, and therefore
+would enable precise timing requirements to be met.
+However, due to the amount of further work required, tackling the issue of the garbage 
 collector is outside the scope of this article.
 
 \subsection{Additional Interesting Features}
@@ -111,3 +141,16 @@ In addition, D provides a Java style model for Exceptions and Errors, enabling
 a much simpler error handling system than the C style ERRNOs 
 \cite{ddili-book}. 
 %TODO - Compare with C++ exceptions. Possibly Java exceptions too. 
+
+
+\section{Target Criteria}
+
+\subsection{Concurrency}
+
+\subsection{Monotonic Clocks}
+
+\subsection{Priority Scheduling}
+
+\subsection{Bounded Priority Inversion}
+
+\subsection{Asynchronous Transfer of Control}
