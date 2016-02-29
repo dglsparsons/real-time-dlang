@@ -23,7 +23,9 @@
 
 
 
-\section{Design Aims}
+% \section{Design Aims} -- MAYBE DON'T NEED THIS BIT AS THE REQUIREMENTS ARE TO
+% BE FORMULATED FROM THE LIT REVIEW SECTION 
+
 % Using D Way that D works - hooks into C standard libraries in order to 
 % provide support for things. 
 
@@ -34,24 +36,31 @@
 % GIVES THE ESSENTIAL - Program written with no knowledge of the Real-time
 % systems additions I am creating will not be effected. This means support can 
 % be added in through importing a library. 
+In previous chapters,
+existing real-time system programming languages were examined in order to
+define a set of required functionality. From this
+set of functionality, a set of project requirements was determined. This
+chapter aims to describe the implementation of these features into the D
+programming language, highlighting the completed implementations and any design 
+decisions made along the way. 
 
 \section{Implementation}
 
-In the previous section, the characteristics a real-time 
-systems programming language would need to provide in order to enable the 
-development of a real-time system were discussed. The aim of this project has been primarily to 
-provide these primitives to the D programming language, and hence any discussion, 
-design decisions and the implementation of these features is discussed in this 
-section. 
+In this section, each of the functional requirements of the project the potential
+implementations are discussed. In this discussion any design decisions that have been
+made will be detailed, and the completed implementation of components will be
+shown. 
 
-\subsection{Threads and Interprocess Communication}
+\subsection{Requirement: Threads and Interprocess Communication}
 D, being a C/C++ style language, provides support for the creation and use of 
 threads. Threads in D follow a Java style approach: Thread is a class, 
 allowing subclasses to be derived and methods to be overridden. The default 
 class method will allow a function to be passed by reference and executed. 
-This is seen in the example below, taken from the D website
+These features can be seen in the example below, taken from the D website
 \cite{core-thread}: 
 \begin{lstlisting}
+import core.Thread; 
+
 class DerivedThread : Thread
 {
     this()
@@ -71,13 +80,16 @@ void threadFunc()
 }
 
 // create and start instances of each type
-auto derived = new DerivedThread().start();
-auto composed = new Thread(&threadFunc).start();
+void main()
+{
+    auto derived = new DerivedThread().start();
+    auto composed = new Thread(&threadFunc).start();
+}
 \end{lstlisting}
 We can therefore see that the primitive of Threads and interprocess communication 
 is already provided by D. However, the implementation is of interest: D 
 provides an agnostic approach to operating systems, supporting Windows, FreeBSD, 
-OSX and Linux. 
+OSX, Linux and Solaris. 
 In order to provide support for this wide range of operating systems, the Thread 
 class contains operating system specific code, mapping down a standard interface 
 onto various underlying implementations 
@@ -88,12 +100,68 @@ regards to real-time applications are specifically targeting POSIX compliant
 operating systems, in particular those with real-time extensions. 
 \par\bigskip\noindent
 It is worth noting that the underlying operating system may not be fully
-real-time compliant, even if it is POSIX compliant. Real-time patches to the 
-Linux kernel exist 
-\cite{rt-wiki}, enabling a greater 
-guarantee over the responsiveness. Special care may also be required when 
-developing such a system 
+real-time compliant even if it is POSIX compliant, as a result, real-time patches 
+to the Linux kernel exist \cite{rt-wiki}. These enabling a greater 
+guarantee over the timeliness of the operating system kernel. 
+Furthermore, special care must also be taken when developing such a system  
 \cite {rt-wiki-how-to}. 
+
+
+
+\subsection{Requirement: Priority Based Scheduling}
+The ability to correctly schedule tasks or threads based on their priority is of 
+critical importance to a real-time system. As previously discussed D provides 
+concurrency through operating system Threads, encapsulated in the
+\texttt{Thread} class. Additionally, the \texttt{Thread} class contains the 
+parameter, \texttt{priority}. This parameter can be used to set or get a thread's 
+priority \cite{core-thread}. 
+However, in order for priority based scheduling to be used, this alone is not 
+enough: the scheduler must be changed to function in a priority based manner. 
+It was previously identified that D's threads provide a mapping onto an operating  
+system thread, and hence it is the operating system scheduler that has to be set.  
+However, no support exists within D's standard libraries to interact with the
+scheduler. 
+Therefore, this support has to be supplied. 
+This can be achieved through interaction with C standard libraries, such as GlibC. 
+The function sched\textunderscore{}setscheduler allows the operating system 
+scheduler to be set to either SCHED\textunderscore{}FIFO or SCHED\textunderscore{}RR for 
+this process \cite{sched-setscheduler}. 
+In order to provide a more intuitive interaction a wrapper was written around the 
+system call. This provides a more 'D like' interface, and enables a level of
+abstraction to be taken from manually mapping D onto C for each application. 
+\begin{lstlisting}[language=C++]
+public import core.sys.posix.sched 
+                : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
+
+void setScheduler(int scheduler_type, int scheduler_priority)
+{
+    import core.sys.posix.sched 
+                : sched_param, sched_setscheduler; 
+
+    sched_param sp = { 
+        sched_priority: scheduler_priority 
+    }; 
+
+    int ret = sched_setscheduler(0, scheduler_type, &sp); 
+    if (ret == -1) {
+        throw new Exception("scheduler did not properly set");
+    }
+}
+\end{lstlisting}
+This can then be called in the following manner: 
+%TODO - CONSIDER CHANGING to setFIFOScheduling(priority) or
+%setRRScheduling(priority)
+\begin{lstlisting}
+void main()
+{
+    setScheduler(SCHED_FIFO, 0); 
+}
+\end{lstlisting}
+The ability to set the scheduler to use a priority based method, combined with 
+D language's previously present ability to set the priority of a thread therefore 
+enables a priority based scheduling approach to be used.  
+
+
 
 \subsection{Monotonic Clocks and Absolute Sleep}
 %TODO - Mention what the default sleep method maps onto. 
@@ -141,55 +209,6 @@ As such, the D programming language can easily provide the ability to sleep
 until an absolute time. In order to easily use this functionality, a 
 wrapper has been provided.
 
-\subsection{Priority Scheduling}
-The ability to correctly schedule tasks or threads based on their priority is of 
-critical importance to a real-time system. As previously discussed within this 
-section, D provides the isolation mechanic of a Thread, easily allowing the 
-separation of concern. Additionally, the Thread class contains the parameter, 
-priority, that can be used to set or get a thread's priority
-\cite{core-thread}. 
-However, in order for priority based scheduling to be used, this alone is not 
-enough: the scheduler must be changed to function in a priority based manner. 
-It was previously identified that D's threads provide a mapping onto an operating  
-system thread, and hence it is the operating system scheduler that has to be set.  
-No support exists within the D standard libraries to interact with the scheduler 
-however, so this support has to be supplied. 
-This was achieved once again through interaction with Glibc: the function 
-sched\textunderscore{}setscheduler allows the operating system scheduler to 
-be set to either SCHED\textunderscore{}FIFO or SCHED\textunderscore{}RR for 
-this process
-\cite{sched-setscheduler}. 
-As with the delayUntil function, a wrapper has been added around the C function,
-providing a simpler interface: 
-\begin{lstlisting}[language=C++]
-public import core.sys.posix.sched 
-                : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
-
-void setScheduler(int scheduler_type, int scheduler_priority)
-{
-    import core.sys.posix.sched 
-                : sched_param, sched_setscheduler; 
-
-    sched_param sp = { 
-        sched_priority: scheduler_priority 
-    }; 
-
-    int ret = sched_setscheduler(0, scheduler_type, &sp); 
-    if (ret == -1) {
-        throw new Exception("scheduler did not properly set");
-    }
-}
-\end{lstlisting}
-This can then be called in the following manner: 
-\begin{lstlisting}
-void main()
-{
-    setScheduler(SCHED_FIFO, 0); 
-}
-\end{lstlisting}
-The ability to set the scheduler to use a priority based method, combined with 
-D language's previously present ability to set the priority of a thread therefore 
-enables a priority based scheduling approach to be used.  
 
 \subsection{Bounded Priority Inversion}
 In D, Mutexes follow a similar approach to Threads: the language's
