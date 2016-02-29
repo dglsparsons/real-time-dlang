@@ -182,7 +182,7 @@ propagate.
 However, it has the additional overhead of thread management and
 thread dependencies.  The second approach discussed is an exception based
 model. In this, ATC is captured by allowing a thread to ``arbitrarily throw an
-exception at a target thread``.  Although this method avoids the overhead of additional
+exception at a target thread''.  Although this method avoids the overhead of additional
 thread creation, it requires additional safety to prevent exceptions
 from being thrown when the target thread is not ready to handle them.
 \par\bigskip\noindent
@@ -293,7 +293,7 @@ As atomic operations are indivisible, they
 allow concurrent reading and writing of shared data without the need for
 protection against concurrent access. Goetz has analysed the capabilities of
 Java using atomic operations to access shared  data. In his study, he finds that
-atomic access to variables can provide a ``high-performance`` replacement for
+atomic access to variables can provide a ``high-performance'' replacement for
 many control structures that would typically require synchronization
 \cite{java-ibm-atomic}.  
 \par\bigskip\noindent
@@ -318,7 +318,7 @@ the system, and the ability to affect the normal flow of control is of
 interest. Programming languages offer various different implementations of
 error or exception handling, but the most commonly used approach is a 
 \texttt{try\{\} catch\{\} } method. Kiniry has studied the implementation in 
-Eiffel and Java, citing these as the ``extremes in design and application``. 
+Eiffel and Java, citing these as the ``extremes in design and application''. 
 Kiniry states that most modern programming languages can be divided into two
 groups based on whether the exceptions are typically used as flow control
 structures or to handle abnormal situations
@@ -327,9 +327,9 @@ structures or to handle abnormal situations
 Despite the widespread use of exception semantics in programming languages,
 they have received critical attention. Weimer and Necula's studies revealed
 that the exception semantics are a common cause of errors, with error handling
-often being ``quite labyrinthine`` \cite{Weimer:2008:ESP:1330017.1330019}. 
+often being ``quite labyrinthine'' \cite{Weimer:2008:ESP:1330017.1330019}. 
 Similarly, Hoare has criticised Ada's use of exceptions, referring to them as
-``dangerous`` \cite{Hoare:1981:EOC:358549.358561}. Despite this criticism,
+``dangerous'' \cite{Hoare:1981:EOC:358549.358561}. Despite this criticism,
 exception handling an extremely popular mechanism for fault handling, and their
 use in Ada and Real-time Java shows the viability for the development of
 real-time systems.
