@@ -163,76 +163,6 @@ Importance     & Desired \\ \hline
 \end{tabular}
 \end{table}
 \FloatBarrier
-\section{Analysis of Target Criteria} %100
-This section aims to outline the functional requirements of the project,
-offering a brief discussion on potential implementation for each of these requirements. 
-
-\subsection{Concurrency and Priority Scheduling} %100
-In order to provide scheduling of multiple different concerns through a
-real-time system, the previous chapters discussed how the concurrent control of
-system components is a crucial feature for real-time systems. D provides a
-method of concurrency through its \texttt{Thread} class. 
-\par\bigskip\noindent
-Closely related to this concept, is the ability to schedule threads based on
-their priority. In D, threads exist in a kernel space. Therefore, in order to
-provide priority based scheduling, the systems scheduler requires changing. Burns
-and Wellings show that there are several different scheduling algorithms that
-may be used in real-time systems \cite{real-time-systems}. It is worth noting
-that of all the operating systems that D runs on, only those that are POSIX
-compliant are capable of handling such a means of priority scheduling. This
-provides a limitation on the project: D can only be programmed in a real-time
-capable manner on a POSIX compliant operating system.
-By default, D is provided with no method to change the underlying operating
-systems scheduler. 
-The ability to adjust the scheduler to use either a Round-Robin, or FIFO approach 
-is therefore a desired end-goal of the project.
-
-\subsection{Monotonic Clocks} %100
-As described in the Literature Review chapter, access to both a high precision
-clock and absolute sleep method is necessary for a real-time system. D's
-current implementation can access a high precision clock through the use of
-functionality provided in the core runtime \cite{dlang-core-time}. However,
-access to an absolute sleep function is missing. Instead, D's default sleep
-method maps onto the C relative sleep function, \texttt{nanosleep}. There are
-therefore two possible alternative implementations. Either the call to
-\texttt{nanosleep} could be wrapped in such a manner that it is not possible to be preempted, 
-or the C function, \texttt{clock\textunderscore{}nanosleep}, may be used. This function enables 
-an absolute sleep with a user specifiable clock \cite{clock-nanosleep}. 
-
-\subsection{Bounded Priority Inversion} %100
-In order to achieve a bound on the amount of priority inversion that a task
-might suffer two protocols exist: the priority inheritance protocol and the
-priority ceiling protocol. These protocols have been detailed in the 
-Literature Review section. D's implementation of mutexes currently has
-neither of these protocols, and is therefore not suited for real-time systems.
-However, similar to D's approach to the \texttt{Thread} class, the languages
-core \texttt{Mutex} class provides a wrapper on POSIX mutexes
-\cite{dlang-github-mutex}. The POSIX specification of mutexes states that
-they can implement both the priority ceiling and the priority inheritance protocol 
-\cite{mutex-setprotocol}. Therefore, there are two possible ways of
-implementing the priority ceiling protocol and the priority inversion protocol
-in D. Either the appropriate external C functions can be imported, allowing the
-use of POSIX mutexes with a specified protocol, or the protocol itself may be
-implemented on top of the existing \texttt{Mutex} implementation. 
-
-\subsection{Asynchronous Transfer of Control} %100
-Asynchronous Transfer of Control (ATC) is a difficult feature to implement due to
-it's ``methodologically suspect'' nature \cite{Brosgol:2002:ATC}. As detailed
-in the literature review Java, Ada and C with POSIX Threads all favour
-different approaches to the implementation details. Simply stated, there are
-three alternative implementations. In C, ATC can be simulated using the
-\texttt{setjmp} and \texttt{longjmp} instructions. In Ada, a
-two-threaded model is often used. This functions by blocking the calling thread
-on a condition, while a subsidiary task is created to execute the abortable
-code. In Java, an exception based approach uses the Thread \texttt{interrupt}
-method to asynchronously throw an exception in the target thread. As D has the
-ability to interact with C code, \texttt{setjmp} and \texttt{longjmp} may be
-used. Furthermore, it's model of threads allows a thread cancellation based
-approach to be taken. Finally, D has a similar model of exceptions to Java. By
-combining D's exception model with POSIX signals, enabling the asynchronous
-execution of code, D therefore has the potential to implement all three ATC
-implementations. 
-
 
 
 
@@ -379,3 +309,75 @@ a much simpler error handling system than the C style ERRNOs
 These exceptions are functionally very similar to Java exceptions. Compared to
 C++'s exception model, D throws exceptions through reference, instead of by
 value \cite{interface-to-cpp}. 
+
+
+\section{Analysis of Target Criteria} %100
+This section aims to outline the functional requirements of the project,
+offering a brief discussion on potential implementation for each of these requirements. 
+
+\subsection{Concurrency and Priority Scheduling} %100
+In order to provide scheduling of multiple different concerns through a
+real-time system, the previous chapters discussed how the concurrent control of
+system components is a crucial feature for real-time systems. D provides a
+method of concurrency through its \texttt{Thread} class. 
+\par\bigskip\noindent
+Closely related to this concept, is the ability to schedule threads based on
+their priority. In D, threads exist in a kernel space. Therefore, in order to
+provide priority based scheduling, the systems scheduler requires changing. Burns
+and Wellings show that there are several different scheduling algorithms that
+may be used in real-time systems \cite{real-time-systems}. It is worth noting
+that of all the operating systems that D runs on, only those that are POSIX
+compliant are capable of handling such a means of priority scheduling. This
+provides a limitation on the project: D can only be programmed in a real-time
+capable manner on a POSIX compliant operating system.
+By default, D is provided with no method to change the underlying operating
+systems scheduler. 
+The ability to adjust the scheduler to use either a Round-Robin, or FIFO approach 
+is therefore a desired end-goal of the project.
+
+\subsection{Monotonic Clocks} %100
+As described in the Literature Review chapter, access to both a high precision
+clock and absolute sleep method is necessary for a real-time system. D's
+current implementation can access a high precision clock through the use of
+functionality provided in the core runtime \cite{dlang-core-time}. However,
+access to an absolute sleep function is missing. Instead, D's default sleep
+method maps onto the C relative sleep function, \texttt{nanosleep}. There are
+therefore two possible alternative implementations. Either the call to
+\texttt{nanosleep} could be wrapped in such a manner that it is not possible to be preempted, 
+or the C function, \texttt{clock\textunderscore{}nanosleep}, may be used. This function enables 
+an absolute sleep with a user specifiable clock \cite{clock-nanosleep}. 
+
+\subsection{Bounded Priority Inversion} %100
+In order to achieve a bound on the amount of priority inversion that a task
+might suffer two protocols exist: the priority inheritance protocol and the
+priority ceiling protocol. These protocols have been detailed in the 
+Literature Review section. D's implementation of mutexes currently has
+neither of these protocols, and is therefore not suited for real-time systems.
+However, similar to D's approach to the \texttt{Thread} class, the languages
+core \texttt{Mutex} class provides a wrapper on POSIX mutexes
+\cite{dlang-github-mutex}. The POSIX specification of mutexes states that
+they can implement both the priority ceiling and the priority inheritance protocol 
+\cite{mutex-setprotocol}. Therefore, there are two possible ways of
+implementing the priority ceiling protocol and the priority inversion protocol
+in D. Either the appropriate external C functions can be imported, allowing the
+use of POSIX mutexes with a specified protocol, or the protocol itself may be
+implemented on top of the existing \texttt{Mutex} implementation. 
+
+\subsection{Asynchronous Transfer of Control} %100
+Asynchronous Transfer of Control (ATC) is a difficult feature to implement due to
+it's ``methodologically suspect'' nature \cite{Brosgol:2002:ATC}. As detailed
+in the literature review Java, Ada and C with POSIX Threads all favour
+different approaches to the implementation details. Simply stated, there are
+three alternative implementations. In C, ATC can be simulated using the
+\texttt{setjmp} and \texttt{longjmp} instructions. In Ada, a
+two-threaded model is often used. This functions by blocking the calling thread
+on a condition, while a subsidiary task is created to execute the abortable
+code. In Java, an exception based approach uses the Thread \texttt{interrupt}
+method to asynchronously throw an exception in the target thread. As D has the
+ability to interact with C code, \texttt{setjmp} and \texttt{longjmp} may be
+used. Furthermore, it's model of threads allows a thread cancellation based
+approach to be taken. Finally, D has a similar model of exceptions to Java. By
+combining D's exception model with POSIX signals, enabling the asynchronous
+execution of code, D therefore has the potential to implement all three ATC
+implementations. 
+
