@@ -38,6 +38,13 @@ stringstyle=\color{redstrings},
 basicstyle=\ttfamily
 }
 
+% For requirements aligning
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% For forcing float draw after tables
+\usepackage{placeins}
+
 % Rewritten the Chapter settings, in order to remove the stupid 50Space 
 % Indent from the top of the page. 
 \makeatletter

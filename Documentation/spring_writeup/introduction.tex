@@ -17,8 +17,8 @@
 This report sets out to detail and discuss the implementation of real-time 
 programming capabilities and abstractions into the D programming language. 
 Such support will take the form of a library, allowing a simplistic implementation 
-into newly created programs, without the need to run custom compilers, or make 
-modifications to the language's runtime. Furthermore, the project has a design 
+into newly created programs, without the need to run custom compilers or make
+modifications to the language's core libraries. Furthermore, the project has a design 
 goal: any existing applications should not be affected through the introduction 
 of this library. This means that any code written without prior knowledge should 
 remain completely unaffected. 
@@ -31,9 +31,9 @@ system, native efficiency, built-in unit testing,  and a general purpose approac
 to programming. Simply stated, D aims to be a ``C++ done right'' \cite{qznc-tutorial}. 
 With C++ seeing increasing use on large scale real-time systems, such as the F-35 
 fighter jet, it follows a logical progression that D would provide a suitable 
-alternative.
+alternative \cite{f35}.
 \par\bigskip\noindent
-As mentioned in the abstract, real-time systems are a classification of 
+Real-time systems are a classification of 
 information processing system, in which input
 stimuli require a response before the passage of a predefined deadline. Failure 
 to meet this deadline may be a failure of the system. Input 
@@ -46,7 +46,7 @@ manufacturing processes, automotive vehicles, or even embedded sensors.
 % Why do i want to do it -- Importance.
 % building upon previous work? Looking at something overlooked? Improving upon
 % a previous research project? 
-\section{Importance} % 200 words? 
+\section{Project Goal} % 200 words? 
 This project aims to build upon previous research in the field of real-time systems. 
 Significant study has gone into the schedulability of the task sets that 
 define a real-time system, and also different programming languages capabilities 
@@ -89,7 +89,8 @@ mutexes and semaphores, are provided through interaction with external libraries
 Many of the features implemented in the real-time library depend on the ability 
 to interact with a standard C library, such as GlibC. This poses another limitation 
 on the result of the project: the real-time features are only appropriate on 
-operating systems with a standard C library provided. 
+operating systems with a standard C library provided. However, the use of C is 
+very widespread, and C is supported on most operating systems. 
 
 \subsection{Garbage Collector}
 A further limitation is provided by D's use of a stop-the-world garbage collector. 
@@ -104,7 +105,7 @@ management techniques such as pooling and preallocation must be used.
 \section{Assumptions} % 200 words? 
 Due to the limitations described in the previous section, several assumptions were 
 made during the course of this project. 
-First, it is assumed that any software necessary for D as a programming language is 
+First, it is assumed that any software necessary needed to run a D program is 
 provided. With regards to the development of real-time systems, this support  
 extends to the assumption that a POSIX compliant operating system is provided, 
 along with a suitable C library, such as GlibC. 
@@ -122,7 +123,8 @@ This report is divided into 5 main sections:
 First, a literature review will 
 consider existing research, analysing what material already exists regarding 
 real-time systems, and situating this report within the context of these works. 
-Secondly, a description and analysis of the problem is detailed: this sets out      %TODO- analysis?
+From this, a set of requirements for real-time programming will be generated. 
+Secondly, a description and analysis of the problem is detailed: this sets out 
 an overview of interesting features of the D programming language, as well as 
 describing features of real-time systems. This set of real-time features acts as 
 the project's end goal. 

@@ -5,9 +5,9 @@
 % One or more review chapters, describing the research I did at the beginning
 % of the project period. 
 
-%Demonstrate that they have acquired specialisation in a particular part of the
-%subject area, including enhanced or new technical skills that build on taught
-%theory.  Examined in the overall project report. 
+% Demonstrate that they have acquired specialisation in a particular part of the
+% subject area, including enhanced or new technical skills that build on taught
+% theory.  Examined in the overall project report. 
 
 In this chapter, the literature surrounding real-time systems will be
 reviewed. The various constructs that enable the development of a real-time
@@ -79,8 +79,8 @@ Fixed Priority scheduling \cite{real-time-systems}.  However, each policy
 requires separate computational analysis in order to determine whether the
 system will meet all its deadlines.  The field of schedulability analysis is
 based around this, with research aiming to provide tests to determine if a
-system will behave as expected \cite{4815215,burns-sched-analysis}.  While
-Burns posits a test for the schedulability of EDF systems, such systems are
+system will behave as expected \cite{4815215,burns-sched-analysis}.  Even though 
+Burns provides a test for proving the schedulability of EDF systems, such systems are
 more difficult to implement in practice: priorities are dynamic, and may change
 at any time. Furthermore, not all tasks may have a deadline, making them
 difficult to incorporate into such a system.  As a result, the most commonly
@@ -279,15 +279,14 @@ may seek to implement two alternative approaches for the communication of data
 between tasks: message passing and shared memory. Some programming languages
 implement both of these, such as Ada.
 
-\subsection{Atomic actions} % 200 words 
+\subsection{Atomic Operations} % 200 words 
 Rather than simply having the ability
 to control access to shared memory using locks and mutexes, as described above,
 many languages that implement shared memory also have support for atomic
 operations. An atomic operation may be described as an operation that is
 indivisible and can be considered as happening in an uninterruptible manner
 \cite{preshing}. Many languages implement these features as part of their
-standard libraries, as seen in Java  and Ada \cite{java-atomic,
-ada-atomic}.  
+standard libraries, as seen in Java and C \cite{java-atomic,preshing}.  
 \par\bigskip\noindent
 As atomic operations are indivisible, they
 allow concurrent reading and writing of shared data without the need for
@@ -304,13 +303,10 @@ might receive when accessing a shared resource. Using atomic operations, tasks
 do not block when waiting to access a shared memory location. Huang, Pillai and 
 Shin demonstrate the importance of non-blocking and wait free approaches to 
 synchronization in their paper \cite{Huang:2002:IWA:647057.713863}.
-Furthermore, Wellings and Romanovsky detail how atomic actions may lead to the safer
-execution of a real-time system \cite{Romanovsky1997}.
 The use of atomic actions enables a real-time system to have high-performance
-access to shared data, as well as improving the fault-tolerance of a system
-and ensuring that the system does not suffer from priority inversion. 
-As a result, the inclusion of atomic actions in a programming language is 
-desirable for a real-time system. 
+access to shared data, as well as ensuring that the system does not suffer from 
+priority inversion. As a result, the inclusion of atomic actions in a programming 
+language is desirable for a real-time system. 
 
 \subsection{Exception and Error Handling} % 200 words
 In real-time systems, the ability to handle errors caused through execution of

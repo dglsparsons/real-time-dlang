@@ -22,3 +22,5 @@ cb:
 count: 
 	texcount *.tex
 
+cbs: 
+	make clean && make && make cb
