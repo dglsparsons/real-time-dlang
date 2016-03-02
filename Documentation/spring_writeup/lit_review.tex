@@ -84,10 +84,9 @@ Burns provides a test for proving the schedulability of EDF systems, such system
 more difficult to implement in practice: priorities are dynamic, and may change
 at any time. Furthermore, not all tasks may have a deadline, making them
 difficult to incorporate into such a system.  As a result, the most commonly
-used scheme is fixed-priority scheduling.  
+used scheme is fixed-priority scheduling. 
 \par\bigskip\noindent
-It is
-therefore a requirement of a real-time systems programming language to provide
+It is therefore a requirement of a real-time systems programming language to provide
 support for a priority based scheduling algorithm or allowing the scheduler to
 be customised. 
 
@@ -248,13 +247,24 @@ uses a protected object in order to handle an interrupt that releases a task.
 As a result, it is clear to see that both Ada and Real-Time Java have
 implementations allowing a sporadic task to be programmed. 
 
-\section{Language Design} In addition to real-time capabilities and
+\section{Language Design} 
+In addition to real-time capabilities and
 abstractions, programming languages have been a wide topic of study in the
 field of Computer Science. Significant research has gone into providing
 capable, efficient and yet readable programming languages. This project
 does not aim to compare the merits of programming language research. However, the
 feature and literature surrounding aspects of programming languages that are of
 interest for this project have been highlighted. 
+
+\subsection{Real-time Euclid} 
+The programming language Real-Time Euclid is of interest for its historical 
+significance. Introduced as ``a language designed specifically to address reliability 
+and guaranteed schedulability issues in real-time systems'', Real-Time Euclid 
+focuses on providing a high level of exception and error handling coupled with 
+forced time and space bounds on every construct \cite{real-time-euclid}. This 
+gives the language an interesting property, Real-Time Euclid programs are able 
+to be analysed rigorously in order to guarantee the schedulability of their 
+processes, thus providing highly reliable software. 
 
 \subsection{Interprocess Communication and Synchronisation} % 200 words 
 As previously mentioned, sharing memory between processes has long been an import
@@ -286,7 +296,7 @@ However, due to the languages current status, in development since the 1980s,
 it has yet to see widespread adoption
 \cite{esterel}.
 \par\bigskip\noindent
-As such, language design
+In summary, language design
 may seek to implement various alternative approaches for the communication of data
 between tasks, the most significant of which are message passing and shared memory. 
 Some programming languages even implement both of these, such as Ada.
