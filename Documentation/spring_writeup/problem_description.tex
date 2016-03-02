@@ -386,7 +386,7 @@ expected behaviour to be verified.
 This is shown in the following sample:
 \begin{lstlisting}
 int triple(int i) {
-    return i+i+i; 
+    return i*3; 
 }
 unittest {
     assert(triple(0) == 0); 
@@ -400,8 +400,8 @@ inserts any \texttt{unittest} code into the main function. A main function may
 also be artificially created through a compiler flag. This allows the testing of 
 library code through a compiler invocation in the following manner: 
 \begin{lstlisting}
-$ ldc -main -unittest -run my_library.d
+ldc -main -unittest -run my_library.d
 \end{lstlisting}
-This inbuilt definition of \texttt{unittest} therefore allows unit-testing to occur 
-without the need for tools external to the core language, providing a convenient 
-testing method. 
+This inbuilt definition of \texttt{unittest} allows unit-testing to occur 
+without the need for tools external to the core language, thus providing a convenient 
+and practical testing method testing method. 
