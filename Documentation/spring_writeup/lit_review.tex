@@ -274,10 +274,23 @@ Erlang, Ada also implements shared memory. This allows the use of semaphores
 and mutexes in order to communicate between processes
 \cite{burns1998concurrency}.  
 \par\bigskip\noindent
+Esterel is another language of interest due to its unconventional approach to the issue of 
+concurrency. Rather than focusing on concurrent execution of system components, 
+Esterel provides a synchronous approach, assuming that all calculation 
+takes zero time. This means that all actions are instantaneous and atomic, 
+any therefore two actions cannot interfere with each other. 
+This has the added benefit of enabling the system to be fully deterministic. 
+Furthermore, this removes the concern over concurrent languages such as Ada, 
+as Esterel does not force the user to ``choose between determinism and concurrency''.
+However, due to the languages current status, in development since the 1980s, 
+it has yet to see widespread adoption. 
+widespread use. 
+\cite{esterel}
+\par\bigskip\noindent
 As such, language design
-may seek to implement two alternative approaches for the communication of data
-between tasks: message passing and shared memory. Some programming languages
-implement both of these, such as Ada.
+may seek to implement different alternative approaches for the communication of data
+between tasks, the most significant being message passing and shared memory. 
+Some programming languages even implement both of these, such as Ada.
 
 \subsection{Atomic Operations} % 200 words 
 Rather than simply having the ability
