@@ -208,6 +208,16 @@ void setScheduler(int schedulerType, int schedulerPriority)
     }
 }
 
+void setFIFOScheduler(int schedulerPriority)
+{
+    setScheduler(SCHED_FIFO, schedulerPriority);
+}
+
+void setRRScheduler(int schedulerPriority)
+{
+    setScheduler(SCHED_RR, schedulerPriority); 
+}
+
 unittest
 {
     // Note: These lines may require a priveledged user to run them in order to
@@ -220,6 +230,16 @@ unittest
 }
 
 
+unittest
+{
+    // Note: These lines may require a priveledged user to run them in order to
+    // be covered during unittesting
+    import core.sys.posix.sched : sched_getscheduler; 
+    setFIFOScheduler(50); 
+    assert(sched_getscheduler(0) == SCHED_FIFO);
+    setRRScheduler(50); 
+    assert(sched_getscheduler(0) == SCHED_RR);
+}
 
 
 
