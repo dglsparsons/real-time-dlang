@@ -2,8 +2,6 @@
 % each different part of the system has been designed and implemented, as well
 % as what the original design aims were. 
 
-% Lots of things to check off in this section
-
 %Formulate a moderate sized problem, to select and justify an appropriate approach, 
 %and to follow the approach systematically. 
 %Examined in the design/implementation chapters of the project. 
@@ -21,8 +19,6 @@
 
 % Word Count Estimate - 2500 Words
 
-
-
 % \section{Design Aims} -- MAYBE DON'T NEED THIS BIT AS THE REQUIREMENTS ARE TO
 % BE FORMULATED FROM THE LIT REVIEW SECTION 
 
@@ -37,23 +33,36 @@
 % systems additions I am creating will not be effected. This means support can 
 % be added in through importing a library. 
 In previous chapters,
-existing real-time system programming languages were examined in order to
-define a set of required functionality. From this
-set of functionality, a set of project requirements was determined. This
-chapter aims to describe the implementation of these features into the D
+existing real-time system programming languages have been examined in order to
+define a set of required functionality. From this, a set of project requirements 
+was determined. 
+This chapter aims to describe the implementation of these requirements into the D
 programming language, highlighting the completed implementations and any design 
 decisions made along the way. 
 
 \section{Implementation}
 
 In this section, each of the functional requirements of the project the potential
-implementations are discussed. In this discussion any design decisions that have been
-made will be detailed, and the completed implementation of components will be
-shown. 
+implementations are discussed. This discussion will highlight any design 
+decisions that have been made and will detail the completed implementation of 
+each component. 
 
-\subsection{Requirement: Threads and Interprocess Communication}
+\subsection{Method of Provision}
+% Library vs modified runtime ? 
+For the end goal of this project to be usable, various methods for its delivery 
+were considered. There are two significant alternatives. If no compiler, or 
+core runtime features of the language need to be altered in order to provide the 
+desired functionality then the project may be packaged as an external library. 
+This is the most desirable end goal, hence the addition of requirement 8, as it 
+prevents the need to provide and maintain a custom complier and runtime and enables 
+exsiting D users to simply add-in the library as needed. 
+Failing this, a modified runtime and/or compiler must be provided. This would 
+enable the development of real-time systems, however, the modified system would 
+require maintenance to keep it up to date with the core set of D functionality. 
+
+\subsection{Requirement 1: Threads and Interprocess Communication}
 D, being a C/C++ style language, provides support for the creation and use of 
-threads. Threads in D follow a Java style approach: Thread is a class, 
+threads. Threads in D follow a Java style approach: \texttt{Thread} is a class, 
 allowing subclasses to be derived and methods to be overridden. The default 
 class method will allow a function to be passed by reference and executed. 
 These features can be seen in the example below, taken from the D website
@@ -82,33 +91,38 @@ void threadFunc()
 // create and start instances of each type
 void main()
 {
-    auto derived = new DerivedThread().start();
-    auto composed = new Thread(&threadFunc).start();
+    auto derived = new DerivedThread();
+    auto composed = new Thread(&threadFunc);
+    derived.start; 
+    composed.start;
 }
 \end{lstlisting}
-We can therefore see that the primitive of Threads and interprocess communication 
-is already provided by D. However, the implementation is of interest: D 
-provides an agnostic approach to operating systems, supporting Windows, FreeBSD, 
-OSX, Linux and Solaris. 
-In order to provide support for this wide range of operating systems, the Thread 
+We can therefore see that D already provides 
+concurrent control of system components, along with mechanisms for 
+interprocess communication. However, the implementation is of interest: D 
+provides an agnostic approach to the underlying operating system, supporting 
+Windows, FreeBSD, OSX, Linux and Solaris. 
+In order to provide support for this wide range of operating systems, the 
+\texttt{Thread}
 class contains operating system specific code, mapping down a standard interface 
 onto various underlying implementations 
 \cite{github-core-thread}. 
-We are interested only in operating systems 
-that support real-time applications, and as such all additions made to D with 
-regards to real-time applications are specifically targeting POSIX compliant 
+We are interested only in operating systems capable of meeting tight timing 
+requirements in any calls to the kernel, and context switching.
+As such, all additions made to D with regards to real-time applications are 
+specifically targeted at POSIX compliant 
 operating systems, in particular those with real-time extensions. 
 \par\bigskip\noindent
-It is worth noting that the underlying operating system may not be fully
-real-time compliant even if it is POSIX compliant, as a result, real-time patches 
+It is worth noting that the underlying operating may require patching in order 
+to be fully viable for a real-time system: system may not be fully
+real-time compliant even if it is POSIX compliant. Because of this, real-time patches 
 to the Linux kernel exist \cite{rt-wiki}. These enabling a greater 
-guarantee over the timeliness of the operating system kernel. 
-Furthermore, special care must also be taken when developing such a system  
-\cite {rt-wiki-how-to}. 
+guarantee over the timeliness of the kernel. 
+Furthermore, special care must also be taken when developing such a system,
+selecting appropriate hardware and programming the system in a manner appreciative 
+of the underlying hardware \cite{rt-wiki-how-to}.
 
-
-
-\subsection{Requirement: Priority Based Scheduling}
+\subsection{Requirement 2: Priority Based Scheduling}
 The ability to correctly schedule tasks or threads based on their priority is of 
 critical importance to a real-time system. As previously discussed D provides 
 concurrency through operating system Threads, encapsulated in the
@@ -147,39 +161,45 @@ void setScheduler(int scheduler_type, int scheduler_priority)
         throw new Exception("scheduler did not properly set");
     }
 }
+
+void setFIFOScheduler(int schedPriority)
+{
+    setScheduler(SCHED_FIFO, schedPriority);
+}
+
+void setRRScheduler(int schedPriority)
+{
+    setScheduler(SCHED_RR, schedPriority); 
+}
 \end{lstlisting}
 This can then be called in the following manner: 
-%TODO - CONSIDER CHANGING to setFIFOScheduling(priority) or
-%setRRScheduling(priority)
 \begin{lstlisting}
 void main()
 {
-    setScheduler(SCHED_FIFO, 0); 
+    setFIFOScheduler(50); 
 }
 \end{lstlisting}
 The ability to set the scheduler to use a priority based method, combined with 
 D language's previously present ability to set the priority of a thread therefore 
 enables a priority based scheduling approach to be used.  
 
-
-
-\subsection{Monotonic Clocks and Absolute Sleep}
-%TODO - Mention what the default sleep method maps onto. 
+\subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
 As mentioned in the previous section, it is a necessary feature of a real-time 
 systems programming language to be able to sleep until an absolute time, rather 
 than a relative time. In addition, this sleep must use a monotonic clock in order 
 to remove any subjection from clock-drift or time-zone changes. D has support 
 for a monotonic clock as part of the core libraries 
 \cite{dlang-core-time}. We can access this using 
-\texttt{MonoTime}, but unfortunately there is no ability to sleep until an 
+\texttt{MonoTime}. Unfortunately there is no ability to sleep until an 
 absolute time. Using D's ability to interact with C libraries, it is possible 
-to leverage Glibc's ability to perform this operation: the C function 
-clock\textunderscore{}nanosleep allows an absolute time to be specified.
-\cite{clock-nanosleep}
-A wrapper function has been provided as part of a real-time library, delayUntil. 
-This function accepts the D type MonoTime as an input, converts it to the C 
-equivalent, and calls the C function clock\textunderscore{}nanosleep, allowing an absolute delay.
-The code is displayed below: 
+to leverage GlibC's ability to perform this operation: the C function 
+\texttt{clock\textunderscore{}nanosleep} allows an absolute time to be specified
+\cite{clock-nanosleep}.
+A wrapper function has been provided as part of the real-time library this 
+project provides: \texttt{delayUntil}.
+This function accepts the D type \texttt{MonoTime} as an input, converts it to the C 
+equivalent, and calls the C function \texttt{clock\textunderscore{}nanosleep}, 
+allowing an absolute delay. The code is displayed below: 
 \begin{lstlisting}
 void delayUntil(MonoTime timeIn)
 {
@@ -195,64 +215,112 @@ void delayUntil(MonoTime timeIn)
     }
 }
 \end{lstlisting}
-This allows a simplistic use from a real-time application. An absolute sleep can 
-then be performed in the following manner: 
+This allows simplistic use from a real-time application. An absolute sleep can 
+be performed in the following manner: 
 \begin{lstlisting}
 void main()
 {
     auto time = MonoTime.currTime(); 
     time += 3.seconds; 
-    delay_until(time);
+    delayUntil(time);
 }
 \end{lstlisting}
 As such, the D programming language can easily provide the ability to sleep 
-until an absolute time. In order to easily use this functionality, a 
-wrapper has been provided.
+until an absolute time. In order to easily the use of this functionality, a 
+wrapper has been provided, giving an interface to D.
 
-
-\subsection{Bounded Priority Inversion}
+\subsection{Requirements 5 and 6: Bounded Priority Inversion}
 In D, Mutexes follow a similar approach to Threads: the language's
 implementation provides a wrapper around operating system calls, this 
 enables operating system independent code to be written simply. However, D has no 
 inherent ability to provide priority inversion handling protocols. 
-However, these protocols are already provided for POSIX compliant Mutexes 
-\cite{mutex-setprotocol}. On a POSIX 
-compliant operating system D will use this mutex type but not set the protocol. 
-By interacting with Glibc, the default mutex class can be inherited
-and provided with a constructor that sets this property.
+\par\bigskip\noindent
+Due to the underlying implementation of D's mutexes, there are two alternative 
+approaches to defining the priority inheritance and priority ceiling protocols: 
+either the current implementation may be extended to incorporate system calls 
+setting the POSIX mutexes as using these protocols, or a new, language level 
+mutex can be added that defines these protocols. As real-time systems have been 
+shown to only be viable on operating systems that are POSIX compliant, and due to 
+the quantity of work involved in reimplementing and defining these protocols, the 
+decision was made to use POSIX mutexes. 
+\par\bigskip\noindent
+It is worth noting that the priority inheritance and priority ceiling protocols 
+are available when using POSIX mutexes in C. 
+\cite{mutex-setprotocol}. However, even though D's implementation of the \texttt{Mutex} 
+class uses POSIX mutexes, it does not not set the protocol during their creation. 
+As requirement 8 highlights the importance of an unmodified runtime, the 
+constructor for this class cannot be extended, instead it must be fully 
+reimplemented with an alterative imlpmentation of the constructer adding in 
+the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} \cite{mutex-setprotocol}. 
+The full implementation of this mutex class is defined:
+\lstinputlisting[language=Java]{rtmutex.d}
 A mutex created like this may then be initialised in the following manner: 
-%TODO - GIVE FULL DEFINITION OF RTMUTEX
 \begin{lstlisting}
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
-Additionally, support is needed to set and receive the priority ceiling 
-associated with the mutex. This is achieved in a similar manner: additional 
+However, this is not a very D-like implementation. As with the scheduler calls, 
+it is better to wrap this into two separate constructors. Additionally, support 
+is needed to set and receive the priority ceiling associated with the 
+mutex. This is achieved in a similar manner: additional 
 functions can be added providing a wrapper around the C functions 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling} and 
-\texttt{pthread\textunderscore{}mutex\textunderscore{}\\setprioceiling}
-in the following manner:
+\texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
+All the above can be achieved through a dummy class, in the following manner: 
 \begin{lstlisting}
-final @property int ceiling()
+class CeilingMutex 
 {
-    int ceiling; 
-    if(pthread_mutex_getprioceiling(&m_hndl, &ceiling))
-    throw new SyncError("Unable to fetch the priority 
-                    ceiling for the associated Mutex"); 
-    return ceiling; 
+    private import core.sync.exception : SyncError;
+    alias ceilingMutex this;
+    RTMutex ceilingMutex;
+
+    // Initializes a new CeilingMutex
+    this()
+    {
+        ceilingMutex = new RTMutex(PROTOCOL_CEILING);
+        this.ceiling = 1;
+    }
+
+    final @property int ceiling()
+    {
+        int ceiling; 
+        if(pthread_mutex_getprioceiling(this.handleAddr, 
+                                                &ceiling))
+            throw new SyncError("Unable to fetch the priority 
+                           ceiling for the associated Mutex"); 
+        return ceiling; 
+    }
+
+    final @property void ceiling(int val)
+    {
+        if(pthread_mutex_setprioceiling(this.handleAddr, 
+                                                val, null))
+            throw new SyncError("Unable to set the priority 
+                           ceiling for the associated Mutex"); 
+    }
 }
 \end{lstlisting}
 This allows the priority ceiling to be set or get as if it were a property of 
-the class. Allowing a very idiomatic and readable interaction: 
+the \texttt{RTMutex} class. Similarly, the functions defined in \texttt{RTMutex} 
+can be accessed as though they were part of the \texttt{CeilingMutex} class. 
+A similar result is achieved for the \texttt{InheritanceMutex} class.
+This allows a very idiomatic and readable interaction: 
 \begin{lstlisting}
-auto a = new RTMutex(PRIORITY_CEILING); 
+auto a = new CeilingMutex;
 a.ceiling = 50; 
 writeln("priority ceiling of a is: ", a.ceiling); 
+synchronized(a) 
+{
+    // do something
+}
 \end{lstlisting}
 Therefore, on a POSIX compliant operating system, the ability to interact with 
-existing C libraries enables D to provide a subclass of the language's default 
-Mutex class. This subclass is capable of providing either the priority ceiling 
-protocol or the priority inheritance protocol. Wrappers around the C functions 
-enable this to be used in an intuitive manner. 
+existing C libraries enables an implementation of a mutex, similar to the languages 
+core model, to be extended, incorporating both the priority inheritance and 
+priority ceiling protocols. Wrappers around this \texttt{RTMutex} class for 
+either protocol, and around the C functions 
+\texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling} 
+and \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling{}} 
+provide an easy to use and intuitive implementation. 
 
 \subsection{Asynchronous Transfer of Control}
 The final primitive required for a programming language to support the development 
