@@ -322,17 +322,30 @@ either protocol, and around the C functions
 and \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling{}} 
 provide an easy to use and intuitive implementation. 
 
-\subsection{Asynchronous Transfer of Control}
+\subsection{Requirement 7: Asynchronous Transfer of Control} % 600 words
 The final primitive required for a programming language to support the development 
 of a real-time system is the ability to perform an asynchronous transfer of 
-control. As detailed in the previous section, this entails providing a 
-section of code that can be interrupted at any moment in time asynchronously. 
-When using C with POSIX threads, this can be achieved through clever use of 
-setjmp and longjmp, combined with SIG handlers. This allows an asynchronous 
-signal to effect the flow of control. A similar approach can be taken in D, 
-however the complexity of such a system and unsafe management of the stack when 
-calling longjmp 
-\cite{unwinding-stack} mean that it is not especially feasible. 
+control. This entails providing a section of code that can be interrupted at 
+any moment in time asynchronously.
+As detailed in the previous section, there are several different methods of 
+achieving this aim. Here, each method is considered, and the logic behind the 
+implementation explained. 
+\subsubsection*{Setjmp and Longjmp} 
+Through D's interaction with C, asynchronous transfer of control can be achieved 
+through use of the commands, \texttt{setjmp} and \texttt{longjmp}. These allow 
+the control of flow to be altered in a program by marking a location in code when 
+\texttt{setjmp} is called, and jumping to this saved location when \texttt{longjmp} 
+is called. It is possible to asynchronously invoke the \texttt{longjmp} function
+through the use of POSIX signals, and a signal handler. This allows an asynchronous 
+signal to effect the flow of control. However, due to the lack of concern for 
+stack management, it is common for the stack to become corrupted using this approach
+\cite{unwinding-stack}. As ATC will typically involve altering the current function, 
+it is likely to affect the stack, and such would not provide a memory safe 
+implementation in D. 
+
+\subsubsection*{Thread Cancellation}
+\subsubsection*{Exceptions and Signals}
+
 An alternative approach is to set a thread's cancellation type using to 
 \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS} using 
 \texttt{pthread\textunderscore{}setcanceltype}. This then allows a thread to 
@@ -352,3 +365,7 @@ and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error
 prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not 
 followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
 In addition, this does not permit the ability to nest interruptible sections. 
+
+\subsection{Requirement 9: Provision of Unit Tests}
+
+\subsection{Requirement 10: Documentation of the Library}
