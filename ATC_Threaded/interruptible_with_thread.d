@@ -18,7 +18,6 @@ class Interruptible
 
     private static Interruptible sm_this;
 
-
     this(void delegate() dg)
     {
         m_dg = dg; 
@@ -70,7 +69,7 @@ class Interruptible
     {
         Interruptible.setThis(this);
         Thread.getThis.priority = this.priority;
-        if( pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null) )
+        if( pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, null) )
         {
             throw new Exception("Unable to set thread cancellation type");
         }
@@ -127,12 +126,8 @@ class Interruptible
 
     @property void deferred(bool new_value)
     {
-        if (new_value) // set this to true
+        if (new_value) 
         {
-            //if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
-            // {
-            //     throw new Exception("Unable to set thread cancellation type");
-            //}
             _deferred = true;
         }
 
@@ -142,12 +137,6 @@ class Interruptible
             {
                 undeferrableInterrupt();
             }
-            /*
-               if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
-               {
-               throw new Exception("Unable to set thread cancellation type");
-               }
-             */
             _deferred = false;
         }
     }
