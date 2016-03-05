@@ -39,15 +39,12 @@ was determined.
 This chapter aims to describe the implementation of these requirements into the D
 programming language, highlighting the completed implementations and any design 
 decisions made along the way. 
+Each of the functional requirements of the project the potential
+implementations are discussed. In this discussion, any design 
+decisions that have been made will be detailed. Furthermore, this chapter will 
+detail the completed implementation of each component. 
 
-\section{Implementation}
-
-In this section, each of the functional requirements of the project the potential
-implementations are discussed. This discussion will highlight any design 
-decisions that have been made and will detail the completed implementation of 
-each component. 
-
-\subsection{Method of Provision}
+\section{Method of Provision}
 % Library vs modified runtime ? 
 For the end goal of this project to be usable, various methods for its delivery 
 were considered. There are two significant alternatives. If no compiler, or 
@@ -60,7 +57,7 @@ Failing this, a modified runtime and/or compiler must be provided. This would
 enable the development of real-time systems, however, the modified system would 
 require maintenance to keep it up to date with the core set of D functionality. 
 
-\subsection{Requirement 1: Threads and Interprocess Communication}
+\section{Requirement 1: Threads and Interprocess Communication}
 D, being a C/C++ style language, provides support for the creation and use of 
 threads. Threads in D follow a Java style approach: \texttt{Thread} is a class, 
 allowing subclasses to be derived and methods to be overridden. The default 
@@ -122,7 +119,7 @@ Furthermore, special care must also be taken when developing such a system,
 selecting appropriate hardware and programming the system in a manner appreciative 
 of the underlying hardware \cite{rt-wiki-how-to}.
 
-\subsection{Requirement 2: Priority Based Scheduling}
+\section{Requirement 2: Priority Based Scheduling}
 The ability to correctly schedule tasks or threads based on their priority is of 
 critical importance to a real-time system. As previously discussed D provides 
 concurrency through operating system Threads, encapsulated in the
@@ -183,13 +180,13 @@ The ability to set the scheduler to use a priority based method, combined with
 D language's previously present ability to set the priority of a thread therefore 
 enables a priority based scheduling approach to be used.  
 
-\subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
+\section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
 As mentioned in the previous section, it is a necessary feature of a real-time 
 systems programming language to be able to sleep until an absolute time, rather 
 than a relative time. In addition, this sleep must use a monotonic clock in order 
 to remove any subjection from clock-drift or time-zone changes. D has support 
 for a monotonic clock as part of the core libraries 
-\cite{dlang-core-time}. We can access this using 
+\cite{dlang-core-time}. This is accessible using 
 \texttt{MonoTime}. Unfortunately there is no ability to sleep until an 
 absolute time. Using D's ability to interact with C libraries, it is possible 
 to leverage GlibC's ability to perform this operation: the C function 
@@ -229,7 +226,7 @@ As such, the D programming language can easily provide the ability to sleep
 until an absolute time. In order to easily the use of this functionality, a 
 wrapper has been provided, giving an interface to D.
 
-\subsection{Requirements 5 and 6: Bounded Priority Inversion}
+\section{Requirements 5 and 6: Bounded Priority Inversion}
 In D, Mutexes follow a similar approach to Threads: the language's
 implementation provides a wrapper around operating system calls, this 
 enables operating system independent code to be written simply. However, D has no 
@@ -254,18 +251,20 @@ reimplemented with an alterative imlpmentation of the constructer adding in
 the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} \cite{mutex-setprotocol}. 
 The full implementation of this mutex class is defined:
 \lstinputlisting[language=Java]{rtmutex.d}
-A mutex created like this may then be initialised in the following manner: 
+A mutex may then be created and initialised in the following manner: 
 \begin{lstlisting}
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
-However, this is not a very D-like implementation. As with the scheduler calls, 
-it is better to wrap this into two separate constructors. Additionally, support 
-is needed to set and receive the priority ceiling associated with the 
-mutex. This is achieved in a similar manner: additional 
-functions can be added providing a wrapper around the C functions 
+However, this is not a very D-like implementation: enums are not widely used 
+in constructors. Instead, as with the scheduler calls, 
+it is more intuitive to wrap this into two separate classes. Additionally, 
+further support 
+is needed to set and retrieve the priority ceiling associated with the 
+mutex. This can achieved in a similar manner, additional 
+functions can extend the class, providing a wrapper around the C functions 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling} and 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
-All the above can be achieved through a dummy class, in the following manner: 
+This can be conveniently wrapped in the following manner. 
 \begin{lstlisting}
 class CeilingMutex 
 {
@@ -322,14 +321,15 @@ either protocol, and around the C functions
 and \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling{}} 
 provide an easy to use and intuitive implementation. 
 
-\subsection{Requirement 7: Asynchronous Transfer of Control} % 600 words
+\section{Requirement 7: Asynchronous Transfer of Control} % 600 words
 The final primitive required for a programming language to support the development 
 of a real-time system is the ability to perform an asynchronous transfer of 
-control. This entails providing a section of code that can be interrupted at 
-any moment in time asynchronously.
+control (ATC). This entails providing a section of code that can be interrupted 
+and aborted at any moment in time asynchronously.
 As detailed in the previous section, there are several different methods of 
 achieving this aim. Here, each method is considered, and the logic behind the 
 implementation explained. 
+
 \subsubsection*{Setjmp and Longjmp} 
 Through D's interaction with C, asynchronous transfer of control can be achieved 
 through use of the commands, \texttt{setjmp} and \texttt{longjmp}. These allow 
@@ -340,23 +340,190 @@ through the use of POSIX signals, and a signal handler. This allows an asynchron
 signal to effect the flow of control. However, due to the lack of concern for 
 stack management, it is common for the stack to become corrupted using this approach
 \cite{unwinding-stack}. As ATC will typically involve altering the current function, 
-it is likely to affect the stack, and such would not provide a memory safe 
-implementation in D. 
+it is likely to affect the stack and would therefore not provide a memory safe 
+implementation in D. As a result of this poor memory management, this method was 
+not implemented in the end product, and is not a viable solution for asynchronous 
+transfer of control in D. 
 
 \subsubsection*{Thread Cancellation}
-\subsubsection*{Exceptions and Signals}
+The second approach considered for the implementation of ATC in D is a thread 
+cancellation approach. As previously shown, D's \texttt{Thread} class maps down onto 
+operating specific threads. For POSIX compliant operating systems, it therefore 
+uses pthreads. When using pthreads, it is possible to terminate a thread during 
+it's execution using the \texttt{pthread\textunderscore{}cancel} function. 
+In both methods, an \texttt{Interruptible} class abstracts the setup and running of an 
+ATC section. 
+Initialising the class will create a new \texttt{Thread}, 
+inheriting the priority of the calling \texttt{Thread}. 
+On calling a \texttt{start} function, execution of the calling 
+\texttt{Thread} will then suspend, waiting for whatever the abortable section 
+of code to be executed within the \texttt{Interruptible} class.
+The aim of this class is to provide a friendly interaction 
+that removes concern over the underlying implementation. 
+For the asynchronous interrupt mechanism, using \texttt{pthread\textunderscore{}cancel} 
+two alternative approaches were considered.
+The first approach incorporates the Java style, having a 
+\texttt{Thread.interrupt()} method. A similar method could be implemented in D. 
+This provides an easy to use syntax that acts in the following manner, 
+interrupting a \texttt{Thread} if it has not completed after 2 seconds.
+\begin{lstlisting}
+void interruptibleCode()
+{
+    while(true)
+    {
+        // loop forever.
+    }
+}
 
-An alternative approach is to set a thread's cancellation type using to 
-\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS} using 
-\texttt{pthread\textunderscore{}setcanceltype}. This then allows a thread to 
-be asynchronously cancelled using \texttt{pthread\textunderscore{}cancel}. Cleanup 
-is also possible using this mechanism through the use of 
-\texttt{pthread\textunderscore{}cleanup\textunderscore{}pop}. However, 
-this method is complicated to implement, requiring a thread to resume from an 
-arbitrary point after its cancellation. In addition, this becomes further 
-complicated by the desire to nest interruptible sections of code. 
-Ada takes a similar approach to this, using a multi-threaded model. 
+void main()
+{
+    void threadFn()
+    {
+        new Interruptible(&interruptibleCode).start(); 
+    }
+
+    auto a = new Thread(&threadFn); 
+    a.start(); 
+    Thread.sleep(2.seconds); 
+    a.interrupt();
+}
+\end{lstlisting}
+The second approach instead placed this \texttt{interrupt} method as part of the 
+\texttt{Interruptible} class. Contrastingly, this would be invoked in the following
+manner: 
+\begin{lstlisting}
+void interruptibleCode()
+{
+    while(true)
+    {
+        // loop forever.
+    }
+}
+
+void main()
+{
+    __gshared Interruptible a; 
+    void threadFn()
+    {
+        a = new Interruptible(&interruptibleCode)
+        a.start(); 
+    }
+
+    new Thread(&threadFn).start(); 
+    Thread.sleep(2.seconds); 
+    a.interrupt();
+}
+\end{lstlisting}
+While the difference between the two approaches may appear small, it is significant: 
+in the first implementation, a thread containing multiple \texttt{Interruptible} 
+sections of code may have a later section interrupted by a call to \texttt{interrupt}
+not intended for it. This may lead to a cause of unexpected behaviour, and therefore 
+a decision was made to implement the second approach. 
 \par\bigskip\noindent
+So far, it has been assumed that the interrupt function performs the exact 
+functionality required. 
+However, using \texttt{pthread\textunderscore{}cancel} alone does not guarantee 
+an immediate cancellation: it is only guaranteed 
+to cancel once both a signal is received and a cancellation point in the code 
+is reached. 
+Many standard C functions are defined as being thread cancellation points, however, 
+there is no guarantee that these may be called within the target thread 
+\cite{pthread-cancel-points}. As a result of this, it is possible to set the 
+cancellation of a thread to be immediate through the function 
+\texttt{pthread\textunderscore{}setcanceltype}, by setting the value to 
+\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS}. This is 
+crucial in either tight loops, or where cancellation must be immediate. 
+\par\bigskip\noindent
+However, this immediate cancellation comes at the cost of safety: interrupting a 
+thread during the middle of a crucial function call, such as a memory allocation, 
+may leave memory in an inconsistent state. In order to safely use this functionality, 
+thread cancellation must therefore be deferred during certain sections of code, 
+and enabled during others. This gives rise to the requirement of having 
+deferred regions of code, in which operations can be executed with no risk of 
+being cancelled. Two alternative approaches were considered for the implementation 
+of this approach. The first approach considered was to have a method of the 
+\texttt{Interruptible} class that allow the cancellation type to be toggled 
+between \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ENABLE}
+and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}
+The second approach is to toggle boolean flags in the \texttt{Interruptible} class. 
+By using these flags it is possible to determine whether a section of code is 
+currently deferred from being interrupted or not. 
+Furthermore, any pending interrupt that arrives when interrupts are deferred may 
+be stored. When interrupts are re-enabled, this interrupt may then be triggered. 
+Conceptually, the two approaches are similar. However, the first approach does 
+not provide a viable method for nesting \texttt{Interruptible} classes. As it is 
+possible for a second interruptible class to be nested within the first, setting 
+\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE} may cause an 
+inner \texttt{Interruptible} to be non-interruptible, even though its outer parent 
+has been cancelled. In order to provide a fine-grained control over the two, 
+even in the cases where nesting is possible, both these methods are implemented. 
+Basic deferral can be achieved through the \texttt{deferred} properties. In order 
+to execute code safely, even in nested cases, an \texttt{executeSafely} method that 
+defers the cancellation has been implemented as follows. 
+\begin{lstlisting}
+class Interruptible
+{
+    ..
+
+    void executeSafely(void delegate() fn)
+    {
+        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+        fn();
+        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+        {
+            throw new Error("Unable to set thread cancellation state");
+        }
+    }
+}
+\end{lstlisting}
+this may then be used in the following manner. 
+\begin{lstlisting}
+alias getInt = Interruptible.getThis;
+void interruptibleFunction() 
+{
+    for(int i = 0; i < 10; i++)
+    {
+        void update() 
+        {
+            // perform some memory allocation
+            void* x = GC.malloc(10_000); 
+        }
+        getInt.executeSafely(&update);
+    }
+}
+\end{lstlisting}
+This provides a safe mechanism for handling memory allocation, or critical sections 
+of code. Furthermore, this enables code to be executed safely despite being 
+nested in outer \texttt{Interruptible} classes. 
+\par\bigskip\noindent
+Additionally, it is often desirable to execute code once the cancellation has taken 
+place. In C with POSIX threads, this can be achieved through the use of the 
+\texttt{pthread\textunderscore{}cleanup\textunderscore{}push} function. 
+This is achievable through use of D's interoperability with C. Again, functions are provided 
+that wrap this functionality, providing a more usable interface. An example of using 
+this cleanup code is as follows: 
+\begin{lstlisting}
+__gshared Interruptible a; 
+
+extern (C) void thread_cleanup(void* arg) nothrow
+{
+    writeln("Cleanup Function");
+}
+
+void interruptibleFn()
+{
+    auto a = addCleanup(&thread_cleanup, cast(void*)void);
+    while(true)
+    {
+        // loop forever
+    }
+}
+\end{lstlisting}
+
+\subsubsection*{Exceptions and Signals}
 An alternative approach is use the inbuilt Exception/Error handling mechanisms 
 that D provides, throwing an Error when an asynchronous signal is received and 
 catching that error when leaving the interruptible section. This can be 
@@ -366,6 +533,4 @@ prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not
 followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
 In addition, this does not permit the ability to nest interruptible sections. 
 
-\subsection{Requirement 9: Provision of Unit Tests}
-
-\subsection{Requirement 10: Documentation of the Library}
+\section{Requirement 9: Provision of Unit Tests}
