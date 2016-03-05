@@ -111,10 +111,10 @@ class Interruptible
         }
         else
         {
-                import core.sys.posix.signal; 
-                Interruptible.toThrow = cast(shared Interruptible)this;
-                if (pthread_kill(m_threadId, _SIGRTMIN))
-                    throw new Exception("Unable to signal the interruptible section");
+            import core.sys.posix.signal; 
+            Interruptible.toThrow = cast(shared Interruptible)this;
+            if (pthread_kill(m_threadId, _SIGRTMIN))
+                throw new Exception("Unable to signal the interruptible section");
         }
     }
 
@@ -122,10 +122,10 @@ class Interruptible
     {
         if (__pending)
         {
-                import core.sys.posix.signal; 
-                Interruptible.toThrow = cast(shared Interruptible) this; 
-                if (pthread_kill(m_threadId, _SIGRTMIN))
-                    throw new Exception("Unable to signal the interruptible section");
+            import core.sys.posix.signal; 
+            Interruptible.toThrow = cast(shared Interruptible) this; 
+            if (pthread_kill(m_threadId, _SIGRTMIN))
+                throw new Exception("Unable to signal the interruptible section");
         }
     }
 

@@ -531,23 +531,76 @@ through the use of thread cancellation in a two-thread model.
 
 %TODO ------
 \subsubsection*{Exceptions and Signals}
-An alternative approach to ATC is the use of D's inbuilt Exception/Error 
+An alternative approach to the implementation of ATC is to use D's inbuilt Exception/Error 
 handling mechanisms. Errors and Exceptions are typically used explicitly within code 
 to affect the flow of control within a program.
 For a POSIX system, it is possible to asynchronously invoke code remotely using 
-signals and signal handlers. 
+signals and signal handlers. While typically used on a process wide level, it
+is also possible to invoke these signal handlers for a specific thread through
+the use of a C function, \texttt{pthread\textunderscore{}kill}. By using a
+real-time signal, such as SIGRTMIN, there are guarantees that the signal
+arrives in a timely manner, and that any signals are sent in the correct order. 
+Thus, in D, it is possible to remotely invoke code in a \texttt{Thread} through 
+the use of signals and signal handlers. This can be also be used to remotely
+throw an exception. The following example shows a simple invocation of ATC
+using achieved by throwing and catching an exception to break out of an
+infinite loop. 
+\begin{lstlisting}
+import core.sys.posix.pthread, 
+       core.sys.posix.signal, 
+       std.stdio;
 
-However, it is possible to remotely execute the code in a signal handler,
-in a pthread using the \texttt{pthread\textunderscore{}kill}
-functin
+Exception ex = new Exception("Remotely Triggered Exception"); 
 
-throwing an Error when an asynchronous signal is received and 
-catching that error when leaving the interruptible section. This can be 
-achieved through having explicit methods such as \texttt{enableAsynchronousInterrupts()}
-and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error 
-prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not 
-followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
-In addition, this does not permit the ability to nest interruptible sections. 
+extern (C) void sig_handler(int signum) @nogc nothrow
+{
+    throw ex;
+}
+
+void setupSignalHandler()
+{
+    sigaction_t action; 
+    action.sa_handler = &sig_handler; 
+    sigemptyset(&action.sa_mask);
+    sigaction(36, &action, null); 
+}
+
+void threadFunction()
+{
+    writeln("This is the thread"); 
+    while(true)
+    {
+        Thread.sleep(1.seconds);
+    }
+}
+
+void main()
+{
+    setupSignalHandler; 
+
+    auto a = new Thread(&threadFunction); 
+    a.start; 
+
+    Thread.sleep(1.seconds); 
+    pthread_kill(a.id, 36); 
+}
+\end{lstlisting}
+% TODO - TALK ABOUT DELAYING THE EXCEPTION 
+% TODO - TALK ABOUT NESTING OF SECTIONS 
+% TODO - TALK ABOUT SAFETY OF THROWING EXCEPTION 
+% TODO - TALK ABOUT CLEANUP ROUTINES 
+% TODO - MENTION THAT IT IS SIMILAR IMPLEMENTATION TO THREAD CANCELLATION 
+% TODO - HIGHLIGHT THE DIFFERENCES BETWEEN THE TWO METHODS - IE Exception
+% REQUIRES SOME ADDITIONAL SETUP, BUT ONLY USES 1 THREAD. ALSO DEPENDS ON THE
+% SETUP OF THE STACK, SO MAY DIFFER ON DIFFERENT ARCHITECTURES.
+
+%throwing an Error when an asynchronous signal is received and 
+%catching that error when leaving the interruptible section. This can be 
+%achieved through having explicit methods such as \texttt{enableAsynchronousInterrupts()}
+%and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error 
+%prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not 
+%followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
+%In addition, this does not permit the ability to nest interruptible sections. 
 
 %TODO ------
 \section{Requirement 9: Provision of Testing Facilities}
