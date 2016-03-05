@@ -522,10 +522,19 @@ void interruptibleFn()
     }
 }
 \end{lstlisting}
+This provides the desired functionality of ATC, as set out in requirement 7, 
+through the use of thread cancellation in a two-thread model.
 
 \subsubsection*{Exceptions and Signals}
-An alternative approach is use the inbuilt Exception/Error handling mechanisms 
-that D provides, throwing an Error when an asynchronous signal is received and 
+An alternative approach to thread cancellation is the use of D's inbuilt Exception/Error 
+handling mechanisms. Errors and Exceptions are typcially used explicity within code 
+to effect the flow of control within a program for unexpected circumstances. 
+Rather than using a two thread approach, with one thread idling, and the other 
+waiting for 
+However, it is possible to remotely invoke an exception in a target thread 
+using POSIX signals. 
+
+throwing an Error when an asynchronous signal is received and 
 catching that error when leaving the interruptible section. This can be 
 achieved through having explicit methods such as \texttt{enableAsynchronousInterrupts()}
 and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error 
