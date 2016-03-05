@@ -375,33 +375,3 @@ approach to be taken. Finally, D has a similar model of exceptions to Java. By
 combining D's exception model with POSIX signals, enabling the asynchronous
 execution of code, D therefore has the potential to implement all three ATC
 implementations. 
-
-\subsection{Requirement 9: Provision of Testing Facilities}
-In order to verify the correct behaviour of the completed implementation, a set 
-of tests must be provided. Furthermore, these tests allow a new systems viability 
-to be tested, and improve the maintainability of the system. D provides a built-in 
-functionality for unit-testing: using the \texttt{unittest} flag, test code can 
-be placed alongside function declarations. In addition, assert statements allow 
-expected behaviour to be verified. 
-This is shown in the following sample:
-\begin{lstlisting}
-int triple(int i) {
-    return i*3; 
-}
-unittest {
-    assert(triple(0) == 0); 
-    assert(triple(-4) == -8); 
-    assert(triple(10) == 20); 
-    assert(12.triple == 36);
-}
-\end{lstlisting}
-For testing, a compiler flag using the two most popular compilers, LDC and DMD, 
-inserts any \texttt{unittest} code into the main function. A main function may 
-also be artificially created through a compiler flag. This allows the testing of 
-library code through a compiler invocation in the following manner: 
-\begin{lstlisting}
-ldc -main -unittest -run my_library.d
-\end{lstlisting}
-This inbuilt definition of \texttt{unittest} allows unit-testing to occur 
-without the need for tools external to the core language, thus providing a convenient 
-and practical testing method testing method. 

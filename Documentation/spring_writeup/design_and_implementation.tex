@@ -467,14 +467,18 @@ class Interruptible
 
     void executeSafely(void delegate() fn)
     {
-        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, null))
+        if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 
+                                                    null))
         {
-            throw new Error("Unable to set thread cancellation state");
+            throw new Error("Unable to set thread cancellation 
+                                                    state");
         }
         fn();
-        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, null))
+        if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 
+                                                      null))
         {
-            throw new Error("Unable to set thread cancellation state");
+            throw new Error("Unable to set thread cancellation 
+                                                    state");
         }
     }
 }
@@ -525,14 +529,17 @@ void interruptibleFn()
 This provides the desired functionality of ATC, as set out in requirement 7, 
 through the use of thread cancellation in a two-thread model.
 
+%TODO ------
 \subsubsection*{Exceptions and Signals}
-An alternative approach to thread cancellation is the use of D's inbuilt Exception/Error 
-handling mechanisms. Errors and Exceptions are typcially used explicity within code 
-to effect the flow of control within a program for unexpected circumstances. 
-Rather than using a two thread approach, with one thread idling, and the other 
-waiting for 
-However, it is possible to remotely invoke an exception in a target thread 
-using POSIX signals. 
+An alternative approach to ATC is the use of D's inbuilt Exception/Error 
+handling mechanisms. Errors and Exceptions are typically used explicitly within code 
+to affect the flow of control within a program.
+For a POSIX system, it is possible to asynchronously invoke code remotely using 
+signals and signal handlers. 
+
+However, it is possible to remotely execute the code in a signal handler,
+in a pthread using the \texttt{pthread\textunderscore{}kill}
+functin
 
 throwing an Error when an asynchronous signal is received and 
 catching that error when leaving the interruptible section. This can be 
@@ -542,4 +549,33 @@ prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not
 followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
 In addition, this does not permit the ability to nest interruptible sections. 
 
-\section{Requirement 9: Provision of Unit Tests}
+%TODO ------
+\section{Requirement 9: Provision of Testing Facilities}
+In order to verify the correct behaviour of the completed implementation, a set 
+of tests have be provided. These tests allow a new systems viability 
+to be tested, and improve the maintainability of the system. D provides a built-in 
+functionality for unit-testing: using the \texttt{unittest} flag, test code can 
+be placed alongside function declarations. In addition, assert statements allow 
+expected behaviour to be verified. 
+This is shown in the following sample:
+\begin{lstlisting}
+int triple(int i) {
+    return i*3; 
+}
+unittest {
+    assert(triple(0) == 0); 
+    assert(triple(-4) == -8); 
+    assert(triple(10) == 20); 
+    assert(12.triple == 36);
+}
+\end{lstlisting}
+For testing, a compiler flag using the two most popular compilers, LDC and DMD, 
+inserts any \texttt{unittest} code into the main function. A main function may 
+also be artificially created through a compiler flag. This allows the 
+full testing of library code through a compiler invocation in the following manner: 
+\begin{lstlisting}
+ldc -main -unittest -run realtime.d
+\end{lstlisting}
+This inbuilt definition of \texttt{unittest} allows unit-testing to occur 
+without the need for tools external to the core language, thus providing a convenient 
+and practical testing method. 
