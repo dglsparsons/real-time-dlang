@@ -52,7 +52,7 @@ core runtime features of the language need to be altered in order to provide the
 desired functionality then the project may be packaged as an external library. 
 This is the most desirable end goal, hence the addition of requirement 8, as it 
 prevents the need to provide and maintain a custom complier and runtime and enables 
-exsiting D users to simply add-in the library as needed. 
+existing D users to simply add-in the library as needed. 
 Failing this, a modified runtime and/or compiler must be provided. This would 
 enable the development of real-time systems, however, the modified system would 
 require maintenance to keep it up to date with the core set of D functionality. 
@@ -464,7 +464,6 @@ defers the cancellation has been implemented as follows.
 class Interruptible
 {
     ..
-
     void executeSafely(void delegate() fn)
     {
         if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 
@@ -529,10 +528,9 @@ void interruptibleFn()
 This provides the desired functionality of ATC, as set out in requirement 7, 
 through the use of thread cancellation in a two-thread model.
 
-%TODO ------
 \subsubsection*{Exceptions and Signals}
-An alternative approach to the implementation of ATC is to use D's inbuilt Exception/Error 
-handling mechanisms. Errors and Exceptions are typically used explicitly within code 
+An alternative approach to the implementation of ATC is to use D's inbuilt exception/error 
+handling mechanisms. Errors and exceptions are typically used explicitly within code 
 to affect the flow of control within a program.
 For a POSIX system, it is possible to asynchronously invoke code remotely using 
 signals and signal handlers. While typically used on a process wide level, it
@@ -543,7 +541,7 @@ arrives in a timely manner, and that any signals are sent in the correct order.
 Thus, in D, it is possible to remotely invoke code in a \texttt{Thread} through 
 the use of signals and signal handlers. This can be also be used to remotely
 throw an exception. The following example shows a simple invocation of ATC
-using achieved by throwing and catching an exception to break out of an
+using achieved by throwing and catching an exception, breaking out of an
 infinite loop. 
 \begin{lstlisting}
 import core.sys.posix.pthread, 
@@ -585,24 +583,163 @@ void main()
     pthread_kill(a.id, 36); 
 }
 \end{lstlisting}
-% TODO - TALK ABOUT DELAYING THE EXCEPTION 
-% TODO - TALK ABOUT NESTING OF SECTIONS 
-% TODO - TALK ABOUT SAFETY OF THROWING EXCEPTION 
-% TODO - TALK ABOUT CLEANUP ROUTINES 
-% TODO - MENTION THAT IT IS SIMILAR IMPLEMENTATION TO THREAD CANCELLATION 
+The above example displays the simple principal behind this method of ATC, 
+however, there are many aspects of its behaviour that make the above
+implementation impractical. 
+First, ATC sections may be nested inside each other. Using the above 
+method it would not be possible to exit two ATC sections through a single interrupt
+to the outermost section. This occurs because the exception would be caught and
+handled in the inner ATC section. 
+Secondly, internal components may trigger exceptions, or may have exception handlers 
+of their own. Using this approach, an exception that is intended to perform ATC 
+may instead be caught, and would thus have no effect. 
+In order to prevent this from happening, the final implementation for this
+project does not use \texttt{Exceptions}, but instead uses D's notion of an
+\texttt{Error}. Conceptually, \texttt{Errors} and \texttt{Exceptions} are
+similar, both being throw and catch-able objects. 
+However, they are used differently within D: \texttt{Exceptions} are used to
+manage the control of flow under exceptional circumstances, whereas
+\texttt{Errors} are typically used for terminating the program, and tracing faults. 
+However, the two also differ fundamentally. 
+\texttt{Errors} are allowed to propagate through generic \texttt{Exception} catches, and thus propagate 
+through all exception handlers. In this regard, they exhibit the desired
+behaviour, enabling abortable code to use \texttt{Exceptions} freely. The only
+limitation that this provides is that the end user does not program the
+abortable code to catch all \texttt{Errors}, as these generally occur when the
+program is unable to run, or corrupts memory, it is not advisable to do this
+anyway. For Signal and Exception based ATC, rather than using a generic
+\texttt{Error}, an \texttt{ATCInterrupt} class is defined. 
+This class extends the \texttt{Error} class.
+\par\bigskip\noindent
+In order to allow nesting of Interruptible sections of code, the \texttt{Error} thrown
+must also be rethrown if it is not caught by its corresponding catch statement. 
+This is achieved by creating a new error for each interruptible section, and
+this error having a property that is checked in the catch statement. The error
+is then rethrown if it is not caught by its owner. 
+This is achieved as follows: 
+\begin{lstlisting}
+private class ATCInterrupt : Error
+{
+    Interruptible owner;
+    this(Interruptible own)
+    {
+        super(null, null);
+        owner = own;
+    }
+}
+
+class Interruptible
+{
+    private ATCInterrupt error; 
+    private void function() fn; 
+
+    this(void function() func)
+    {
+        error = new ATCInterrupt(this); 
+        fn = func
+    }
+
+    private ATCInterrupt caughtInt;
+
+    void start()
+    {
+        try
+        {
+            fn();
+        }
+        catch (ATCInterrupt ex)
+        {
+            if (ex.owner != this)
+                caughtInt = ex;
+        }
+        finally
+        {
+            if (!(caughtInt is null))
+                throw caughtInt;
+        }
+    }
+}
+\end{lstlisting}
+This example enables both the use of exceptions within the ATC region, and
+enables ATC sections to be nested inside each other. However, compared to the
+\texttt{Thread} based approach, additional functionality is still required. 
+For the safety of the system it must be possible to defer interrupts, enabling 
+functions such as memory allocation, or system calls to fully complete. In
+Real-time Java this is achieved through the use of runtime reflection to detect
+whether the current function is safe to throw an \texttt{Exception} or not.
+However, D does not have a concept of run-time reflection, and therefore this cannot be
+used. 
+Instead, there are two alternatives. For the first, the core runtime and standard
+libraries would have to be modified. Through doing this, it is possible to
+define a further function property, such as \texttt{@ATCDeferred}.  During these
+sections of code, it would not be possible to interrupt. This
+would be the preferred method of implementing ATC, as it would remove the
+concern over safety from the developer. However, it would require significant
+reworking of the D runtime, and possibly compiler alterations (as this would be
+a language feature). As such, this method is outside of the scope of this
+project. 
+The alternative approach, is to leave the safety of ATC to the developer by
+providing methods to disable and re-enable deferral.
+This can easily be achieved through the use of two boolean flags: one to keep track
+of whether interrupts are deferred, and one to test whether an interrupt has
+arrived while they have been deferred. 
+However, as with the \texttt{Thread} approach, an extra method is then needed in 
+order to guarantee fully safe execution during nested ATC sections. By keeping
+track of each \texttt{Interruptible} sections parent, it is possible to defer
+all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
+achieved in the following manner: 
+\begin{lstlisting}
+class Interruptible
+{
+    ..
+    void executeSafely(void delegate() fn) 
+    {
+        defer();
+        scope(exit) restore();
+        fn();
+    }
+
+    private bool previousDeferState;
+
+    private void defer() @safe
+    {
+        if (! (parent is null) )
+        {
+            parent.defer;
+        }
+        previousDeferState = this.deferred;
+        this.deferred = true;
+    }
+
+    private void restore() @safe
+    {
+        if (! (parent is null))
+        {
+            parent.restore;
+        }
+        this.deferred = previousDeferState;
+    }
+}
+\end{lstlisting}
+This can then be invoked in the same manner as the \texttt{Thread} based
+implementation.
+\par\bigskip\noindent
+Furthermore, as with the implementation of \texttt{Thread} based ATC, a method 
+of specifying cleanup is neeeded. This
+is possible through the use of D's inbuilt \texttt{scope (exit)}.
+This executes code specified on exiting the current scope, regardless of
+whether this was through normal flow, or as a result of an exception. 
+This provides a convenient method of adding cleanup. 
+However, in order to keep the \texttt{Thread} and
+\texttt{Exception} based approaches similar in terms of functionality, and to
+allow the removal of these cleanup routines, the 
+previously \texttt{addCleanup} and \texttt{removeCleanup} functions have
+been added to the \texttt{Exception} model. 
+\par\bigskip\noindent
 % TODO - HIGHLIGHT THE DIFFERENCES BETWEEN THE TWO METHODS - IE Exception
 % REQUIRES SOME ADDITIONAL SETUP, BUT ONLY USES 1 THREAD. ALSO DEPENDS ON THE
 % SETUP OF THE STACK, SO MAY DIFFER ON DIFFERENT ARCHITECTURES.
 
-%throwing an Error when an asynchronous signal is received and 
-%catching that error when leaving the interruptible section. This can be 
-%achieved through having explicit methods such as \texttt{enableAsynchronousInterrupts()}
-%and \texttt{disableAsynchronousInterrupts()}. However, this can lead to error 
-%prone programs, where \texttt{enableAsynchronousInterrupts()} is called and not 
-%followed later by a call to \texttt{disableAsynchronousInterrupts()}. 
-%In addition, this does not permit the ability to nest interruptible sections. 
-
-%TODO ------
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 
 of tests have be provided. These tests allow a new systems viability 
