@@ -45,6 +45,11 @@ basicstyle=\ttfamily
 % For forcing float draw after tables
 \usepackage{placeins}
 
+% For embedding a wordcount
+\immediate\write18{texcount *.tex -total | grep "Words in" > count.sum;
+./wc_tool.d > count.sum2 }
+\newcommand\wordcount{\input{count.sum2}}
+
 % Rewritten the Chapter settings, in order to remove the stupid 50Space 
 % Indent from the top of the page. 
 \makeatletter
@@ -88,7 +93,7 @@ basicstyle=\ttfamily
 \chapter{Results and Evaluation}
 \input{results_and_evaluation.tex} %5
 \chapter{Conclusions}
-\input{conclusion.tex} %6
+%\input{conclusion.tex} %6
 %\appendix
 \addcontentsline{toc}{chapter}{References}
 \bibliographystyle{IEEEtran}

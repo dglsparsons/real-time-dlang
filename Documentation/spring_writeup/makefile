@@ -1,11 +1,11 @@
 # Makefile 
 
 all: 
-	pdflatex writeup.tex
+	pdflatex --enable-write18 writeup.tex
 	bibtex writeup.aux
-	pdflatex writeup.tex
-	pdflatex writeup.tex
-	pdflatex writeup.tex
+	pdflatex --enable-write18 writeup.tex
+	pdflatex --enable-write18 writeup.tex
+	pdflatex --enable-write18 writeup.tex
 
 clean: 
 	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf
