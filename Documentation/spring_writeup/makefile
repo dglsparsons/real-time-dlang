@@ -8,7 +8,7 @@ all:
 	pdflatex --enable-write18 writeup.tex
 
 clean: 
-	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf
+	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf *.sum *.sum2
 
 view: 
 	zathura writeup.pdf&
