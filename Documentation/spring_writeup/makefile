@@ -11,7 +11,7 @@ clean:
 	rm -fv *.aux *.blg *.out *.bbl *.log *.toc *.lot writeup.pdf
 
 view: 
-	okular writeup.pdf&
+	zathura writeup.pdf&
 
 spell: 
 	ispell *.tex
