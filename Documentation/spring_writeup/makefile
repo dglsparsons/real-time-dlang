@@ -20,7 +20,7 @@ cb:
 	cp writeup.pdf ~/Downloads/writeup.pdf
 
 count: 
-	texcount *.tex | grep "Words in text: " | grep -E "[0-9]{5}"
+	texcount *.tex -total | grep "Words in" 
 	detex writeup.tex | wc -w
 
 cbs: 
