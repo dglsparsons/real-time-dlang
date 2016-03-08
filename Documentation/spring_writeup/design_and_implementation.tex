@@ -268,7 +268,7 @@ This can be conveniently wrapped in the following manner.
 \begin{lstlisting}
 class CeilingMutex 
 {
-    private import core.sync.exception : SyncError;
+    private import core.sync.\texttt{Exception} : SyncError;
     alias ceilingMutex this;
     RTMutex ceilingMutex;
 
@@ -529,8 +529,8 @@ This provides the desired functionality of ATC, as set out in requirement 7,
 through the use of thread cancellation in a two-thread model.
 
 \subsubsection*{Exceptions and Signals}
-An alternative approach to the implementation of ATC is to use D's inbuilt exception/error 
-handling mechanisms. Errors and exceptions are typically used explicitly within code 
+An alternative approach to the implementation of ATC is to use D's inbuilt \texttt{Exception}/error 
+handling mechanisms. Errors and \texttt{Exception}s are typically used explicitly within code 
 to affect the flow of control within a program.
 For a POSIX system, it is possible to asynchronously invoke code remotely using 
 signals and signal handlers. While typically used on a process wide level, it
@@ -540,8 +540,8 @@ real-time signal, such as SIGRTMIN, there are guarantees that the signal
 arrives in a timely manner, and that any signals are sent in the correct order. 
 Thus, in D, it is possible to remotely invoke code in a \texttt{Thread} through 
 the use of signals and signal handlers. This can be also be used to remotely
-throw an exception. The following example shows a simple invocation of ATC
-using achieved by throwing and catching an exception, breaking out of an
+throw an \texttt{Exception}. The following example shows a simple invocation of ATC
+using achieved by throwing and catching an \texttt{Exception}, breaking out of an
 infinite loop. 
 \begin{lstlisting}
 import core.sys.posix.pthread, 
@@ -588,26 +588,26 @@ however, there are many aspects of its behaviour that make the above
 implementation impractical. 
 First, ATC sections may be nested inside each other. Using the above 
 method it would not be possible to exit two ATC sections through a single interrupt
-to the outermost section. This occurs because the exception would be caught and
+to the outermost section. This occurs because the \texttt{Exception} would be caught and
 handled in the inner ATC section. 
-Secondly, internal components may trigger exceptions, or may have exception handlers 
-of their own. Using this approach, an exception that is intended to perform ATC 
+Secondly, internal components may trigger \texttt{Exception}s, or may have \texttt{Exception} handlers 
+of their own. Using this approach, an \texttt{Exception} that is intended to perform ATC 
 may instead be caught, and would thus have no effect. 
 In order to prevent this from happening, the final implementation for this
 project does not use \texttt{Exceptions}, but instead uses D's notion of an
 \texttt{Error}. Conceptually, \texttt{Errors} and \texttt{Exceptions} are
 similar, both being throw and catch-able objects. 
 However, they are used differently within D: \texttt{Exceptions} are used to
-manage the control of flow under exceptional circumstances, whereas
+manage the control of flow under \texttt{Exception}al circumstances, whereas
 \texttt{Errors} are typically used for terminating the program, and tracing faults. 
 However, the two also differ fundamentally. 
 \texttt{Errors} are allowed to propagate through generic \texttt{Exception} catches, and thus propagate 
-through all exception handlers. In this regard, they exhibit the desired
+through all \texttt{Exception} handlers. In this regard, they exhibit the desired
 behaviour, enabling abortable code to use \texttt{Exceptions} freely. The only
 limitation that this provides is that the end user does not program the
 abortable code to catch all \texttt{Errors}, as these generally occur when the
 program is unable to run, or corrupts memory, it is not advisable to do this
-anyway. For Signal and Exception based ATC, rather than using a generic
+anyway. For Signal and \texttt{Exception} based ATC, rather than using a generic
 \texttt{Error}, an \texttt{ATCInterrupt} class is defined. 
 This class extends the \texttt{Error} class.
 \par\bigskip\noindent
@@ -660,7 +660,7 @@ class Interruptible
     }
 }
 \end{lstlisting}
-This example enables both the use of exceptions within the ATC region, and
+This example enables both the use of \texttt{Exception}s within the ATC region, and
 enables ATC sections to be nested inside each other. However, compared to the
 \texttt{Thread} based approach, additional functionality is still required. 
 For the safety of the system it must be possible to defer interrupts, enabling 
@@ -728,7 +728,7 @@ Furthermore, as with the implementation of \texttt{Thread} based ATC, a method
 of specifying cleanup is neeeded. This
 is possible through the use of D's inbuilt \texttt{scope (exit)}.
 This executes code specified on exiting the current scope, regardless of
-whether this was through normal flow, or as a result of an exception. 
+whether this was through normal flow, or as a result of an \texttt{Exception}. 
 This provides a convenient method of adding cleanup. 
 However, in order to keep the \texttt{Thread} and
 \texttt{Exception} based approaches similar in terms of functionality, and to
@@ -736,9 +736,25 @@ allow the removal of these cleanup routines, the
 previously \texttt{addCleanup} and \texttt{removeCleanup} functions have
 been added to the \texttt{Exception} model. 
 \par\bigskip\noindent
-% TODO - HIGHLIGHT THE DIFFERENCES BETWEEN THE TWO METHODS - IE Exception
-% REQUIRES SOME ADDITIONAL SETUP, BUT ONLY USES 1 THREAD. ALSO DEPENDS ON THE
-% SETUP OF THE STACK, SO MAY DIFFER ON DIFFERENT ARCHITECTURES.
+As highlighted, there are two possible implementations of Asynchronous
+Transfer of Control in D: a two-thread model and a Signal/Exception based
+approach. Both of these methods meet all the desired requirements of ATC; 
+They can be used safely, Allow cleanup, They immediately transfer control and
+abstract any unnecessary complexity away from the developer. 
+However, the two approaches differ in some regards. 
+Using the \texttt{Thread} based approach, a new \texttt{Thread} is
+created for each invocation. This suggests a heavier weight implementation compared
+to the \texttt{Exception} model.
+As far as the cancellation goes, there is little difference between
+\texttt{pthread\textunderscore{}kill} and \texttt{pthread\textunderscore{}cancel}, 
+both of these functions are operating system calls that use signals in their
+implementation. 
+However, the \texttt{Exception} based approach to ATC depends heavily on correct 
+setup of the target \texttt{Thread's} stack when handling a signal. 
+On different CPU architectures, it is possible that the signal handler may not 
+allow propagation through the stack.
+Therefore, in order to provide a generalisable means of performing ATC, both of
+these methods have been implemented. 
 
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 
