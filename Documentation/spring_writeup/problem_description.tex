@@ -183,6 +183,7 @@ Furthermore, D aims to provide
 powerful abstractions that aid in the speed and ease of development of general systems. 
 The following code example, taken from dlang.org, cleanly and efficiently 
 sorts lines of a file and outputs them. 
+%TC:ignore
 \begin{lstlisting}
 import std.stdio, std.array, std.algorithm;
 
@@ -195,6 +196,7 @@ void main()
         .each!writeln;
 }
 \end{lstlisting}
+%TC:endignore
 However, in addition to providing high-level abstractions, D maintains low 
 level capabilities: the language still retains access to inline assembler, 
 system calls, interrupts, and low level I/O.

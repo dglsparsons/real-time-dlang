@@ -27,6 +27,7 @@ the two languages have much in common.
 In Ada, it is possible to separate a concurrent thread of control through the
 medium of a task. This enables a level of parallelism. A \texttt{Task} can be 
 created in the following manner: 
+%TC:ignore
 \begin{lstlisting}[language=Ada]
 procedure Program is 
     task My_Task; 
@@ -40,6 +41,7 @@ begin
     null; 
 end Program;
 \end{lstlisting}
+%TC:endignore
 It is worth noting than in the above example, the \texttt{Program} procedure will wait
 for \texttt{My\textunderscore{}Task} to complete before exiting. D differs in this aspect: 
 there is no concept of ownership of a \texttt{Thread}, and unless
@@ -50,6 +52,7 @@ In terms of syntax, the creation of a
 \texttt{Thread} in D is similarly different. Rather than specifying the body of
 the task inline, it is more typical to place it in a separate function. This
 appears as follows: 
+%TC:ignore
 \begin{lstlisting}
 import core.thread; 
 
@@ -63,6 +66,7 @@ void main()
     new Thread(&threadFunction).start;
 }
 \end{lstlisting}
+%TC:endignore
 Thus, both languages are able to similarly specify concurrent computation. In
 Ada, this is achieved through the medium of a \texttt{Task}, in D, the medium
 is provided by a \texttt{Thread}. 
@@ -71,10 +75,13 @@ is provided by a \texttt{Thread}.
 Important to real-time systems is the concept of priority scheduling. In both
 Ada and D priority based scheduling is implemented. In Ada, the systems scheduler can
 be set through the use of a \texttt{pragma}. This is done as follows: 
+%TC:ignore
 \begin{lstlisting}[language=Ada]
 pragma task_dispatching_policy(fifo_within_priorities); 
 \end{lstlisting}
+%TC:endignore
 This allows the priority of a task to be statically set in the following manner: 
+%TC:ignore
 \begin{lstlisting}[language=Ada]
 task Worker is 
     pragma Priority(System.Priority'First + 1); 
@@ -85,8 +92,10 @@ begin
     ...
 end Worker; 
 \end{lstlisting}
+%TC:endignore
 Priority scheduling behaves in a similar manner in D, however, there is one
-fundamental difference: 
+fundamental difference: priorities in D are not static, and must instead be
+assigend at runtime. Furthermore, priorities can be changed throughout 
 
 \subsection{Shared Memory}
 
