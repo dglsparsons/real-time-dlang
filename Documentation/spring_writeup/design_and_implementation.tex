@@ -35,26 +35,28 @@
 In previous chapters,
 existing real-time system programming languages have been examined in order to
 define a set of required functionality. From this, a set of project requirements 
-was determined. 
+has been determined. 
 This chapter aims to describe the implementation of these requirements into the D
 programming language, highlighting the completed implementations and any design 
 decisions made along the way. 
-Each of the functional requirements of the project the potential
+For each of the functional requirements of the project, the potential
 implementations are discussed. In this discussion, any design 
-decisions that have been made will be detailed. Furthermore, this chapter will 
+decisions that have been made will be explained. Furthermore, this chapter will 
 detail the completed implementation of each component. 
 
 \section{Method of Provision}
 % Library vs modified runtime ? 
 For the end goal of this project to be usable, various methods for its delivery 
-were considered. There are two significant alternatives. If no compiler, or 
-core runtime features of the language need to be altered in order to provide the 
-desired functionality then the project may be packaged as an external library. 
-This is the most desirable end goal, hence the addition of requirement 8, as it 
-prevents the need to provide and maintain a custom complier and runtime and enables 
-existing D users to simply add-in the library as needed. 
-Failing this, a modified runtime and/or compiler must be provided. This would 
-enable the development of real-time systems, however, the modified system would 
+were considered. There are two significant alternatives. 
+If the compiler or the 
+core runtime features of the language do not need to be altered to provide the 
+desired functionality, 
+the project may then be packaged as an external library. 
+This is the most desirable end goal, hence the addition of requirement 8: no
+modifications to the language's compiler or core libraries. 
+Failing this, a modified runtime and/or compiler would need be provided.
+Although this would 
+enable the development of real-time systems, the modified system would 
 require maintenance to keep it up to date with the core set of D functionality. 
 
 \section{Requirement 1: Threads and Interprocess Communication}
@@ -96,7 +98,7 @@ void main()
 }
 \end{lstlisting}
 %TC:endignore
-We can therefore see that D already provides 
+It is therefore evident that D already provides 
 concurrent control of system components, along with mechanisms for 
 interprocess communication. However, the implementation is of interest: D 
 provides an agnostic approach to the underlying operating system, supporting 
@@ -106,16 +108,16 @@ In order to provide support for this wide range of operating systems, the
 class contains operating system specific code, mapping down a standard interface 
 onto various underlying implementations 
 \cite{github-core-thread}. 
-We are interested only in operating systems capable of meeting tight timing 
-requirements in any calls to the kernel, and context switching.
+This project is interested only in operating systems capable of meeting tight timing 
+requirements in any calls to the kernel and context switching.
 As such, all additions made to D with regards to real-time applications are 
 specifically targeted at POSIX compliant 
 operating systems, in particular those with real-time extensions. 
 \par\bigskip\noindent
 It is worth noting that the underlying operating may require patching in order 
-to be fully viable for a real-time system: system may not be fully
+to be fully viable for a real-time system: the system may not be fully
 real-time compliant even if it is POSIX compliant. Because of this, real-time patches 
-to the Linux kernel exist \cite{rt-wiki}. These enabling a greater 
+to the Linux kernel exist \cite{rt-wiki}. These enable a greater 
 guarantee over the timeliness of the kernel. 
 Furthermore, special care must also be taken when developing such a system,
 selecting appropriate hardware and programming the system in a manner appreciative 
@@ -123,24 +125,24 @@ of the underlying hardware \cite{rt-wiki-how-to}.
 
 \section{Requirement 2: Priority Based Scheduling}
 The ability to correctly schedule tasks or threads based on their priority is of 
-critical importance to a real-time system. As previously discussed D provides 
+critical importance to a real-time system. As previously discussed, D provides 
 concurrency through operating system Threads, encapsulated in the
 \texttt{Thread} class. Additionally, the \texttt{Thread} class contains the 
-parameter, \texttt{priority}. This parameter can be used to set or get a thread's 
-priority \cite{core-thread}. 
+parameter, \texttt{priority}. This parameter can be used to set or get a
+\texttt{Thread's} priority \cite{core-thread}. 
 However, in order for priority based scheduling to be used, this alone is not 
 enough: the scheduler must be changed to function in a priority based manner. 
-It was previously identified that D's threads provide a mapping onto an operating  
+It has been previously identified that D's threads provide a mapping onto an operating  
 system thread, and hence it is the operating system scheduler that has to be set.  
 However, no support exists within D's standard libraries to interact with the
 scheduler. 
 Therefore, this support has to be supplied. 
 This can be achieved through interaction with C standard libraries, such as GlibC. 
-The function sched\textunderscore{}setscheduler allows the operating system 
+The function \texttt{sched\textunderscore{}setscheduler} allows the operating system 
 scheduler to be set to either SCHED\textunderscore{}FIFO or SCHED\textunderscore{}RR for 
 this process \cite{sched-setscheduler}. 
-In order to provide a more intuitive interaction a wrapper was written around the 
-system call. This provides a more 'D like' interface, and enables a level of
+In order to provide a more intuitive interaction, a wrapper was written around the 
+system call. This provides a more 'D like' interface and enables a level of
 abstraction to be taken from manually mapping D onto C for each application. 
 %TC:ignore
 \begin{lstlisting}[language=C++]
@@ -183,7 +185,7 @@ void main()
 \end{lstlisting}
 %TC:endignore
 The ability to set the scheduler to use a priority based method, combined with 
-D language's previously present ability to set the priority of a thread therefore 
+the D language's ability to set the priority of a thread, 
 enables a priority based scheduling approach to be used.  
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
@@ -233,19 +235,19 @@ void main()
 \end{lstlisting}
 %TC:endignore
 As such, the D programming language can easily provide the ability to sleep 
-until an absolute time. In order to easily the use of this functionality, a 
+until an absolute time. In order to easily use this functionality, a 
 wrapper has been provided, giving an interface to D.
 
 \section{Requirements 5 and 6: Bounded Priority Inversion}
-In D, Mutexes follow a similar approach to Threads: the language's
-implementation provides a wrapper around operating system calls, this 
+In D, mutexes follow a similar approach to threads: the language's
+implementation provides a wrapper around operating system calls. This 
 enables operating system independent code to be written simply. However, D has no 
 inherent ability to provide priority inversion handling protocols. 
 \par\bigskip\noindent
 Due to the underlying implementation of D's mutexes, there are two alternative 
-approaches to defining the priority inheritance and priority ceiling protocols: 
-either the current implementation may be extended to incorporate system calls 
-setting the POSIX mutexes as using these protocols, or a new, language level 
+approaches to defining the priority inheritance and priority ceiling protocols.
+In one approach, the current implementation may be extended to incorporate system calls 
+setting the POSIX mutexes as using these protocols. In the other approach, a language level 
 mutex can be added that defines these protocols. As real-time systems have been 
 shown to only be viable on operating systems that are POSIX compliant, and due to 
 the quantity of work involved in reimplementing and defining these protocols, the 
@@ -256,8 +258,8 @@ are available when using POSIX mutexes in C.
 \cite{mutex-setprotocol}. However, even though D's implementation of the \texttt{Mutex} 
 class uses POSIX mutexes, it does not not set the protocol during their creation. 
 As requirement 8 highlights the importance of an unmodified runtime, the 
-constructor for this class cannot be extended, instead it must be fully 
-reimplemented with an alterative imlpmentation of the constructer adding in 
+constructor for this class cannot be extended. Instead it must be fully 
+reimplemented with an alternative implementation of the constructor adding in 
 the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} \cite{mutex-setprotocol}. 
 The full implementation of this mutex class is defined:
 %TC:ignore
@@ -269,12 +271,12 @@ A mutex may then be created and initialised in the following manner:
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
 %TC:endignore
-However, this is not a very D-like implementation: enums are not widely used 
+However, this is not a very D-like implementation: \texttt{enums} are not widely used 
 in constructors. Instead, as with the scheduler calls, 
 it is more intuitive to wrap this into two separate classes. Additionally, 
 further support 
 is needed to set and retrieve the priority ceiling associated with the 
-mutex. This can achieved in a similar manner, additional 
+mutex. This can achieved in a similar manner: additional 
 functions can extend the class, providing a wrapper around the C functions 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling} and 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
@@ -314,11 +316,11 @@ class CeilingMutex
 }
 \end{lstlisting}
 %TC:endignore
-This allows the priority ceiling to be set or get as if it were a property of 
+This allows the priority ceiling to be set or retrieved as if it were a property of 
 the \texttt{RTMutex} class. Similarly, the functions defined in \texttt{RTMutex} 
 can be accessed as though they were part of the \texttt{CeilingMutex} class. 
 A similar result is achieved for the \texttt{InheritanceMutex} class.
-This allows a very idiomatic and readable interaction: 
+This allows an idiomatic and readable interaction: 
 %TC:ignore
 \begin{lstlisting}
 auto a = new CeilingMutex;
@@ -334,7 +336,7 @@ Therefore, on a POSIX compliant operating system, the ability to interact with
 existing C libraries enables an implementation of a mutex, similar to the languages 
 core model, to be extended, incorporating both the priority inheritance and 
 priority ceiling protocols. Wrappers around this \texttt{RTMutex} class for 
-either protocol, and around the C functions 
+either protocol and around the C functions 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling} 
 and \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling{}} 
 provide an easy to use and intuitive implementation. 
@@ -345,7 +347,7 @@ of a real-time system is the ability to perform an asynchronous transfer of
 control (ATC). This entails providing a section of code that can be interrupted 
 and aborted at any moment in time asynchronously.
 As detailed in the previous section, there are several different methods of 
-achieving this aim. Here, each method is considered, and the logic behind the 
+achieving this aim. Here, each method is considered and the logic behind the 
 implementation explained. 
 
 \subsubsection*{Setjmp and Longjmp} 
@@ -354,7 +356,7 @@ through use of the commands, \texttt{setjmp} and \texttt{longjmp}. These allow
 the control of flow to be altered in a program by marking a location in code when 
 \texttt{setjmp} is called, and jumping to this saved location when \texttt{longjmp} 
 is called. It is possible to asynchronously invoke the \texttt{longjmp} function
-through the use of POSIX signals, and a signal handler. This allows an asynchronous 
+through the use of POSIX signals and a signal handler. This allows an asynchronous 
 signal to effect the flow of control. However, due to the lack of concern for 
 stack management, it is common for the stack to become corrupted using this approach
 \cite{unwinding-stack}. As ATC will typically involve altering the current function, 
@@ -368,17 +370,18 @@ The second approach considered for the implementation of ATC in D is a thread
 cancellation approach. As previously shown, D's \texttt{Thread} class maps down onto 
 operating specific threads. For POSIX compliant operating systems, it therefore 
 uses pthreads. When using pthreads, it is possible to terminate a thread during 
-it's execution using the \texttt{pthread\textunderscore{}cancel} function. 
+its execution using the \texttt{pthread\textunderscore{}cancel} function. 
 In both methods, an \texttt{Interruptible} class abstracts the setup and running of an 
 ATC section. 
 Initialising the class will create a new \texttt{Thread}, 
 inheriting the priority of the calling \texttt{Thread}. 
 On calling a \texttt{start} function, execution of the calling 
-\texttt{Thread} will then suspend, waiting for whatever the abortable section 
+\texttt{Thread} will then suspend, waiting for the abortable section 
 of code to be executed within the \texttt{Interruptible} class.
 The aim of this class is to provide a friendly interaction 
 that removes concern over the underlying implementation. 
-For the asynchronous interrupt mechanism, using \texttt{pthread\textunderscore{}cancel} 
+For the asynchronous interrupt mechanism, using
+\texttt{pthread\textunderscore{}cancel},
 two alternative approaches were considered.
 The first approach incorporates the Java style, having a 
 \texttt{Thread.interrupt()} method. A similar method could be implemented in D. 
@@ -439,7 +442,7 @@ void main()
 While the difference between the two approaches may appear small, it is significant: 
 in the first implementation, a thread containing multiple \texttt{Interruptible} 
 sections of code may have a later section interrupted by a call to \texttt{interrupt}
-not intended for it. This may lead to a cause of unexpected behaviour, and therefore 
+not intended for it. This may lead to a cause of unexpected behaviour and therefore 
 a decision was made to implement the second approach. 
 \par\bigskip\noindent
 So far, it has been assumed that the interrupt function performs the exact 
@@ -448,22 +451,22 @@ However, using \texttt{pthread\textunderscore{}cancel} alone does not guarantee
 an immediate cancellation: it is only guaranteed 
 to cancel once both a signal is received and a cancellation point in the code 
 is reached. 
-Many standard C functions are defined as being thread cancellation points, however, 
+Many standard C functions are defined as being thread cancellation points, but 
 there is no guarantee that these may be called within the target thread 
 \cite{pthread-cancel-points}. As a result of this, it is possible to set the 
 cancellation of a thread to be immediate through the function 
 \texttt{pthread\textunderscore{}setcanceltype}, by setting the value to 
 \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS}. This is 
-crucial in either tight loops, or where cancellation must be immediate. 
+crucial in either tight loops or where cancellation must be immediate. 
 \par\bigskip\noindent
 However, this immediate cancellation comes at the cost of safety: interrupting a 
 thread during the middle of a crucial function call, such as a memory allocation, 
 may leave memory in an inconsistent state. In order to safely use this functionality, 
-thread cancellation must therefore be deferred during certain sections of code, 
+thread cancellation must therefore be deferred during certain sections of code 
 and enabled during others. This gives rise to the requirement of having 
 deferred regions of code, in which operations can be executed with no risk of 
 being cancelled. Two alternative approaches were considered for the implementation 
-of this approach. The first approach considered was to have a method of the 
+of this feature. The first considered was to have a method of the 
 \texttt{Interruptible} class that allow the cancellation type to be toggled 
 between \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ENABLE}
 and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}
@@ -524,7 +527,7 @@ void interruptibleFunction()
 }
 \end{lstlisting}
 %TC:endignore
-This provides a safe mechanism for handling memory allocation, or critical sections 
+This provides a safe mechanism for handling memory allocation or critical sections 
 of code. Furthermore, this enables code to be executed safely despite being 
 nested in outer \texttt{Interruptible} classes. 
 \par\bigskip\noindent
@@ -565,12 +568,12 @@ signals and signal handlers. While typically used on a process wide level, it
 is also possible to invoke these signal handlers for a specific thread through
 the use of a C function, \texttt{pthread\textunderscore{}kill}. By using a
 real-time signal, such as SIGRTMIN, there are guarantees that the signal
-arrives in a timely manner, and that any signals are sent in the correct order. 
+arrives in a timely manner and that any signals are sent in the correct order. 
 Thus, in D, it is possible to remotely invoke code in a \texttt{Thread} through 
 the use of signals and signal handlers. This can be also be used to remotely
 throw an \texttt{Exception}. The following example shows a simple invocation of ATC
 using achieved by throwing and catching an \texttt{Exception}, breaking out of an
-infinite loop. 
+infinite loop: 
 %TC:ignore
 \begin{lstlisting}
 import core.sys.posix.pthread, 
@@ -613,31 +616,31 @@ void main()
 }
 \end{lstlisting}
 %TC:endignore
-The above example displays the simple principal behind this method of ATC, 
-however, there are many aspects of its behaviour that make the above
+The above example displays the simple principal behind this method of ATC.
+However, there are many aspects of its behaviour that make the above
 implementation impractical. 
 First, ATC sections may be nested inside each other. Using the above 
-method it would not be possible to exit two ATC sections through a single interrupt
+method, it would not be possible to exit two ATC sections through a single interrupt
 to the outermost section. This occurs because the \texttt{Exception} would be caught and
 handled in the inner ATC section. 
-Secondly, internal components may trigger \texttt{Exception}s, or may have \texttt{Exception} handlers 
+Secondly, internal components may trigger \texttt{Exception}s or may have \texttt{Exception} handlers 
 of their own. Using this approach, an \texttt{Exception} that is intended to perform ATC 
-may instead be caught, and would thus have no effect. 
+may instead be caught and would thus have no effect. 
 In order to prevent this from happening, the final implementation for this
 project does not use \texttt{Exceptions}, but instead uses D's notion of an
 \texttt{Error}. Conceptually, \texttt{Errors} and \texttt{Exceptions} are
 similar, both being throw and catch-able objects. 
 However, they are used differently within D: \texttt{Exceptions} are used to
 manage the control of flow under \texttt{Exception}al circumstances, whereas
-\texttt{Errors} are typically used for terminating the program, and tracing faults. 
+\texttt{Errors} are typically used for terminating the program and tracing faults. 
 However, the two also differ fundamentally. 
 \texttt{Errors} are allowed to propagate through generic \texttt{Exception} catches, and thus propagate 
 through all \texttt{Exception} handlers. In this regard, they exhibit the desired
 behaviour, enabling abortable code to use \texttt{Exceptions} freely. The only
-limitation that this provides is that the end user does not program the
-abortable code to catch all \texttt{Errors}, as these generally occur when the
-program is unable to run, or corrupts memory, it is not advisable to do this
-anyway. For Signal and \texttt{Exception} based ATC, rather than using a generic
+limitation here is that the end user does not program the
+abortable code to catch all \texttt{Errors}. As errors generally occur when the
+program is unable to run or corrupts memory, it is not advisable to do this. 
+For Signal and \texttt{Exception} based ATC, rather than using a generic
 \texttt{Error}, an \texttt{ATCInterrupt} class is defined. 
 This class extends the \texttt{Error} class.
 \par\bigskip\noindent
@@ -692,12 +695,12 @@ class Interruptible
 }
 \end{lstlisting}
 %TC:endignore
-This example enables both the use of \texttt{Exception}s within the ATC region, and
+This example enables both the use of \texttt{Exception}s within the ATC region and
 enables ATC sections to be nested inside each other. However, compared to the
 \texttt{Thread} based approach, additional functionality is still required. 
 For the safety of the system it must be possible to defer interrupts, enabling 
-functions such as memory allocation, or system calls to fully complete. In
-Real-time Java this is achieved through the use of runtime reflection to detect
+functions such as memory allocation or system calls to fully complete. In
+Real-time Java, this is achieved through the use of runtime reflection to detect
 whether the current function is safe to throw an \texttt{Exception} or not.
 However, D does not have a concept of run-time reflection, and therefore this cannot be
 used. 
@@ -710,14 +713,14 @@ concern over safety from the developer. However, it would require significant
 reworking of the D runtime, and possibly compiler alterations (as this would be
 a language feature). As such, this method is outside of the scope of this
 project. 
-The alternative approach, is to leave the safety of ATC to the developer by
+The alternative approach is to leave the safety of ATC to the developer by
 providing methods to disable and re-enable deferral.
 This can easily be achieved through the use of two boolean flags: one to keep track
 of whether interrupts are deferred, and one to test whether an interrupt has
 arrived while they have been deferred. 
 However, as with the \texttt{Thread} approach, an extra method is then needed in 
 order to guarantee fully safe execution during nested ATC sections. By keeping
-track of each \texttt{Interruptible} sections parent, it is possible to defer
+track of each \texttt{Interruptible} section's parent, it is possible to defer
 all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
 achieved in the following manner: 
 %TC:ignore
@@ -762,7 +765,7 @@ Furthermore, as with the implementation of \texttt{Thread} based ATC, a method
 of specifying cleanup is neeeded. This
 is possible through the use of D's inbuilt \texttt{scope (exit)}.
 This executes code specified on exiting the current scope, regardless of
-whether this was through normal flow, or as a result of an \texttt{Exception}. 
+whether this was through normal flow or as a result of an \texttt{Exception}. 
 This provides a convenient method of adding cleanup. 
 However, in order to keep the \texttt{Thread} and
 \texttt{Exception} based approaches similar in terms of functionality, and to
@@ -772,15 +775,16 @@ been added to the \texttt{Exception} model.
 \par\bigskip\noindent
 As highlighted, there are two possible implementations of Asynchronous
 Transfer of Control in D: a two-thread model and a Signal/Exception based
-approach. Both of these methods meet all the desired requirements of ATC; 
-They can be used safely, Allow cleanup, They immediately transfer control and
-abstract any unnecessary complexity away from the developer. 
-However, the two approaches differ in some regards. 
+approach. Both of these methods meet all the desired requirements of ATC: 
+they can be used safely; allow cleanup; they immediately transfer control; and
+they abstract any unnecessary complexity away from the developer. 
+However, some aspects of the two approaches differ. 
 Using the \texttt{Thread} based approach, a new \texttt{Thread} is
 created for each invocation. This suggests a heavier weight implementation compared
 to the \texttt{Exception} model.
 As far as the cancellation goes, there is little difference between
-\texttt{pthread\textunderscore{}kill} and \texttt{pthread\textunderscore{}cancel}, 
+\texttt{pthread\textunderscore{}kill} and
+\texttt{pthread\textunderscore{}cancel}:
 both of these functions are operating system calls that use signals in their
 implementation. 
 However, the \texttt{Exception} based approach to ATC depends heavily on correct 
@@ -792,8 +796,8 @@ these methods have been implemented.
 
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 
-of tests have be provided. These tests allow a new systems viability 
-to be tested, and improve the maintainability of the system. D provides a built-in 
+of tests have be provided. These tests allow a new system's viability 
+to be tested and improve the maintainability of the system. D provides a built-in 
 functionality for unit-testing: using the \texttt{unittest} flag, test code can 
 be placed alongside function declarations. In addition, assert statements allow 
 expected behaviour to be verified. 

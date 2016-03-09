@@ -94,10 +94,40 @@ end Worker;
 \end{lstlisting}
 %TC:endignore
 Priority scheduling behaves in a similar manner in D, however, there is one
-fundamental difference: priorities in D are not static, and must instead be
-assigend at runtime. Furthermore, priorities can be changed throughout 
+fundamental difference: the standard approach to priorities in D is not static, 
+and any priorities must instead be assigned at runtime. 
+Furthermore, priorities can be changed during the programs execution. While similar
+behaviour can be implemented in Ada using the
+\texttt{Ada.Dynamic\textunderscore{}Priorities}
+package, it is the only option for priority scheduling in D. 
+Priority scheduling can thus be achieved in the following manner: 
+%TC:ignore 
+\begin{lstlisting}
+import core.thread; 
+
+void threadFunction()
+{
+    ...
+}
+
+void main()
+{
+    setFIFOScheduler(50);
+    auto a = new Thread(&threadFunction).start;
+    a.priority = 20; 
+    Thread.sleep(2.seconds); 
+    a.priority = 30; 
+}
+\end{lstlisting}
+%TC:endignore
+This example shows not only an initial assignment of a priority to a created
+\texttt{Thread}, but highlights the possibility of modifying a priority at
+runtime. 
 
 \subsection{Shared Memory}
+With all concurrent programs, communication between different concurrent
+components is a crucial feature. 
+
 
 \subsection{Priority Inheritance and Priority Ceiling Protocols}
 
@@ -107,10 +137,10 @@ assigend at runtime. Furthermore, priorities can be changed throughout
 
 \subsection{Asynchronous Transfer of Control}
 
-\section{Efficiency of Implementation vs Ada}
+\section{Efficiency of Asynchronous compared to Ada}
 % Compare D with Ada in terms of efficiency.
 In order to form a true comparison between the two languages, D and Ada, it is
 necessary to examine their performance.
 
-\section{Comparison of Asynchronous Transfer of Control Approaches}
+\section{Comparison of Asynchronous Transfer of Control Approaches in D}
 % Profile the two ATC Methods. 

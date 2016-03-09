@@ -1,16 +1,16 @@
 %Problem description and analysis for my project. 
 % Word Count Guide - 1500 words.
 
-This chapter aims to examine the literature review in order to provide a set of 
+This chapter aims to examine the Literature Review in order to provide a set of 
 requirements for real-time programming. Following this, it will set out a 
 description of the features of the D programming language, discussing its 
-suitability for the development of real-time systems, and approach to crucial 
+suitability for the development of real-time systems and approach to crucial 
 features.
 
 \section{Requirements}
-From the examination of existing languages in the literature review, it is possible 
+From the examination of existing languages in the Literature Review, it is possible 
 to determine the criteria needed for real-time programming. These requirements are 
-summarised in the following. Furthermore, additional desired features are set out 
+summarised below. Furthermore, additional desired features are set out 
 in this section. 
 \begin{table}[!htbp]
 \centering
@@ -20,7 +20,7 @@ Requirement Number & 1 \\ \hline
 Requirement & The ability to provide concurrent programming through a 
 mechanism such as Java's Thread, or Ada's Task. \\ \hline
 Rationale      & This is necessary in a real-time system to provide separation 
-of concerns between separate components, and to  provide control over 
+of concerns between separate components and to  provide control over 
 concurrent operations. \\ \hline
 Criterion      & New threads of control can be created through a defined 
 function. \\ \hline
@@ -34,11 +34,11 @@ Importance     & Necessary \\ \hline
 \hline
 Requirement Number & 2 \\ \hline
 Requirement & The ability to schedule concurrent threads based on their priority in 
-                either a round-robin, or FIFO approach\\ \hline
-Rationale      & This is necessary so that tasks with a shorter deadline, or more 
-                important tasks are given priority, enabling them to meet their 
+                either a round-robin or FIFO approach.\\ \hline
+Rationale      & This is necessary so that more important tasks or those with a shorter deadline
+                are given priority, enabling them to meet their 
                 deadlines. \\ \hline
-Criterion      & A provided function must allow the scheduler to be changed \\ \hline
+Criterion      & A provided function must allow the scheduler to be changed. \\ \hline
 Functional or Non-Functional & Functional \\ \hline
 Importance     & Necessary \\ \hline
 \end{tabular}
@@ -51,7 +51,8 @@ Requirement Number & 3 \\ \hline
 Requirement & Access a monotonic clock. \\ \hline
 Rationale      & This is necessary in order to provide precise timing requirements 
                 that are consistent, unlike a calendar clock. \\ \hline
-Criterion      & A function must allow a time value to be read from a monotonic clock \\ \hline
+Criterion      & A function must allow a time value to be read from a monotonic
+                clock. \\ \hline
 Functional or Non-Functional & Functional \\ \hline
 Importance     & Necessary \\ \hline
 \end{tabular}
@@ -62,7 +63,7 @@ Importance     & Necessary \\ \hline
 \hline
 Requirement Number & 4 \\ \hline
 Requirement & An absolute sleep statement \\ \hline
-Rationale      & Relative sleep statements are subject to preemption, and may not 
+Rationale      & Relative sleep statements are subject to preemption and may not 
                 provide precise timing requirements. \\ \hline
 Criterion      & A function must delay the calling thread until an absolute time. \\ \hline
 Functional or Non-Functional & Functional \\ \hline
@@ -75,9 +76,9 @@ Importance     & Necessary \\ \hline
 \hline
 Requirement Number & 5 \\ \hline
 Requirement & Implementation of the Immediate Priority Ceiling Protocol \\ \hline
-Rationale      & In order to provide a limit to blocking a task may suffer, priority 
+Rationale      & In order to limit the blocking a task may suffer, priority 
                 inversion must be bounded. \\ \hline
-Criterion      & The ability to specify a mutex as using the protocol\\ \hline
+Criterion      & The ability to specify a mutex as using the protocol.\\ \hline
 Functional or Non-Functional & Functional \\ \hline
 Importance     & Necessary \\ \hline
 \end{tabular}
@@ -104,7 +105,7 @@ Requirement & Implementation of Asynchronous Transfer of Control (ATC) \\ \hline
 Rationale      & Real-time systems require ATC for a wide range of functionality, 
                 including timing out computations, cancelling overrun deadlines,  
                 or instantaneous mode changes of a system. \\ \hline
-Criterion      & The ability to enter an abortable section of code, and remotely  
+Criterion      & The ability to enter an abortable section of code and remotely  
                 abort the code. \\ \hline
 Functional or Non-Functional & Functional \\ \hline
 Importance     & Necessary \\ \hline
@@ -115,11 +116,11 @@ Importance     & Necessary \\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 Requirement Number & 8 \\ \hline
-Requirement & No modifications to the languages compiler, or core libraries \\ \hline
+Requirement & No modifications to the language's compiler or core libraries \\ \hline
 Rationale      & In order to provide a more accessible system and to simplify the 
                 process of developing real-time systems in D. Furthermore, this 
-                keeps compatibility with existing D code, and allows any programs  
-                written to keep up with the latest features and advances of D \\ \hline
+                keeps compatibility with existing D code and allows any programs  
+                written to keep up with the latest features and advances of D. \\ \hline
 Criterion      & For programming real-time systems in D, the default compiler and  
                 an unmodified runtime may be used. \\ \hline
 Functional or Non-Functional & Non-Functional \\ \hline
@@ -134,7 +135,7 @@ Requirement Number   & 9 \\ \hline
 Requirement & Provision of tests for the provided library to show that 
                 implementation is functioning correctly. \\ \hline
 Rationale      & Provision of tests would allow an easier checking of the viability of  
-                real-time features, and aids debugging in any potential future 
+                real-time features and aids debugging in any potential future 
                 modifications to the feature-set. \\ \hline
 Criterion      & A set of unit-tests that ensure correct behaviour of the system. \\ \hline
 Functional or Non-Functional & Functional \\ \hline
@@ -147,11 +148,11 @@ Importance     & Desired \\ \hline
 \hline
 Requirement Number & 10 \\ \hline
 Requirement & Provision of documentation, showing typical use cases for provided 
-                functionality, and describing its usage. \\ \hline
+                functionality and describing its usage. \\ \hline
 Rationale      & In order to allow potential users to understand the purpose and 
-                functionality provided, it must be explicitly shown in use, and
+                functionality provided, it must be explicitly shown in use and
                 documented.  \\ \hline
-Criterion      & All functions and common interactions must be well documented \\ \hline
+Criterion      & All functions and common interactions must be well documented. \\ \hline
 Functional or Non-Functional & Non-Functional \\ \hline
 Importance     & Desired \\ \hline
 \end{tabular}
@@ -162,9 +163,9 @@ Importance     & Desired \\ \hline
 
 \section{Features of the D Programming Language}
 As mentioned in the introduction, the D programming language has many 
-characteristics that lend it nicely to the development of real-time systems.
+characteristics that lend it to the development of real-time systems.
 These are outlined in further detail in this section. 
-However, D also has contains certain characteristics that are less desirable for 
+However, D also has certain characteristics that are less desirable for 
 real-time systems, such as the use of a garbage collector. 
 These less desirable features are similarly detailed in order to highlight the 
 shortcomings of D. 
@@ -178,7 +179,7 @@ right''
 This explains the power that the language possesses. D is a high level, compiled 
 language with support for object oriented programming. In addition, D boasts 
 native efficiency: as with C and C++, there is no virtual 
-machine hosting the languages environment and causing additional overhead. 
+machine hosting the language's environment and causing additional overhead. 
 Furthermore, D aims to provide
 powerful abstractions that aid in the speed and ease of development of general systems. 
 The following code example, taken from dlang.org, cleanly and efficiently 
@@ -204,8 +205,8 @@ system calls, interrupts, and low level I/O.
 This flexibility of D is one of its greatest advantages. It ``allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
 idiosyncrasies in the way'' \cite{ddili-book}. 
-These features also make D well suited to the development of real-time systems, 
-as stated in the literature review, the ability to program sporadic tasks
+These features also make D well suited to the development of real-time systems: 
+as stated in the Literature Review, the ability to program sporadic tasks
 may depend on the ability to handle interrupts in a timely and predictable manner.
 Furthermore, the ability to perform IO operations using hardware allows the
 system to interact with special purpose hardware, another crucial feature of
@@ -229,9 +230,9 @@ with the message passing interface simply built on top of this
 \cite{dlang-github-concurrency}. 
 As such, when developing in D, the programmer has the option to choose between 
 the higher level message passing interface or the lower level lock and mutex 
-approach. It is even true that a mix approach can be taken, using both.
+approach. In addition, a mixed approach can be taken, using both. 
 \par\bigskip\noindent
-D also has an interesting approach to sharing memory between threads. In D 
+D also has an interesting approach to sharing memory between threads. In D, 
 global variables are not shared between different threads as they are in 
 other languages. Instead, each thread has a local copy of the global variable. 
 This is a concept that is known as Thread Local Storage (TLS) 
@@ -256,28 +257,28 @@ Additional safety features are also provided in the SafeD subset of the language
 \cite{safe-d}. The SafeD subset will only allow functions to perform 
 operations that are deemed as either safe or trusted, preventing any 
 potential corruption of memory. Examples of unsafe functions could include the 
-manual manipulation of pointers, or the use of unsafe types. A major difference 
-with regards to other languages is that D provides sufficient power so that many complex 
-operations can be performed and used, while still remaining completely safe.
+manual manipulation of pointers or the use of unsafe types. A major difference 
+with regards to other languages is that D provides sufficient power for many complex 
+operations to be performed, while still remaining completely safe.
 
 \subsection{Garbage Collector}
 %GC
 Coupled with the safety of the SafeD subset, D provides additional memory
 safety through its use of a garbage collector. A garbage collector
 automatically manages heap allocated memory. It is responsible for managing
-the lifetime of data, and cleaning up unused memory. 
+the lifetime of data and cleaning up unused memory. 
 However, this safety comes at a cost. One significant problem with developing a 
 real-time system in D is the need to bypass D's garbage collector. 
 The current implementation of the garbage 
 collector is a `stop the world' approach: when garbage collection is occurring, 
 all threads are halted from making progress 
 \cite{dlang-garbage}. This causes problems with 
-real-time systems. A real-time system must be able to guarantee a maximum response 
-time on any operation performed, predictable behaviour is therefore fundamental to this. 
+real-time systems. As a real-time system must be able to guarantee a maximum response 
+time on any operation performed, predictable behaviour is fundamental to this. 
 With a stop the world garbage collector, such behaviour cannot be guaranteed. 
 \par\bigskip\noindent
 One possible solution to this problem is to disable the garbage collector for 
-real time applications. This is possible to do by marking functions \texttt{@nogc}, 
+real-time applications. This is possible to do by marking functions \texttt{@nogc}, 
 or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
 many of D's higher level features and libraries use garbage collection. 
 Another possibility is to replace D's garbage collector with a real-time 
@@ -309,7 +310,7 @@ value \cite{interface-to-cpp}.
 
 \section{Analysis of Target Criteria} %100
 This section aims to outline the functional requirements of the project,
-offering a brief discussion on any potential implementations for each of these 
+offering a brief discussion of any potential implementations for each of these 
 requirements. 
 
 \subsection{Requirements 1 and 2: Concurrency and Priority Scheduling} %100
@@ -318,18 +319,18 @@ real-time system, the previous chapters discussed how the concurrent control of
 system components is a crucial feature for real-time systems. D provides a
 method of concurrency through its \texttt{Thread} class. 
 \par\bigskip\noindent
-Closely related to this concept, is the ability to schedule threads based on
+Closely related to this concept is the ability to schedule threads based on
 their priority. In D, threads exist in a kernel space. Therefore, in order to
-provide priority based scheduling, the systems scheduler requires changing. Burns
+provide priority based scheduling, the system's scheduler requires changing. Burns
 and Wellings show that there are several different scheduling algorithms that
 may be used in real-time systems \cite{real-time-systems}. It is worth noting
-that of all the operating systems that D runs on, only those that are POSIX
+that of all the operating systems on which D runs, only those that are POSIX
 compliant are capable of handling such a means of priority scheduling. This
 provides a limitation on the project: D can only be programmed in a real-time
 capable manner on a POSIX compliant operating system.
 By default, D is provided with no method to change the underlying operating
 systems scheduler. 
-The ability to adjust the scheduler to use either a Round-Robin, or FIFO approach 
+The ability to adjust the scheduler to use either a round-robin or FIFO approach 
 is therefore a desired end-goal of the project.
 
 \subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep} %100
@@ -346,10 +347,10 @@ an absolute sleep with a user specifiable clock \cite{clock-nanosleep}.
 
 \subsection{Requirements 5 and 6: Bounded Priority Inversion} %100
 In order to achieve a bound on the amount of priority inversion that a task
-might suffer two protocols exist: the priority inheritance protocol and the
+might suffer, two protocols exist: the priority inheritance protocol and the
 priority ceiling protocol. These protocols have been detailed in the 
 Literature Review section. D's implementation of mutexes currently has
-neither of these protocols, and is therefore not suited for real-time systems.
+neither of these protocols and is therefore not suited for real-time systems.
 However, similar to D's approach to the \texttt{Thread} class, the languages
 core \texttt{Mutex} class provides a wrapper on POSIX mutexes
 \cite{dlang-github-mutex}. The POSIX specification of mutexes states that
@@ -362,8 +363,8 @@ implemented on top of the existing \texttt{Mutex} implementation.
 
 \subsection{Requirement 7: Asynchronous Transfer of Control} %100
 Asynchronous Transfer of Control (ATC) is a difficult feature to implement due to
-it's ``methodologically suspect'' nature \cite{Brosgol:2002:ATC}. As detailed
-in the literature review Java, Ada and C with POSIX Threads all favour
+its ``methodologically suspect'' nature \cite{Brosgol:2002:ATC}. As detailed
+in the Literature Review, Java, Ada and C with POSIX Threads all favour
 different approaches to the implementation details. Simply stated, there are
 three alternative implementations. In C, ATC can be simulated using the
 \texttt{setjmp} and \texttt{longjmp} instructions. In Ada, a
@@ -372,7 +373,7 @@ on a condition, while a subsidiary task is created to execute the abortable
 code. In Java, an exception based approach uses the Thread \texttt{interrupt}
 method to asynchronously throw an exception in the target thread. As D has the
 ability to interact with C code, \texttt{setjmp} and \texttt{longjmp} may be
-used. Furthermore, it's model of threads allows a thread cancellation based
+used. Furthermore, its model of threads allows a thread cancellation based
 approach to be taken. Finally, D has a similar model of exceptions to Java. By
 combining D's exception model with POSIX signals, enabling the asynchronous
 execution of code, D therefore has the potential to implement all three ATC
