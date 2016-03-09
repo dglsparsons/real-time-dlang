@@ -16,9 +16,77 @@ D will be examined.
 
 This section sets to compare the implementation of real-time primitives in D,
 with those of Ada, a general purpose programming language with a wide range of
-support for real-time systems.
+support for real-time systems. The syntax of the two languages is significantly 
+different: D follows a C style approach, using curly braces to indicate scope,
+Ada by contrast follows a Pascal style syntax, using \texttt{begin} and
+\texttt{end} statements to indicate scope. However, despite these differences,
+the two languages have much in common. 
 
-\subsection{Concurrency and Priority Scheduling}
+\subsection{Concurrency}
+
+In Ada, it is possible to separate a concurrent thread of control through the
+medium of a task. This enables a level of parallelism. A \texttt{Task} can be 
+created in the following manner: 
+\begin{lstlisting}[language=Ada]
+procedure Program is 
+    task My_Task; 
+
+    task body My_Task is 
+    begin
+        ...
+    end My_Task;
+
+begin
+    null; 
+end Program;
+\end{lstlisting}
+It is worth noting than in the above example, the \texttt{Program} procedure will wait
+for \texttt{My\textunderscore{}Task} to complete before exiting. D differs in this aspect: 
+there is no concept of ownership of a \texttt{Thread}, and unless
+explicitly stated through \texttt{Thread.join}, a process will not await
+\texttt{Thread} completion. The notable exception to this is exiting the
+\texttt{main} function, which waits for all threads to terminate. 
+In terms of syntax, the creation of a
+\texttt{Thread} in D is similarly different. Rather than specifying the body of
+the task inline, it is more typical to place it in a separate function. This
+appears as follows: 
+\begin{lstlisting}
+import core.thread; 
+
+void threadFunction()
+{
+    ...
+}
+
+void main()
+{
+    new Thread(&threadFunction).start;
+}
+\end{lstlisting}
+Thus, both languages are able to similarly specify concurrent computation. In
+Ada, this is achieved through the medium of a \texttt{Task}, in D, the medium
+is provided by a \texttt{Thread}. 
+
+\subsection{Priority Scheduling}
+Important to real-time systems is the concept of priority scheduling. In both
+Ada and D priority based scheduling is implemented. In Ada, the systems scheduler can
+be set through the use of a \texttt{pragma}. This is done as follows: 
+\begin{lstlisting}[language=Ada]
+pragma task_dispatching_policy(fifo_within_priorities); 
+\end{lstlisting}
+This allows the priority of a task to be statically set in the following manner: 
+\begin{lstlisting}[language=Ada]
+task Worker is 
+    pragma Priority(System.Priority'First + 1); 
+end Worker;
+
+task body Worker is 
+begin 
+    ...
+end Worker; 
+\end{lstlisting}
+Priority scheduling behaves in a similar manner in D, however, there is one
+fundamental difference: 
 
 \subsection{Shared Memory}
 
