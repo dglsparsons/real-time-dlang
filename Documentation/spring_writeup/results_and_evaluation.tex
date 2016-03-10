@@ -112,7 +112,7 @@ void threadFunction()
 
 void main()
 {
-    setFIFOScheduler(50);
+    setFIFOScheduler(90);
     auto a = new Thread(&threadFunction).start;
     a.priority = 20; 
     Thread.sleep(2.seconds); 
@@ -127,16 +127,89 @@ runtime.
 \subsection{Shared Memory}
 With all multithreaded programs, communication between different concurrent
 components is crucial. Both Ada and D support the notion of shared memory,
-allowing separate \texttt{Threads} or \texttt{Tasks} to 
+allowing separate \texttt{Threads} or \texttt{Tasks} to access the same
+variables. However, due to D's use of shared memory, shared memory functions
+differently. In D, each \texttt{Thread} contains its own copy of any global 
+variables, preventing them from being used globally, unless specifically stated 
+as \texttt{shared} or \texttt{\textunderscore{}\textunderscore{}gshared}. 
+\par\bigskip\noindent
+In Ada, it is common practice to use protected objects to read and write to
+variables, preventing inconsistency. These operate by defining several different 
+operation types: a function that allows concurrent reads to occur; a procedure
+is exclusive of other procedures and functions and allows writes to occur; 
+and an entry allows a task to block, waiting on a condition. This is shown
+below: 
+%TC:ignore
+\begin{lstlisting}[language=Ada]
+protected Read_Write is
+    function Read return Integer;
+    procedure Write(New_Value : in Integer); 
+private 
+    Data : Integer := 0; 
+end Read_Write;
 
+protected body Read_Write is 
+begin 
+    function Read is 
+    body 
+        return Data; 
+    end Read; 
+
+    procedure Write(New_Value: in Integer) is 
+    body
+        Data := New_Value; 
+    end Write; 
+end Read_Write; 
+\end{lstlisting}
+%TC:endignore
+D does not provide the notion of protected objects, but instead provides a
+special \texttt{ReadWriteMutex} that emulates this behaviour.
+Using this, the previous Ada code may be rewritten in D
+in the following manner: 
+%TC:ignore
+\begin{lstlisting}
+auto mut = new ReadWriteMutex(); 
+int data = 0; 
+void readerFunction()
+{
+    synchronized(mut.reader)
+    {
+        return data; 
+    }
+}
+
+void writerFunction(int newValue)
+{
+    synchronized(mut.writer)
+    {
+        data = newValue;
+    }
+}
+\end{lstlisting}
+%TC:endignore
+This allows the same principal, protected data, to be used in D for
+safe interprocess communication using shared memory. However, the ability to 
+define an \texttt{entry}, waiting on a particular condition to come true, is not 
+encapsulated. However, it is possible to use the \texttt{Condition} class to
+easily provide a simulated entry behaviour 
+\cite{dlang-condition}. 
+However, it is worth noting that using the above approach, it is not possible to 
+use either the priority ceiling or priority inheritance protocol with the
+\texttt{ReadWriteMutex}. To achieve this, the \texttt{ReadWriteMutex} class
+must be redefined as using the corresponding \texttt{CeilingMutex} or
+\texttt{InheritanceMutex}. 
 
 \subsection{Priority Inheritance and Priority Ceiling Protocols}
 
+
 \subsection{Periodic Tasks}
+
 
 \subsection{Sporadic Tasks}
 
+
 \subsection{Asynchronous Transfer of Control}
+
 
 \section{Efficiency of Asynchronous compared to Ada}
 % Compare D with Ada in terms of efficiency.
