@@ -49,6 +49,8 @@ basicstyle=\ttfamily
 \immediate\write18{texcount *.tex -total | grep "Words in" > count.sum;
 ./wc_tool.d > count.sum2 }
 \newcommand\wordcount{\input{count.sum2}}
+\immediate\write18{detex writeup.tex | wc -w > count3.sum}
+\newcommand\wrdcount{\input{count3.sum}}
 
 % Rewritten the Chapter settings, in order to remove the stupid 50Space 
 % Indent from the top of the page. 
@@ -91,9 +93,9 @@ basicstyle=\ttfamily
 \chapter{Design and Implementation}
 \input{design_and_implementation.tex} %4
 \chapter{Results and Evaluation}
-\input{results_and_evaluation.tex} %5
+%\input{results_and_evaluation.tex} %5
 \chapter{Conclusions}
-\input{conclusion.tex} %6
+%\input{conclusion.tex} %6
 %\appendix
 \addcontentsline{toc}{chapter}{References}
 \bibliographystyle{IEEEtran}
