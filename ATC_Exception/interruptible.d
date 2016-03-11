@@ -9,6 +9,7 @@ class Interruptible
     private void delegate() m_dg;
     private Call m_call;
     private enum Call {NO, FN, DG};
+    private bool isRunning = false; 
 
     private pthread_t m_threadId; 
     public ATCInterrupt m_error; 
@@ -45,6 +46,8 @@ class Interruptible
         parent = sm_this;
         scope(exit) sm_this = parent;
         sm_this = this; 
+        isRunning = true; 
+        scope(exit) isRunning = false;
         try 
         {
             if (m_call == Call.FN)
@@ -104,17 +107,20 @@ class Interruptible
     }
 
     void interrupt() @trusted 
-    {
-        if (__deferred)
+    { 
+        if (isRunning)
         {
-            __pending = true;
-        }
-        else
-        {
-            import core.sys.posix.signal; 
-            Interruptible.toThrow = cast(shared Interruptible)this;
-            if (pthread_kill(m_threadId, _SIGRTMIN))
-                throw new Exception("Unable to signal the interruptible section");
+            if (__deferred)
+            {
+                __pending = true;
+            }
+            else
+            {
+                import core.sys.posix.signal; 
+                Interruptible.toThrow = cast(shared Interruptible)this;
+                if (pthread_kill(m_threadId, _SIGRTMIN))
+                    throw new Exception("Unable to signal the interruptible section");
+            }
         }
     }
 

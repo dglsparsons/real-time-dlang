@@ -266,7 +266,7 @@ private enum {PROTOCOL_INHERIT = 1, PROTOCOL_CEILING };
 /* 
    External imports required for the creation of RTMutex 
  */
-version( Posix ) extern (C) nothrow
+version(Posix) extern (C) nothrow
 {
     private import core.sys.posix.sys.types; 
     enum 
@@ -284,7 +284,7 @@ version( Posix ) extern (C) nothrow
     int pthread_mutexattr_setprotocol(pthread_mutexattr_t*, int);
 }
 
-/* 
+/**
    class RTMutex is a private class, used internally within InheritanceMutex and 
    CeilingMutex along with the alias this trick. 
    This class is similar to the druntime Mutex, providing features such as an 
@@ -295,6 +295,26 @@ version( Posix ) extern (C) nothrow
    Priority Ceiling protocol.
 
  */
+
+/**
+ * The RTMutex class is a modified copy of the Dlang mutex class, taken from
+ * the github pages. The original contains the following license: 
+ * 
+ * The mutex module provides a primitive for maintaining mutually exclusive
+ * access.
+ *
+ * Copyright: Copyright Sean Kelly 2005 - 2009.
+ * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
+ * Authors:   Sean Kelly
+ * Source:    $(DRUNTIMESRC core/sync/_mutex.d)
+ */
+
+/*          Copyright Sean Kelly 2005 - 2009.
+ * Distributed under the Boost Software License, Version 1.0.
+ *    (See accompanying file LICENSE or copy at
+ *          http://www.boost.org/LICENSE_1_0.txt)
+ */
+
 private class RTMutex : Object.Monitor
 {
     private import core.sys.posix.pthread;
@@ -308,11 +328,11 @@ private class RTMutex : Object.Monitor
     {
         pthread_mutexattr_t mutexAttr = void;
 
-        if( pthread_mutexattr_init( &mutexAttr ) )
+        if(pthread_mutexattr_init(&mutexAttr))
             throw new SyncError("Unable to initialize mutex");
-        scope(exit) pthread_mutexattr_destroy( &mutexAttr );
+        scope(exit) pthread_mutexattr_destroy(&mutexAttr);
 
-        if( pthread_mutexattr_settype( &mutexAttr, PTHREAD_MUTEX_RECURSIVE ) )
+        if(pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE))
             throw new SyncError("Unable to initialize mutex");
 
         if(protocol == PROTOCOL_CEILING)
@@ -328,8 +348,8 @@ private class RTMutex : Object.Monitor
                 throw new SyncError("Unable to initialize Priority inheritance protocol"); 
         }
 
-        if( pthread_mutex_init( &mutexID, &mutexAttr ) )
-            throw new SyncError( "Unable to initialize mutex" );
+        if(pthread_mutex_init(&mutexID, &mutexAttr))
+            throw new SyncError("Unable to initialize mutex");
         monProxy.link = this;
         this.__monitor = &monProxy;
     }
@@ -338,10 +358,10 @@ private class RTMutex : Object.Monitor
     /*
        Initialiser for creating a monitored object
      */
-    this( Object obj , int protocol ) nothrow @trusted
+    this(Object obj , int protocol) nothrow @trusted
         in
         {
-            assert( obj.__monitor is null );
+            assert(obj.__monitor is null);
         }
     body
     {
@@ -355,8 +375,8 @@ private class RTMutex : Object.Monitor
      */
     ~this()
     {
-        int rc = pthread_mutex_destroy( &mutexID );
-        assert( !rc, "Unable to destroy mutex" );
+        int rc = pthread_mutex_destroy(&mutexID);
+        assert(!rc, "Unable to destroy mutex");
         this.__monitor = null;
     }
 
@@ -405,7 +425,7 @@ private class RTMutex : Object.Monitor
      */
     bool tryLock()
     {
-        return pthread_mutex_trylock( &mutexID ) == 0;
+        return pthread_mutex_trylock(&mutexID) == 0;
     }
 
 
@@ -463,11 +483,11 @@ unittest
 
     auto group = new ThreadGroup;
     int numThreads = 10;
-    for( int i = 0; i < numThreads; ++i )
-        group.create( &testFn );
+    for(int i = 0; i < numThreads; i++)
+        group.create(&testFn);
 
     group.joinAll();
-    assert( obj.count == numThreads * numTries );
+    assert(obj.count == numThreads * numTries);
 }
 
 unittest
@@ -482,9 +502,9 @@ unittest
 
     void testFn()
     {
-        for( int i = 0; i < numTries; ++i )
+        for(int i = 0; i < numTries; ++i)
         {
-            synchronized( mutex )
+            synchronized(mutex)
             {
                 ++lockCount;
             }
@@ -493,11 +513,11 @@ unittest
 
     auto group = new ThreadGroup;
 
-    for( int i = 0; i < numThreads; ++i )
-        group.create( &testFn );
+    for(int i = 0; i < numThreads; i++)
+        group.create(&testFn);
 
     group.joinAll();
-    assert( lockCount == numThreads * numTries );
+    assert(lockCount == numThreads * numTries);
 }
 
 
@@ -514,9 +534,8 @@ unittest
  * 
  * Example: 
  * ---
- * auto a = new CeilingMutex(); 
- * a.priority = 50; 
- * synchronized ( a )
+ * auto mut = new CeilingMutex(50); 
+ * synchronized (mut)
  * {
  *     // do something
  * }
@@ -537,10 +556,10 @@ class CeilingMutex
      * Initializes a new CeilingMutex
      * 
      **/
-    this()
+    this(int priority = 1)
     {
         ceilingMutex = new RTMutex(PROTOCOL_CEILING);
-        this.ceiling = 1;
+        this.ceiling = priority;
     }
 
     /** 
@@ -557,7 +576,7 @@ class CeilingMutex
      * ---
      **/
 
-    final @property int ceiling()
+    final @property int ceiling() 
     {
         int ceiling; 
         if(pthread_mutex_getprioceiling(this.handleAddr, &ceiling))
@@ -589,8 +608,8 @@ class CeilingMutex
  * 
  * Example: 
  * ---
- * auto a = new InheritanceMutex(); 
- * synchronized ( a )
+ * auto mut = new InheritanceMutex(); 
+ * synchronized (mut)
  * {
  *     // do something
  * }
@@ -637,19 +656,19 @@ unittest
     int  lockCount  = 0;
     void testFn()
     {
-        for( int i = 0; i < numTries; ++i )
+        for(int i = 0; i < numTries; ++i)
         {
-            synchronized( mutex )
+            synchronized(mutex)
             {
                 ++lockCount;
             }
         }
     }
     auto group = new ThreadGroup;
-    for( int i = 0; i < numThreads; ++i )
-        group.create( &testFn );
+    for(int i = 0; i < numThreads; ++i)
+        group.create(&testFn);
     group.joinAll();
-    assert( lockCount == numThreads * numTries );
+    assert(lockCount == numThreads * numTries);
 }
 
 unittest
@@ -663,19 +682,19 @@ unittest
     int  lockCount  = 0;
     void testFn()
     {
-        for( int i = 0; i < numTries; ++i )
+        for(int i = 0; i < numTries; ++i)
         {
-            synchronized( mutex )
+            synchronized(mutex)
             {
                 ++lockCount;
             }
         }
     }
     auto group = new ThreadGroup;
-    for( int i = 0; i < numThreads; ++i )
-        group.create( &testFn );
+    for(int i = 0; i < numThreads; ++i)
+        group.create(&testFn);
     group.joinAll();
-    assert( lockCount == numThreads * numTries );
+    assert(lockCount == numThreads * numTries);
 }
 
 unittest
