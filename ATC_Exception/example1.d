@@ -23,7 +23,6 @@ void interruptThread()
 
 void main()
 {
-    enableInterruptibleSections;
     new Thread(&interruptThread).start();
     a = new Interruptible(&interruptibleFunction);
     a.start();

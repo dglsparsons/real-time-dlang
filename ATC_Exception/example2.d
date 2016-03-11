@@ -72,7 +72,6 @@ void thread_to_spawn_interruptible()
 
 void main()
 {
-    enableInterruptibleSections;
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();
 

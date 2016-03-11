@@ -72,7 +72,7 @@ class Interruptible
     {
         Interruptible.setThis(this);
         Thread.getThis.priority = this.priority;
-        if( pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, null) )
+        if( pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, null) )
         {
             throw new Exception("Unable to set thread cancellation type");
         }
@@ -302,7 +302,6 @@ unittest
         a.start(); 
     }
 
-    //import RealTime : setScheduler, SCHED_FIFO;
     setScheduler(SCHED_FIFO, 50);
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();

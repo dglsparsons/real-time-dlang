@@ -18,6 +18,11 @@ class Interruptible
     shared static Interruptible toThrow;
     package Interruptible parent = null;
 
+    shared static this()
+    {
+        enableInterruptibleSections;
+    }
+
     this(void function() fn )
     {
         m_fn = fn; 
@@ -239,7 +244,7 @@ private class ATCInterrupt : Error
     }
 }
 
-void enableInterruptibleSections()
+private void enableInterruptibleSections()
 {
     import core.sys.posix.signal: sigaction_t, sigemptyset, sigaction; 
     sigaction_t action; 
@@ -353,7 +358,6 @@ unittest
     }
 
     enableInterruptibleSections;
-    //import RealTime : setScheduler, SCHED_FIFO;
     setScheduler(SCHED_FIFO, 50);
     auto mythread = new Thread(&thread_to_spawn_interruptible); 
     mythread.start();

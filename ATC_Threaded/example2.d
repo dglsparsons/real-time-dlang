@@ -2,8 +2,7 @@
 
 import std.stdio, 
        core.thread, 
-       interruptible, 
-       RealTime : setScheduler, SCHED_FIFO; 
+       interruptible;
 
 __gshared Interruptible a;
 __gshared Interruptible b;
