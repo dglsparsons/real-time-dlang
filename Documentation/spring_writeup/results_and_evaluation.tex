@@ -275,7 +275,7 @@ end Periodic;
 This can be defined almost identically in D using the provided
 \texttt{delayUntil} function: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[language=Java]
 void periodic()
 {
     immutable releaseInterval = 100.msecs; 
@@ -302,8 +302,8 @@ difference in overhead between the two languages.
 
 \subsection{Asynchronous Transfer of Control}
 Another crucial aspect of a real-time system is the ability to perform
-Asynchronous Transfer of Control. In Ada, this is achieved with a special
-variation of the \texttt{select} statement: the \texttt{select .. then abort}
+Asynchronous Transfer of Control (ATC). In Ada, this is achieved with a special
+variation of the \texttt{select} statement: the \texttt{select ... then abort}
 statement. For example, a timeout of 2 seconds on a function call takes the 
 following form: 
 %TC:ignore 
@@ -312,17 +312,61 @@ select
     delay 2.0; 
     -- cleanup goes here 
 then abort
-    functionCall; 
+    abortable_function; 
 end select; 
 \end{lstlisting}
 %TC:endignore
-In D, it is not possible to prog
+In D, it is not possible to program a timeout in this manner: the method of ATC
+is fundamentally very different, taking instead a class based approach using 
+signals. In D, an \texttt{Interruptible} task is defined. This enables
+execution of a function to be performed until there is a call to
+\texttt{interrupt}. Therefore, programming a timeout in D requires an additional
+thread to be created compared to the Ada implementation. This may appear as follows: 
+%TC:ignore
+\begin{lstlisting}
+void abortableFunction()
+{
+    ...
+}
 
+void main()
+{
+    Interruptible intr = new Interruptible(&abortableFunction); 
+    new Thread({
+        Thread.sleep(2.seconds); 
+        intr.interrupt(); 
+    }).start;
+    intr.start; 
+}
+\end{lstlisting}
+%TC:endignore
+This allows a implementation of ATC in D, sharing many similarities with the
+behaviour of Ada. However, in some regards it is subtly different to 
+Ada's model of ATC. The most significant difference is the management of
+whether a section of code is abort deferred or not. In Ada, there is notion of
+a task being abort-deferred, specified by \texttt{pragma Abort\textunderscore{}Defer}
+\cite{atc-article}.
+This prevents asynchronous cancellation for
+critical regions of code, so that they may safely perform operations such as
+updating shared memory or allocating memory. 
+For most standard interactions, such as with protected objects or standard
+packages, there is no need to explicitly specify code as abort-deferred. This
+therefore removes the concern from the developer. In D, there is no notion of a
+function being abort-deferred. Instead, it is left up to the developer to
+control whether an ATC region of code may have interrupts deferred, using the 
+\texttt{Interruptible.getThis.deferred} flag. This manual management of
+abort-deferred regions of code requires careful management for the developer. 
+
+\section{Comparison of Asynchronous Transfer of Control Approaches in D}
+% Profile the two ATC Methods. 
+As two alternative approaches to providing asynchronous transfer of control
+have been implemented in D, this section aims to profile the two, comparing the
+performance benefits of a one thread approach over a two thread approach. 
 
 \section{Efficiency of Asynchronous compared to Ada}
 % Compare D with Ada in terms of efficiency.
 In order to form a true comparison between the two languages, D and Ada, it is
-necessary to examine their performance.
+necessary to examine and compare their performance.
 
-\section{Comparison of Asynchronous Transfer of Control Approaches in D}
-% Profile the two ATC Methods. 
+
+
