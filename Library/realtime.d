@@ -58,7 +58,7 @@ void delayUntil(MonoTime timeIn)
     import core.sys.linux.time,
            core.time : Duration, timespec; 
 
-    Duration dur = timeIn - MonoTime(0); 
+    Duration dur = timeIn - MonoTime(0);
     long secs, nansecs; 
     dur.split!("seconds", "nsecs")(secs, nansecs);
     timespec sleep_time = timespec(secs, nansecs);
@@ -309,11 +309,11 @@ private class RTMutex : Object.Monitor
         pthread_mutexattr_t mutexAttr = void;
 
         if( pthread_mutexattr_init( &mutexAttr ) )
-            throw new SyncError( "Unable to initialize mutex" );
+            throw new SyncError("Unable to initialize mutex");
         scope(exit) pthread_mutexattr_destroy( &mutexAttr );
 
         if( pthread_mutexattr_settype( &mutexAttr, PTHREAD_MUTEX_RECURSIVE ) )
-            throw new SyncError( "Unable to initialize mutex" );
+            throw new SyncError("Unable to initialize mutex");
 
         if(protocol == PROTOCOL_CEILING)
         {
@@ -371,16 +371,9 @@ private class RTMutex : Object.Monitor
      * calling thread. 
      *
      */
-    @trusted void lock() 
+    @trusted void lock() nothrow @nogc
     {
-        lock_nothrow();
-    }
-
-    // Internal Function
-    final void lock_nothrow() nothrow @trusted @nogc
-    {
-        int returnedNumber = pthread_mutex_lock( &mutexID );
-        if( returnedNumber )
+        if(pthread_mutex_lock(&mutexID))
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
             syncErr.msg = "Unable to lock mutex.";
@@ -393,16 +386,9 @@ private class RTMutex : Object.Monitor
      * counter by one. If the count becomes zero, it is fully released, and
      * able to be locked by other threads. 
      */
-    @trusted void unlock()
+    @trusted void unlock() nothrow @nogc
     {
-        unlock_nothrow();
-    }
-
-    // Internal Function
-    final void unlock_nothrow() nothrow @trusted @nogc
-    {
-        int returnedNumber = pthread_mutex_unlock( &mutexID );
-        if( returnedNumber )
+        if(pthread_mutex_unlock(&mutexID))
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
             syncErr.msg = "Unable to unlock mutex.";

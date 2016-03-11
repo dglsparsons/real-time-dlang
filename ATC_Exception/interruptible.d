@@ -118,7 +118,7 @@ class Interruptible
         }
     }
 
-    public void testCancel() 
+    public void testCancel()
     {
         if (__pending)
         {

@@ -2,7 +2,7 @@
 
 import std.stdio,
        core.thread, 
-       rt;
+       rt; 
 
 __gshared MonoTime start_time; 
 
@@ -13,7 +13,7 @@ void periodicFunction()
     auto next_release = start_time;
     for (int i = 1; i <= 100; i++)
     {
-        delay_until(next_release);
+        delayUntil(next_release);
         writeln("Periodic Task: ", i); 
         next_release += release_interval; 
     }
@@ -24,7 +24,7 @@ void workerFunction()
     Thread.getThis.priority = Thread.PRIORITY_MIN + 1;
     int F;
     int I;
-    delay_until(start_time);
+    delayUntil(start_time);
     while(true)
     {
         writeln("Task 2 executing");
@@ -45,7 +45,7 @@ void workerFunction()
 void main()
 {
     // set the scheduler
-    setScheduler(SCHED_FIFO, 50);
+    setFIFOScheduler(90);
 
     start_time = MonoTime.currTime() + 100.msecs;
 

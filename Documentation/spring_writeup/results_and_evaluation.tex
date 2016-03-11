@@ -112,11 +112,11 @@ void threadFunction()
 
 void main()
 {
-    setFIFOScheduler(90);
+    setFIFOScheduler(Thread.PRIORITY_MAX);
     auto a = new Thread(&threadFunction).start;
-    a.priority = 20; 
+    a.priority = Thread.PRIORITY_MIN + 1; 
     Thread.sleep(2.seconds); 
-    a.priority = 30; 
+    a.priority = Thread.PRIORITY_MIN + 5; 
 }
 \end{lstlisting}
 %TC:endignore
@@ -129,8 +129,8 @@ With all multithreaded programs, communication between different concurrent
 components is crucial. Both Ada and D support the notion of shared memory,
 allowing separate \texttt{Threads} or \texttt{Tasks} to access the same
 variables. However, due to D's use of shared memory, shared memory functions
-differently. In D, each \texttt{Thread} contains its own copy of any global 
-variables, preventing them from being used globally, unless specifically stated 
+differently. In D, each \texttt{Thread} contains its own copy of a global 
+variables unless the variable is stated 
 as \texttt{shared} or \texttt{\textunderscore{}\textunderscore{}gshared}. 
 \par\bigskip\noindent
 In Ada, it is common practice to use protected objects to read and write to
@@ -162,7 +162,7 @@ begin
 end Read_Write; 
 \end{lstlisting}
 %TC:endignore
-D does not provide the notion of protected objects, but instead provides a
+D does not provide the notion of protected objects, but instead uses a
 special \texttt{ReadWriteMutex} that emulates this behaviour.
 Using this, the previous Ada code may be rewritten in D
 in the following manner: 
@@ -187,23 +187,102 @@ void writerFunction(int newValue)
 }
 \end{lstlisting}
 %TC:endignore
-This allows the same principal, protected data, to be used in D for
+This allows the same principle, protected data, to be used in D for
 safe interprocess communication using shared memory. However, the ability to 
-define an \texttt{entry}, waiting on a particular condition to come true, is not 
-encapsulated. However, it is possible to use the \texttt{Condition} class to
-easily provide a simulated entry behaviour 
+define an \texttt{entry} or a \texttt{requeue} is not encapsulated. In D,
+however, it is 
+possible to use the \texttt{Condition} class to simulate entry behaviour 
 \cite{dlang-condition}. 
-However, it is worth noting that using the above approach, it is not possible to 
-use either the priority ceiling or priority inheritance protocol with the
-\texttt{ReadWriteMutex}. To achieve this, the \texttt{ReadWriteMutex} class
-must be redefined as using the corresponding \texttt{CeilingMutex} or
-\texttt{InheritanceMutex}. 
+It is worth noting that when using \texttt{ReadWriteMutex}, it is not possible to 
+use either the priority ceiling or priority inheritance protocol.
+However, this can be implemented: the \texttt{ReadWriteMutex} class
+can be redefined as using the corresponding \texttt{CeilingMutex} or
+\texttt{InheritanceMutex} classes, rather than a \texttt{Mutex}. 
 
 \subsection{Priority Inheritance and Priority Ceiling Protocols}
+As detailed in the Literature Review, the ability to use either the priority
+inheritance protocol, or the priority ceiling protocol is crucial in order to
+provide a bounded limit on the about of priority inversion that a task can
+suffer. Ada supports use of the priority ceiling protocol in the following
+manner: 
+%TC:ignore 
+\begin{lstlisting}[language=Ada]
+protected Buffer is 
+    pragma Priority(28); 
+    ...
+end Buffer; 
+\end{lstlisting}
+%TC:endignore
+When accessing the Buffer, an accessing \texttt{Task} has it's priority raised
+to 28. In D the same functionality is implemented. In D, this only applies to
+the \texttt{CeilingMutex} though: any \texttt{Thread} that holds a lock on a
+\texttt{CeilingMutex} has its priority raised. This appears in the following
+manner: 
+%TC:ignore 
+\begin{lstlisting}
+import realtime; 
 
+auto ceilingMutex = new CeilingMutex(); 
+
+void accessResource()
+{
+    synchronized(ceilingMutex)
+    {
+        ...
+    }
+}
+
+void main()
+{
+    ceilingMutex.ceiling = 28; 
+    ...
+}
+\end{lstlisting}
+%TC:endignore
 
 \subsection{Periodic Tasks}
+For a real-time system, periodic tasks are a common feature. In Ada, a periodic
+task is defined in the following manner: 
+%TC:ignore 
+\begin{lstlisting}[language=Ada]
+task Periodic; 
+task Periodic is 
+    Release_Interval : Time_Span := Milliseconds(100); 
+    Next_Release : Time := Clock + Release_Interval; 
+begin
+    loop 
+        delay until Next_Release; 
+        ... 
+        Next_Release := Next_Release + Release_Interval; 
+    end loop; 
+end Periodic; 
+\end{lstlisting}
+%TC:endignore
+This can be defined almost identically in D: 
+%TC:ignore
+\begin{lstlisting}
+void periodic()
+{
+    immutable releaseInterval = 100.msecs; 
+    auto nextRelease = MonoTime.currTime + releaseInterval; 
+    while(true)
+    {
+        delayUntil(nextRelease); 
+        ...
+        nextRelease += releaseInterval; 
+    }
+}
 
+void main()
+{
+    new Thread(&periodic).start; 
+    ...
+}
+\end{lstlisting}
+%TC:endignore
+This therefore allows a periodic task to be defined in a manner very
+similar to that of Ada. There is little visible difference between the two
+implemnentations.
 
 \subsection{Sporadic Tasks}
 
