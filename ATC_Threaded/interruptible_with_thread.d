@@ -10,6 +10,7 @@ class Interruptible
     void delegate() m_dg; 
     private Call m_call;
     private enum Call {NO, FN, DG};
+    private bool isRunning; 
 
     private Thread m_thr;
     private int priority;
@@ -54,7 +55,9 @@ class Interruptible
         }
 
         m_thr.start(); 
+        isRunning = true; 
         m_thr.join();
+        isRunning = false;
 
         //cleanup
         m_thr.destroy();
@@ -85,21 +88,24 @@ class Interruptible
 
     void interrupt()
     {
-        if( !_deferred )
+        if (isRunning)
         {
-            if ( !(child is null) )
+            if( !_deferred )
             {
-                child.undeferrableInterrupt();
-                if ( !(sm_this is null) )
+                if ( !(child is null) )
                 {
-                    Interruptible.getThis.child = null;
+                    child.undeferrableInterrupt();
+                    if ( !(sm_this is null) )
+                    {
+                        Interruptible.getThis.child = null;
+                    }
                 }
+                pthread_cancel(m_thr.id);
             }
-            pthread_cancel(m_thr.id);
-        }
-        else 
-        {
-            _interrupt_pending = true;
+            else 
+            {
+                _interrupt_pending = true;
+            }
         }
     }
 

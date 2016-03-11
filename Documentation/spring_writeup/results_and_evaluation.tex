@@ -209,36 +209,50 @@ manner:
 \begin{lstlisting}[language=Ada]
 protected Buffer is 
     pragma Priority(28); 
+    procedure accessResource; 
     ...
 end Buffer; 
 \end{lstlisting}
 %TC:endignore
 When accessing the Buffer, an accessing \texttt{Task} has it's priority raised
-to 28. In D the same functionality is implemented. In D, this only applies to
-the \texttt{CeilingMutex} though: any \texttt{Thread} that holds a lock on a
+to 28. In D the same functionality is implemented. In D, this applies to
+the \texttt{CeilingMutex}: any \texttt{Thread} that holds a lock on a
 \texttt{CeilingMutex} has its priority raised. This appears in the following
 manner: 
 %TC:ignore 
 \begin{lstlisting}
-import realtime; 
-
-auto ceilingMutex = new CeilingMutex(); 
+auto mut = new CeilingMutex(28); 
 
 void accessResource()
 {
-    synchronized(ceilingMutex)
+    synchronized(mut)
     {
         ...
     }
 }
+\end{lstlisting}
+%TC:endignore
+As with the implementation in Ada, the ceiling property is dynamic, and can be
+adjusted at runtime. It is therefore possible to see that both D, through this
+project, provides the priority ceiling protocol. However, the priority
+inheritance protocol is also introduced to D. This is absent from Ada, and can
+be used in the following manner: 
+%TC:ignore
+\begin{lstlisting}
+auto mut = new InheritanceMutex; 
 
-void main()
+void accessResource()
 {
-    ceilingMutex.ceiling = 28; 
-    ...
+    synchronized(mut)
+    {
+
+    }
 }
 \end{lstlisting}
 %TC:endignore
+Through these examples, it is shown that D provides two alternative protocols
+to solve priority inversion: the priority ceiling protocol, which behaves the
+same as Ada's priority ceiling protocol, and the priority inheritance protocol. 
 
 \subsection{Periodic Tasks}
 For a real-time system, periodic tasks are a common feature. In Ada, a periodic
@@ -258,7 +272,8 @@ begin
 end Periodic; 
 \end{lstlisting}
 %TC:endignore
-This can be defined almost identically in D: 
+This can be defined almost identically in D using the provided
+\texttt{delayUntil} function: 
 %TC:ignore
 \begin{lstlisting}
 void periodic()
@@ -282,12 +297,26 @@ void main()
 %TC:endignore
 This therefore allows a periodic task to be defined in a manner very
 similar to that of Ada. There is little visible difference between the two
-implemnentations.
-
-\subsection{Sporadic Tasks}
-
+implementations, and as both utilise operating system threads, there is little
+difference in overhead between the two languages. 
 
 \subsection{Asynchronous Transfer of Control}
+Another crucial aspect of a real-time system is the ability to perform
+Asynchronous Transfer of Control. In Ada, this is achieved with a special
+variation of the \texttt{select} statement: the \texttt{select .. then abort}
+statement. For example, a timeout of 2 seconds on a function call takes the 
+following form: 
+%TC:ignore 
+\begin{lstlisting}[language=Ada]
+select 
+    delay 2.0; 
+    -- cleanup goes here 
+then abort
+    functionCall; 
+end select; 
+\end{lstlisting}
+%TC:endignore
+In D, it is not possible to prog
 
 
 \section{Efficiency of Asynchronous compared to Ada}
