@@ -1,5 +1,3 @@
-#!/usr/bin/rdmd 
-
 import realtime, interruptible_thread, core.time, std.stdio;
 
 void intrFunction()
@@ -16,7 +14,7 @@ void main()
     MonoTime timeDuring;
     MonoTime timeAfter;
     auto timeBefore = MonoTime.currTime;
-    __gshared auto intr = new Interruptible(&intrFunction); 
+    auto intr = new Interruptible(&intrFunction); 
     new Thread({
         Thread.sleep(1.seconds); 
         intr.interrupt; 

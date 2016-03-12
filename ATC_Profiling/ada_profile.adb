@@ -13,7 +13,7 @@ procedure Ada_Profile is
 
 begin 
 
-    --for i in 1..100 loop
+    for i in 1..10 loop
         
         Clock_Before := Clock; 
         select 
@@ -22,15 +22,22 @@ begin
             Put("Cancelled");
         then abort
             loop 
-                null;
+                put(" ");
             end loop; 
         end select; 
         Clock_After := Clock; 
 
-    Setup_Duration := Clock_During - Clock_Before; 
-    TearDown_Duration := Clock_After - Clock_Before; 
-    Put_Line("Setup: " & Duration'Image(To_Duration(Setup_Duration))); 
-    Put_Line("Teardown: " & Duration'Image(To_Duration(TearDown_Duration))); 
+        if i = 1 then 
+            Setup_Duration := Clock_During - Clock_Before - Seconds(1); 
+            TearDown_Duration := Clock_After - Clock_During; 
+        else
+            Setup_Duration    := Setup_Duration + Clock_During - Clock_Before - Seconds(1); 
+            TearDown_Duration := TearDown_Duration + Clock_After - Clock_During; 
+        end if;
 
-    --end loop;
+    end loop;
+
+    Put_Line(" ");
+    Put_Line("Total setup:    " & Duration'Image(To_Duration(Setup_Duration)));
+    Put_Line("Total teardown: " & Duration'Image(To_Duration(TearDown_Duration)));
 end Ada_Profile; 
