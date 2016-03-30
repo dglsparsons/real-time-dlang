@@ -1,5 +1,5 @@
-import realtime, interruptible_exception, core.time, std.stdio, core.thread;
-
+import realtime, interruptible_exception, 
+       core.time, std.stdio, core.thread;
 
 void main()
 {
@@ -9,7 +9,7 @@ void main()
     Duration totalSetup; 
     Duration totalTeardown;
 
-    for (auto i = 0; i < 10; i++)
+    for (auto i = 0; i < 10_000; i++)
     {
         MonoTime timeCancelled;
         MonoTime timeAfter;
@@ -18,21 +18,24 @@ void main()
 
         auto intr = new Interruptible({
             timeStarting = MonoTime.currTime;
+            getInt.deferred = true; 
             while(true)
             {
-
+                getInt.testCancel;
             }
         });
 
         new Thread({
-            Thread.sleep(1.seconds); 
+            timeCancelled = timeBefore + 10.msecs;
+            delayUntil(timeCancelled); 
             intr.interrupt; 
-            timeCancelled = MonoTime.currTime; 
         }).start;
 
         intr.start;
         timeAfter = MonoTime.currTime; 
 
+        if (i % 10 == 0)
+            writeln("Cancelled: ", i); 
         totalSetup += timeStarting - timeBefore;
         totalTeardown += timeAfter - timeCancelled;
     }

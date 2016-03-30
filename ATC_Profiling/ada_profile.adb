@@ -5,7 +5,7 @@ with Ada.Real_Time; use Ada.Real_Time;
 procedure Ada_Profile is 
     pragma Priority(90); 
     Clock_Before : Time; 
-    Clock_During : Time; 
+    Cancel_Time : Time; 
     Clock_After  : Time; 
     Clock_Starting : Time; 
 
@@ -14,13 +14,13 @@ procedure Ada_Profile is
 
 begin 
 
-    for i in 1..1000 loop
+    for i in 1..10000 loop
         
         Clock_Before := Clock; 
+        Cancel_Time := Clock_Before + Milliseconds(10);
+
         select 
-            delay 1.0;--until x; 
-            Clock_During := Clock;
-            Put("Cancelled " & Integer'image(i));
+            delay until Cancel_Time;
         then abort
             Clock_Starting := Clock; 
             loop 
@@ -29,12 +29,15 @@ begin
         end select; 
         Clock_After := Clock; 
 
+        if i mod 10 = 0 then
+            Put("Cancelled " & Integer'image(i));
+        end if;
         if i = 1 then 
             Setup_Duration := Clock_Starting - Clock_Before; 
-            TearDown_Duration := Clock_After - Clock_During; 
+            TearDown_Duration := Clock_After - Cancel_Time; 
         else
             Setup_Duration    := Setup_Duration + Clock_Starting - Clock_Before; 
-            TearDown_Duration := TearDown_Duration + Clock_After - Clock_During; 
+            TearDown_Duration := TearDown_Duration + Clock_After - Cancel_Time; 
         end if;
 
     end loop;
