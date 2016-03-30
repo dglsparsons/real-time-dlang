@@ -1,12 +1,5 @@
 import realtime, interruptible_exception, core.time, std.stdio, core.thread;
 
-void intrFunction()
-{
-    while(true)
-    {
-
-    }
-}
 
 void main()
 {
@@ -18,20 +11,30 @@ void main()
 
     for (auto i = 0; i < 10; i++)
     {
-        MonoTime timeDuring;
+        MonoTime timeCancelled;
         MonoTime timeAfter;
+        MonoTime timeStarting; 
         auto timeBefore = MonoTime.currTime;
-        auto intr = new Interruptible(&intrFunction); 
+
+        auto intr = new Interruptible({
+            timeStarting = MonoTime.currTime;
+            while(true)
+            {
+
+            }
+        });
+
         new Thread({
             Thread.sleep(1.seconds); 
             intr.interrupt; 
-            timeDuring = MonoTime.currTime; 
+            timeCancelled = MonoTime.currTime; 
         }).start;
+
         intr.start;
         timeAfter = MonoTime.currTime; 
 
-        totalSetup += timeDuring - timeBefore - 1.seconds;
-        totalTeardown += timeAfter - timeDuring;
+        totalSetup += timeStarting - timeBefore;
+        totalTeardown += timeAfter - timeCancelled;
     }
 
     writeln("Setup:    ", totalSetup); 

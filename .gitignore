@@ -11,3 +11,8 @@
 *.lst
 *.o
 *.toc
+*.ali 
+*.sum*
+ada_profile
+thread_profile
+exception_profile
