@@ -233,7 +233,7 @@ the higher level message passing interface or the lower level lock and mutex
 approach. In addition, a mixed approach can be taken, using both. 
 \par\bigskip\noindent
 D also has an interesting approach to sharing memory between threads. In D, 
-global variables are not shared between different threads as they are in 
+global variables are \emph{not} shared between different threads as they are in 
 other languages. Instead, each thread has a local copy of the global variable. 
 This is a concept that is known as Thread Local Storage (TLS) 
 \cite{migrate-to-shared}. 
@@ -280,12 +280,12 @@ With a stop the world garbage collector, such behaviour cannot be guaranteed.
 One possible solution to this problem is to disable the garbage collector for 
 real-time applications. This is possible to do by marking functions \texttt{@nogc}, 
 or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
-many of D's higher level features and libraries use garbage collection. 
+many of D's higher level features and libraries rely on garbage collection. 
 Another possibility is to replace D's garbage collector with a real-time 
 garbage collector. This would provide predictable behaviour, and therefore
 would enable precise timing requirements to be met.
 However, due to the amount of further work required, tackling the issue of the garbage 
-collector is outside the scope of this article.
+collector is outside the scope of this project.
 A third possibility of avoiding the garbage collector comes in through
 detaching threads from D's runtime. This prevents the garbage collector from
 stopping them. However, any garbage collected objects used must be registered

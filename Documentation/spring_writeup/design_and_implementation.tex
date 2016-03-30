@@ -186,7 +186,9 @@ void main()
 %TC:endignore
 The ability to set the scheduler to use a priority based method, combined with 
 the D language's ability to set the priority of a thread, 
-enables a priority based scheduling approach to be used.  
+enables a priority based scheduling approach to be used. It is worth noting
+that on many operating systems, setting the scheduler requires super user
+privileges. 
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
 As mentioned in the previous section, it is a necessary feature of a real-time 
@@ -244,14 +246,15 @@ implementation provides a wrapper around operating system calls. This
 enables operating system independent code to be written simply. However, D has no 
 inherent ability to provide priority inversion handling protocols. 
 \par\bigskip\noindent
-Due to the underlying implementation of D's mutexes, there are two alternative 
-approaches to defining the priority inheritance and priority ceiling protocols.
-In one approach, the current implementation may be extended to incorporate system calls 
-setting the POSIX mutexes as using these protocols. In the other approach, a language level 
-mutex can be added that defines these protocols. As real-time systems have been 
-shown to only be viable on operating systems that are POSIX compliant, and due to 
-the quantity of work involved in reimplementing and defining these protocols, the 
-decision was made to use POSIX mutexes. 
+%Due to the underlying implementation of D's mutexes, there are two alternative 
+%approaches to defining the priority inheritance and priority ceiling protocols.
+%In one approach, the current implementation may be extended to incorporate system calls 
+%setting the POSIX mutexes as using these protocols. In the other approach, a language level 
+%mutex can be added that defines these protocols. 
+Real-time systems have been shown to only be viable on operating systems that 
+are POSIX compliant, and due to the quantity of work involved in reimplementing 
+and defining these protocols, the decision was made to use the languages
+inbuilt POSIX mutexes. 
 \par\bigskip\noindent
 It is worth noting that the priority inheritance and priority ceiling protocols 
 are available when using POSIX mutexes in C. 
