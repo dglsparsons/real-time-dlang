@@ -175,7 +175,8 @@ import core.sys.posix.pthread;
 pthread_cleanup* addCleanup(_pthread_cleanup_routine fn, void* arg)
 {
     import core.memory; 
-    pthread_cleanup* cleanup = cast(pthread_cleanup*)GC.malloc(pthread_cleanup.sizeof);
+    pthread_cleanup* cleanup = cast(pthread_cleanup*)
+                                GC.malloc(pthread_cleanup.sizeof);
 
     cleanup_array ~= cast(void*)cleanup;
 

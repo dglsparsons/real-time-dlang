@@ -359,14 +359,15 @@ abort-deferred regions of code requires careful management for the developer.
 
 \section{Comparison of Asynchronous Transfer of Control Approaches in D}
 % Profile the two ATC Methods. 
-As two alternative approaches to providing asynchronous transfer of control
-have been implemented in D, this section aims to profile the two, comparing the
-performance benefits of a one thread approach over a two thread approach. 
+Two alternative approaches to providing asynchronous transfer of control
+have been implemented in D. In this section, both of these implementations will 
+be profiled, comparing the performance benefits of a one thread, exception approach over a 
+two thread model. 
 \par\bigskip\noindent
-In order to achieve this, a sample program was created that records for the
-time for both the
-setup of an \texttt{Interruptible} section, and the time taken to progress from
-receiving an asynchronous \texttt{interrupt}. In order to provide reliable results,
+For profiling, a sample program was created that records the
+time taken for both the setup of an \texttt{Interruptible} section, and the time 
+taken to progress from receiving an asynchronous \texttt{interrupt}. In order to 
+provide reliable results,
 this was repeated 10,000 times with average times recorded. Furthermore, both
 the \texttt{Thread} model, and the \texttt{Exception} model have been compiled 
 using the same version of the DMD compiler (2.069.2), with no compiler
@@ -377,20 +378,51 @@ The D code for profiling the Exception based ATC is as follows:
 \lstinputlisting[language=C++]{exception_profile.d}
 Similarly, Thread based ATC is profiled using the following code: 
 \lstinputlisting[language=C++]{thread_profile.d}
+These tests produced the following results for the setup and cancellation times: 
 \begin{table}[!htbp]
 \begin{tabular}{l|lll}
-ATC Method & Average Setup Time & Teardown Time  & Total \\
-           & (microseconds)     & (microseconds) & (microseconds) \\ \hline
-Threaded   & 37.81              & 34.40          & 72.21  \\
-Exception  & 13.95              & 13.18          & 27.13  \\
+ATC Method & Average Setup Time & Cancellation Time  & Total          \\
+           & (microseconds)     & (microseconds)     & (microseconds) \\ \hline
+Threaded   & 37.81              & 34.40              & 72.21          \\
+Exception  & 13.95              & 13.18              & 27.13          \\
 \end{tabular}
-\end{table}
+\end{table} \\
 % Ada times & 1.11              & 69.11          & 70.22  \\ 
+As expected, this shows that there is an additional overhead in the
+\texttt{Thread} based approach to ATC compared to an \texttt{Exception} based
+approach: creating a new \texttt{Thread} for each
+invocation has a more significant overhead, leading to around a 260\% increase 
+in setup time. This occurs as the creation of a \texttt{Thread} in D involves
+the creation of a kernel thread, requiring many operating system calls.
+Furthermore, the \texttt{Thread} based approach also takes longer to perform
+the cancellation. Both approaches use a POSIX signal in order to asynchronously
+perform their cancellation: the \texttt{Exception} based approach uses a signal
+to throw an exception and the \texttt{Thread} based approach uses a signal to
+terminate the Thread. However, with the \texttt{Thread} based approach, the
+application must wait for the \texttt{Thread} to be fully completed before it can
+continue. This is a lengthier process than simply catching an
+\texttt{Exception}, as resources must be reclaimed and any \texttt{Thread}
+cleanup executed. 
 
 \section{Efficiency of Asynchronous compared to Ada}
 % Compare D with Ada in terms of efficiency.
-In order to form a true comparison between the two languages, D and Ada, it is
-necessary to examine and compare their performance.
-
-
-
+In addition to comparing the two Asynchronous Transfer of Control mechanisms, a
+comparison against Ada can be used to highlight the performance of D. As in the
+previous example, it is possible to profile both the setup time and cancellation
+time of Ada's ATC method in a similar manner to that of D. This takes the
+following form: 
+\lstinputlisting[language=Ada]{./ada_profile.adb}
+A profiling of the Ada implementation of Asynchronous Transfer of Control gives
+the following results: 
+\begin{table}[!htbp]
+\begin{tabular}{l|lll}
+ATC Method & Average Setup Time & Cancellation Time  & Total          \\
+           & (microseconds)     & (microseconds)     & (microseconds) \\ \hline
+D Threaded &  37.81             & 34.40              & 72.21          \\
+D Exception & 13.95             & 13.18              & 27.13          \\
+Ada         &  1.11             & 69.11              & 70.22          \\
+\end{tabular}
+\end{table} \\
+This shows a different distribution of setup and cancellation times compared to
+the previous D profiles: 
+-- TODO - check with Andy whether this is right. 

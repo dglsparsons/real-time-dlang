@@ -1,6 +1,8 @@
 import realtime, interruptible_exception, 
        core.time, std.stdio, core.thread;
 
+immutable auto numtests = 10_000;
+
 void main()
 {
     setFIFOScheduler(95);
@@ -9,7 +11,7 @@ void main()
     Duration totalSetup; 
     Duration totalTeardown;
 
-    for (auto i = 0; i < 10_000; i++)
+    for (auto i = 0; i < numtests; i++)
     {
         MonoTime timeCancelled;
         MonoTime timeAfter;
@@ -18,11 +20,7 @@ void main()
 
         auto intr = new Interruptible({
             timeStarting = MonoTime.currTime;
-            getInt.deferred = true; 
-            while(true)
-            {
-                getInt.testCancel;
-            }
+            while(true){}
         });
 
         new Thread({
@@ -34,12 +32,10 @@ void main()
         intr.start;
         timeAfter = MonoTime.currTime; 
 
-        if (i % 10 == 0)
-            writeln("Cancelled: ", i); 
         totalSetup += timeStarting - timeBefore;
         totalTeardown += timeAfter - timeCancelled;
     }
 
-    writeln("Setup:    ", totalSetup); 
-    writeln("Teardown: ", totalTeardown); 
+    writeln("Average Setup:    ", totalSetup / numtests); 
+    writeln("Average Teardown: ", totalTeardown / numtests); 
 }

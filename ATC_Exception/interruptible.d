@@ -124,7 +124,8 @@ class Interruptible
                 import core.sys.posix.signal; 
                 Interruptible.toThrow = cast(shared Interruptible)this;
                 if (pthread_kill(m_threadId, _SIGRTMIN))
-                    throw new Exception("Unable to signal the interruptible section");
+                    throw new Exception("Unable to signal the 
+                                          interruptible section");
             }
         }
     }
@@ -136,7 +137,8 @@ class Interruptible
             import core.sys.posix.signal; 
             Interruptible.toThrow = cast(shared Interruptible) this; 
             if (pthread_kill(m_threadId, _SIGRTMIN))
-                throw new Exception("Unable to signal the interruptible section");
+                throw new Exception("Unable to signal the 
+                                      interruptible section");
         }
     }
 

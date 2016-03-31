@@ -63,7 +63,7 @@ void delayUntil(MonoTime timeIn)
     dur.split!("seconds", "nsecs")(secs, nansecs);
     timespec sleep_time = timespec(secs, nansecs);
     if (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &sleep_time, null))
-        throw new Exception("Failed to call clock_nanosleep, and sleep as expected");
+        throw new Exception("Failed to sleep as expected");
 }
 
 unittest 
@@ -137,7 +137,7 @@ unittest
     catch (Exception ex)
     {
         a = 1;
-        assert(ex.msg == "Failed to call clock_nanosleep, and sleep as expected");
+        assert(ex.msg == "Failed to sleep as expected");
     }
     assert (a == 1);
 }
@@ -339,13 +339,15 @@ private class RTMutex : Object.Monitor
         {
             if(pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_PROTECT))
             {
-                throw new SyncError("Unable to initialize Priority ceiling protocol"); 
+                throw new SyncError("Unable to initialize 
+                                    Priority Ceiling protocol"); 
             }
         }
         else if (protocol == PROTOCOL_INHERIT)
         {
             if(pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT))
-                throw new SyncError("Unable to initialize Priority inheritance protocol"); 
+                throw new SyncError("Unable to initialize 
+                                    Priority Inheritance protocol"); 
         }
 
         if(pthread_mutex_init(&mutexID, &mutexAttr))
@@ -395,7 +397,7 @@ private class RTMutex : Object.Monitor
     {
         if(pthread_mutex_lock(&mutexID))
         {
-            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
+            SyncError syncErr=cast(SyncError)cast(void*)typeid(SyncError).init;
             syncErr.msg = "Unable to lock mutex.";
             throw syncErr;
         }
@@ -410,7 +412,7 @@ private class RTMutex : Object.Monitor
     {
         if(pthread_mutex_unlock(&mutexID))
         {
-            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).init;
+            SyncError syncErr=cast(SyncError)cast(void*)typeid(SyncError).init;
             syncErr.msg = "Unable to unlock mutex.";
             throw syncErr;
         }
@@ -580,14 +582,14 @@ class CeilingMutex
     {
         int ceiling; 
         if(pthread_mutex_getprioceiling(this.handleAddr, &ceiling))
-            throw new SyncError("Unable to fetch the priority ceiling for the associated Mutex"); 
+            throw new SyncError("Unable to fetch the priority ceiling"); 
         return ceiling; 
     }
 
     final @property void ceiling(int val)
     {
         if(pthread_mutex_setprioceiling(this.handleAddr, val, null))
-            throw new SyncError("Unable to set the priority ceiling for the associated Mutex"); 
+            throw new SyncError("Unable to set the priority ceiling"); 
     }
 }
 
