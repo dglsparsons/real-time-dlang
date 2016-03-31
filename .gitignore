@@ -16,3 +16,4 @@
 ada_profile
 thread_profile
 exception_profile
+no_reinit
