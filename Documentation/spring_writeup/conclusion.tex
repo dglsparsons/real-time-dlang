@@ -27,21 +27,27 @@ may suffer, both the Priority Inheritance and Priority Ceiling protocols have
 been implemented through the languages use of POSIX Mutexes. This meets
 requirements 5 and 6. 
 For requirement 7, Asynchronous Transfer of Control has been implemented in two 
-alternative approaches: a two-thread model, and a one-thread, \texttt{Exception} model. 
-This provides the desired functionality, and nicely encapsulates not only
-creation and cancellation of an
+alternative approaches: a two-thread model, and a one-thread \texttt{Exception} model. 
+This provides the desired functionality, and 
+nicely encapsulates not only creation and cancellation of an
 abortable section, but provides mechanisms for adding cleanup routines and deferring 
 cancellation. 
+\par\bigskip\noindent
+In the Results and Evaluation section, the two alternative implementations of
+Asynchronous Transfer of Control in D have been profiled. 
+This found that, while an \texttt{Exception} based approach depends 
+heavily on the setup of the stack during signal handling, it is a much more efficient
+implementation, taking around only 40\% of the computation time compared to a
+two-thread approach. 
+%TODO - talk about comparison vs Ada 
+\par\bigskip\noindent
 Furthermore, in addition to the provided functionality, a wide range of unit-tests 
-have been provided, alongside in-built documentation. 
-The unit-tests can easily be invoked to ensure correct operation, and
-additionally provide example usage of the provided functionality. 
+have been provided, along with in-built documentation. 
+The unit-tests can easily be invoked to ensure correct operation on a specific
+system, and provide example usage of the introduced features. 
 These implemented tools are provided as a module, and can be made available as 
 a library. This would enable the development of real-time system in the D programming 
 language, as well as maintaining compatibility with existing code. 
-\par\bigskip\noindent
-%TODO - talk about result of profiling the two ATC methods. 
-%TODO - talk about comparison vs Ada 
 \par\bigskip\noindent
 However, there are additional difficulties that the 
 language faces: the use of a stop-the-world garbage collector in the 
@@ -49,6 +55,7 @@ D programming language prevents a reliable estimate of timings from being determ
 This is a problem that can be offset through disabling the garbage collector 
 and instead using manual memory management, or through detaching a thread from the 
 runtime and ensuring any GC objects used are referenced from other threads.
+Alternatively a real-time garbage collector could replace the existing one. 
 Offsetting the penalty of the garbage collector adds additional complexity for 
 the programmer and can restrict the use of more advanced language features. 
 \par\bigskip\noindent
