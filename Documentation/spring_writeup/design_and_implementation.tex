@@ -67,7 +67,7 @@ class method will allow a function to be passed by reference and executed.
 These features can be seen in the example below, taken from the D website
 \cite{core-thread}: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 import core.Thread; 
 
 class DerivedThread : Thread
@@ -145,7 +145,7 @@ In order to provide a more intuitive interaction, a wrapper was written around t
 system call. This provides a more 'D like' interface and enables a level of
 abstraction to be taken from manually mapping D onto C for each application. 
 %TC:ignore
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[basicstyle=\small,language=C++]
 public import core.sys.posix.sched 
                 : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
 
@@ -177,7 +177,7 @@ void setRRScheduler(int schedPriority)
 %TC:endignore
 This can then be called in the following manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 void main()
 {
     setFIFOScheduler(50); 
@@ -208,7 +208,7 @@ This function accepts the D type \texttt{MonoTime} as an input, converts it to t
 equivalent, and calls the C function \texttt{clock\textunderscore{}nanosleep}, 
 allowing an absolute delay. The code is displayed below: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 void delayUntil(MonoTime timeIn)
 {
     import core.sys.linux.time; 
@@ -227,7 +227,7 @@ void delayUntil(MonoTime timeIn)
 This allows simplistic use from a real-time application. An absolute sleep can 
 be performed in the following manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 void main()
 {
     auto time = MonoTime.currTime(); 
@@ -270,7 +270,7 @@ The full implementation of this mutex class is defined:
 %TC:endignore
 A mutex may then be created and initialised in the following manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
 %TC:endignore
@@ -285,7 +285,7 @@ functions can extend the class, providing a wrapper around the C functions
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
 This can be conveniently wrapped in the following manner. 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 class CeilingMutex 
 {
     private import core.sync.\texttt{Exception} : SyncError;
@@ -325,7 +325,7 @@ can be accessed as though they were part of the \texttt{CeilingMutex} class.
 A similar result is achieved for the \texttt{InheritanceMutex} class.
 This allows an idiomatic and readable interaction: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 auto a = new CeilingMutex;
 a.ceiling = 50; 
 writeln("priority ceiling of a is: ", a.ceiling); 
@@ -391,7 +391,7 @@ The first approach incorporates the Java style, having a
 This provides an easy to use syntax that acts in the following manner, 
 interrupting a \texttt{Thread} if it has not completed after 2 seconds.
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 void interruptibleCode()
 {
     while(true)
@@ -418,7 +418,7 @@ The second approach instead placed this \texttt{interrupt} method as part of the
 \texttt{Interruptible} class. Contrastingly, this would be invoked in the following
 manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 void interruptibleCode()
 {
     while(true)
@@ -489,7 +489,7 @@ Basic deferral can be achieved through the \texttt{deferred} properties. In orde
 to execute code safely, even in nested cases, an \texttt{executeSafely} method that 
 defers the cancellation has been implemented as follows. 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
     ..
@@ -514,7 +514,7 @@ class Interruptible
 %TC:endignore
 this may then be used in the following manner. 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 alias getInt = Interruptible.getThis;
 void interruptibleFunction() 
 {
@@ -541,7 +541,7 @@ This is achievable through use of D's interoperability with C. Again, functions 
 that wrap this functionality, providing a more usable interface. An example of using 
 this cleanup code is as follows: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 __gshared Interruptible a; 
 
 extern (C) void thread_cleanup(void* arg) nothrow
@@ -578,7 +578,7 @@ throw an \texttt{Exception}. The following example shows a simple invocation of 
 using achieved by throwing and catching an \texttt{Exception}, breaking out of an
 infinite loop: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 import core.sys.posix.pthread, 
        core.sys.posix.signal, 
        std.stdio;
@@ -654,7 +654,7 @@ this error having a property that is checked in the catch statement. The error
 is then rethrown if it is not caught by its owner. 
 This is achieved as follows: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 private class ATCInterrupt : Error
 {
     Interruptible owner;
@@ -727,7 +727,7 @@ track of each \texttt{Interruptible} section's parent, it is possible to defer
 all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
 achieved in the following manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
     ..
@@ -806,7 +806,7 @@ be placed alongside function declarations. In addition, assert statements allow
 expected behaviour to be verified. 
 This is shown in the following sample:
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 int triple(int i) {
     return i*3; 
 }
@@ -823,7 +823,7 @@ inserts any \texttt{unittest} code into the main function. A main function may
 also be artificially created through a compiler flag. This allows the 
 full testing of library code through a compiler invocation in the following manner: 
 %TC:ignore
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\small]
 ldc -main -unittest -run realtime.d
 \end{lstlisting}
 %TC:endignore
