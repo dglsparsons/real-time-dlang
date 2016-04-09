@@ -57,7 +57,12 @@ and instead using manual memory management, or through detaching a thread from t
 runtime and ensuring any GC objects used are referenced from other threads.
 Alternatively a real-time garbage collector could replace the existing one. 
 Offsetting the penalty of the garbage collector adds additional complexity for 
-the programmer and can restrict the use of more advanced language features. 
+the programmer and can restrict the use of more advanced language features.
+This opens an avenue for potential future work in this field. 
+As D's standard libraries are so expansive, there is also potential for future
+work in making the standard library fully real-time compliant: features such as
+\texttt{Tasks} and \texttt{Fibers}, which can be used to execute work
+concurrently, currently do not support the use of priority based scheduling. 
 \par\bigskip\noindent
 As such, it is possible to develop a real-time system in the D programming 
 language using the additional support detailed in this article. However, 
