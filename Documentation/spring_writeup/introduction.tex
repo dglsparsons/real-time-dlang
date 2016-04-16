@@ -25,37 +25,36 @@ remain completely unaffected.
 \par\bigskip\noindent
 The D programming language was chosen as the target for this project due to its 
 inherent suitability for many real-time principals. The language shows a rich 
-feature set, boasting high-level abstractions, low-level capabilities, inherent 
-concurrency, improved memory safety over C/C++, a safe type 
-system, native efficiency, built-in unit testing,  and a general purpose approach 
+feature set, boasting high-level abstractions, low-level capabilities, 
+improved memory safety over C/C++, a safe type 
+system, built-in unit-testing,  and a general purpose approach 
 to programming. Simply stated, D aims to be a ``C++ done right'' \cite{qznc-tutorial}. 
 With C++ seeing increasing use on large scale real-time systems, such as the F-35 
 fighter jet, it follows a logical progression that D would provide a suitable 
 alternative \cite{f35}.
 \par\bigskip\noindent
 Real-time systems are a classification of 
-information processing system, in which input
+information processing systems, in which input
 stimuli require a response before the passage of a predefined deadline. Failure 
 to meet this deadline may be a failure of the system. Input 
 stimuli may be both externally generated i.e. by a trigger in the system's 
 environment, or they may be released by the passage of time. Such systems are 
-often safety critical, and failure to meet an imposed deadline may lead to 
-an irrelevant result of no value to the system. It can also cause disastrous side-effects, 
-such as the loss of life. Examples of such systems could include 
-manufacturing processes, automotive vehicles, or even embedded sensors. 
+often safety critical, in which, failure to meet an imposed deadline could
+cause disastrous side-effects and could potentially lead to the loss of human life. 
 % Why do i want to do it -- Importance.
 % building upon previous work? Looking at something overlooked? Improving upon
 % a previous research project? 
 \section{Project Goal} % 200 words? 
 This project aims to build upon previous research in the field of real-time systems. 
 Significant study has gone into the schedulability of the task sets that 
-define a real-time system, and also different programming languages capabilities 
-to provide timing guarantees \cite{burns-sched-analysis,atc-article}. 
-However, the evaluation of a new programming language's suitability for the 
+define a real-time system, as well as different programming languages capabilities 
+to provide guaranteed timings \cite{burns-sched-analysis,atc-article}. 
+However, both the evaluation of a new programming language's suitability for the 
 development of real-time systems, and the provision of real-time programming 
-abstractions to these languages is unexplored. This project aims to target that 
+abstractions to such a language, are unexplored. 
+This project aims to target that 
 omission by extending any necessary programming abstractions to the D programming 
-language, and detailing its suitability for future real-time systems programming.
+language, detailing its suitability for real-time systems.
 % Limitations -- be honest with the limitations of the project, i.e can only
 % target certain operating systems, requires glibc, still has a garbage
 % collector. 
@@ -65,11 +64,12 @@ use of D as a programming language for the development of real-time systems.
 This section aims to explain these restrictions, and the reasons for
 their inclusion.
 \subsection{Operating System}
-Using D's existing features was a desired requirement for the project. D's native 
-approach to concurrency, threads, do not provide a container in which they run. 
-Instead, the language simply provides a wrapper around several different operating 
-system calls, providing the correct type of thread for whichever operating system 
-the program is provided for \cite{github-core-thread}. 
+Using D's existing features was a desired requirement for the project. 
+D's native approach to concurrency, a \texttt{Thread}, does not provide a
+container in which to run. 
+Instead, the language provides a wrapper around operating system calls, 
+providing the correct type of thread for the operating system
+that the program is provided for \cite{github-core-thread}. 
 \par\bigskip\noindent
 This has the advantage of flexibility with regards to operating system.
 Furthermore, it does not require the use of a virtual machine, as seen in languages such as 
@@ -78,9 +78,8 @@ different operating systems handle threads and scheduling very differently.
 In order to provide guaranteed latencies, real-time systems use a priority based 
 scheduling approach. This approach is only available in D through the use of 
 POSIX threads, targeting a POSIX compliant operating system such as GNU/Linux. 
-\par\bigskip\noindent
 As a result, the functionality provided by the real-time library for D is only 
-applicable on POSIX compliant operating systems.
+applicable on a POSIX compliant operating system.
 
 \subsection{External Libraries}
 
@@ -97,19 +96,14 @@ A further limitation is provided by D's use of a stop-the-world garbage collecto
 This, at any moment in time, may pause the execution of the entire program in 
 order to perform memory management. As providing D with a real-time capable 
 garbage collector is outside the scope of this project, an additional limitation 
-is imposed. In order to guarantee the timely response of threads, and that no 
+is imposed. In order to guarantee a timely response, and that no 
 deadlines are missed, the garbage collector must either be avoided or memory 
-management techniques such as pooling and preallocation must be used. 
+management techniques such as pooling and preallocation must be used instead. 
 
 % Assumptions. -- Assuming that the GC has negligible impact. ? 
-\section{Assumptions} % 200 words? 
-Due to the limitations described in the previous section, several assumptions were 
-made during the course of this project. 
-First, it is assumed that any software necessary needed to run a D program is 
-provided. With regards to the development of real-time systems, this support  
-extends to the assumption that a POSIX compliant operating system is provided, 
-along with a suitable C library, such as GlibC. 
-Additionally, it is assumed that the garbage collector will either be replaced, 
+\section{Assumptions} 
+As D's current garbage-collector does not provide real-time capable
+memory-management, it is assumed that the garbage collector will either be replaced, 
 avoided, or that memory management techniques such as pooling and preallocation 
 will be used so that garbage collections do not affect deadlines. 
 
@@ -121,22 +115,21 @@ itself does not contain participants and as such there is no immediate ethical i
 \section{Report Outline} % 200 words
 This report is divided into 5 main sections:
 First, a literature review will 
-consider existing research, analysing what material already exists regarding 
-real-time systems, and situating this report within the context of these works. 
+consider existing research, analysing material on 
+real-time systems and situating this report within the context of these works. 
 From this, a set of requirements for real-time programming will be generated. 
-Secondly, a description and analysis of the problem is detailed: this sets out 
-an overview of interesting features of the D programming language, as well as 
-describing features of real-time systems. This set of real-time features acts as 
-the project's end goal. 
-The report will then discuss the taken design approach to the implemented library,
+Secondly, a description and analysis of the problem is detailed. This sets out 
+the target criteria and an overview of interesting features of the D programming 
+language. 
+The report will then discuss the approach taken for the implemented library, 
 discussing any decisions made during the library's creation. It will explain the 
 rationale behind implementation decisions. This section will also detail 
 how sample programs may be written using the implemented library. 
-The next section, Results and Evaluation, will consider two different properties 
-of the provided library: a comparison with an existing real-time capable programming 
-language, Ada, and a comparison between its own two alternative implementations 
-of asynchronous transfer of control. 
-Finally, conclusions will be drawn regarding the efficiency and safety of the 
-two implemented asynchronous transfer of control methods, the effectiveness of 
-real-time systems development in D over an alternative language, and the future 
-potential D has for developing real-time systems.
+The next section, Results and Evaluation, will consider a comparison with an 
+existing real-time capable programming language, Ada, as well as a comparison 
+between its own two and Ada's implementations of asynchronous transfer of
+control. 
+Finally, conclusions will be drawn regarding the following: 
+the efficiency and safety of the two implemented asynchronous transfer of control methods, 
+the effectiveness of real-time systems development in D over an alternative language, 
+and the potential D has for developing real-time systems.

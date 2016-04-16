@@ -3,19 +3,18 @@
 % May also have some ethics statement, etc... 
 % Whatever that is supposed to mean...
 
-Real-time systems are an area of increasing relevance and interest in the field 
+Real-time systems are commonplace and are found in a wide range of 
+situations such as manufacturing processes, automotive vehicles and embedded 
+sensors. As a result, they are an area of increasing relevance and interest in the field 
 of Computer Science. Generally stated, a real-time system is a type of information 
 processing system in which a response to an external input stimuli 
 has to be generated within a fixed time period. Correctness of the 
-system may depend not only the result, but also the time that it was delivered. 
-Such systems are commonplace and are found in a wide range of 
-situations such as manufacturing processes, automotive vehicles and embedded 
-sensors.
+system may depend not only on the result, but also the time that it was delivered. 
 \par\bigskip\noindent
 The development of real-time systems typically involves the use of a programming 
 language providing explicit support for real-time systems. 
 This support involves the provision of protocols that allow the system to 
-behave in a more reliable manner, such as asynchronous transfer of control or 
+behave in a more reliable manner, such as asynchronous transfer of control, or 
 bounded priority inversion. 
 My project entails the provision of such support to a new programming language: 
 D. D currently has very limited support for the development of real-time systems. 
@@ -32,40 +31,21 @@ language.
 By examining existing programming languages and research on real-time systems, a core set 
 of functionality for any real-time system supporting language was defined. 
 In some aspects, such as concurrent programming, support was already provided in D. 
-However, for the majority of real-time programming language features,
-additional support was required. Different approaches for the implementation 
-of these features was considered, and functionality was implemented into 
-a library. With regards to asynchronous transfer of control, there was no clear 
+However, for the majority of the real-time programming language features that
+are under consideration, additional support was required. 
+Different approaches for the implementation of these features was considered, and 
+functionality was implemented as a library. 
+With regards to asynchronous transfer of control, there was no clear 
 approach for implementation. As a result, two alternative approaches have 
-been considered, profiled and implemented. A comparison between the two approaches 
+been considered, implemented, and profiled. A comparison between the two approaches 
 has shown that a POSIX signal based approach leads to a higher performance 
 solution. 
 \par\bigskip\noindent
-Furthermore, a series of experiments compares the behaviour of a D program written 
-using the added features with an equivalent real-time Ada program. This found 
-that the performance is roughly comparable. 
+Furthermore, an experiment compares the behaviour of a D program written 
+using the implemented asynchronous transfer of control approaches with an equivalent 
+real-time Ada program. This found that the performance of asynchronous transfer
+of control in the two programming languages is roughly comparable. 
 \par\bigskip\noindent
 As a result of this project, the pool of applicable languages for the development 
 of real-time systems has been extended to incorporate a new and powerful language, D, which 
 boasts high performance and strong safety. 
-
-
-%However, there is no reason that this pool of applicable languages can not be extended to 
-%incorporate new, powerful programming languages. 
-%D is one such language, aiming for a C++ style syntax, coupled with powerful 
-%abstractions to ease development and the ability to take advantage of modern 
-%compiler technology to provide aggressively optimised code.
-%The D programming language is of particular interest for 
-%the development of real-time applications due to it's combined ease of development
-%and rich feature set. 
-
-%However, it is noteworthy that D does not provide support for real-time systems: 
-%it has the required characteristics of enabling concurrent programming and low-level 
-%control, but lacks required features. 
-%In order to develop a real-time application or system, additional functionality 
-%must therefore be provided.
-%This project intends to contribute to the pool of languages supporting the development 
-%of real-time systems and applications by providing necessary features 
-%to the D Programming language. 
-
-

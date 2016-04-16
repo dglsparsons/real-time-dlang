@@ -23,17 +23,20 @@ used, ensuring that deadlines within a system can be reliably met.  Burns and
 Wellings provide a detailed overview of development for real-time systems in
 their book, \emph{Real Time Systems and Programming Languages}
 \cite{real-time-systems}.  This provides a detailed and complete set of
-information, informing the reader of the base requirements of a real-time
-system, the implementation of real-time systems in various programming
-languages, and all relevant theory, such as scheduling theory, surrounding the
-field. In providing a detailed overview of real-time programming concepts, 
-this book provides a comprehensive account of the implementation required for my project.
+information for the reader on: 
+the base requirements of a real-time system, 
+the implementation of real-time systems in various programming languages, 
+and all relevant theory surrounding the field. 
+In providing a detailed overview of real-time programming concepts, 
+this book provides a comprehensive account of the implementation required for
+this project.
 
 \subsection{Concurrent Programming}
 % Dijkstra
-Ever since Dijkstra introduced the concepts of mutual exclusion, processes,
-semaphores, deadlock, preconditions and guards in his 1968 seminal paper,
-\emph{Cooperating Sequential Processes}, concurrent programming has seen an
+Ever since Dijkstra introduced the concepts of: 
+mutual exclusion, processes, semaphores, deadlock, 
+preconditions and guards in his 1968 seminal paper,
+\emph{Cooperating Sequential Processes}; concurrent programming has seen an
 explosion in popularity \cite{Dijkstra}.  The aspects of synchronisation and
 concurrency have become fundamental issues of computing science, with a wide
 variety of research exploring and attempting to maximise the field's
@@ -50,7 +53,7 @@ Real-time systems benefit greatly from parallelism. Inherently, they are
 concerned with the notion of timing and scheduling many different components
 across a system.  The ability to schedule these components concurrently and in
 isolation thus provides a valuable tool. Concurrent programming serves to
-enable complex systems to be more simply developed and provides 
+enable complex systems to be more simply developed, and provides 
 more readable, modular systems. Furthermore, concurrency reduces the complexity
 of scheduling these systems \cite{real-time-systems}.  It is therefore a
 requirement of a real-time systems programming language to provide support for
@@ -70,37 +73,37 @@ the scheduler's behaviour and tasks with short deadlines may have to wait for
 extended periods of time. Instead, real-time systems do not care about the
 scheduler implementing a fair algorithm. Scheduling policies have been
 developed that focus on ensuring short deadline tasks are executed in
-preference to others, so they still meet their deadlines. 
+preference to others, enabling them to meet their deadlines.
 % Apply it to real-time systems
 \par\bigskip\noindent
 Many algorithms exist that enable real-time systems to be
-scheduled, such as earliest deadline first (EDF), Least Laxity First (LLF), or
+scheduled, such as Earliest Deadline First (EDF), Least Laxity First (LLF), or
 Fixed Priority scheduling \cite{real-time-systems}.  However, each policy
 requires separate computational analysis in order to determine whether the
 system will meet all its deadlines.  The field of schedulability analysis is
 based around this, with research aiming to provide tests to determine if a
 system will behave as expected \cite{4815215,burns-sched-analysis}.  Even though 
 Burns provides a test for proving the schedulability of EDF systems, such systems are
-more difficult to implement in practice: priorities are dynamic, and may change
+more difficult to implement in practice; priorities are dynamic, and may change
 at any time. Furthermore, not all tasks may have a deadline, making them
 difficult to incorporate into such a system.  As a result, the most commonly
-used scheme is fixed-priority scheduling. 
+used scheme is Fixed Priority scheduling. 
 \par\bigskip\noindent
 It is therefore a requirement of a real-time systems programming language to provide
 support for a priority based scheduling algorithm or allowing the scheduler to
-be customised. 
+be changed. 
 
 \subsection{Bounded Priority Inversion}
 % Talk about the priority inversion problem. Introduce it.  Talk about existing
 % solutions to the priority inversion problem - Priority Ceiling protocol, and
 % the Priority Inheritance protocol. % Show the research that they come from.
 Concurrent components of a system are rarely truly isolated from each other,
-often requiring some shared information or data between different parts of the
-system.  Using priority based scheduling, it is possible for a high priority
+often requiring some shared information or data.
+Using priority based scheduling, it is possible for a high priority
 task to become blocked from making progress due to a low priority task holding
 a resource. Additionally, the low priority task may be preempted and prevented
 from making progress. In this instance, the high priority task is effectively
-running at the lowest priority of the system: it has to wait for all other
+running at the lowest priority of the system: it must wait for all other
 tasks to complete before it can progress. This is a well studied phenomenon
 known as priority inversion \cite{real-time-systems}.  
 \par\bigskip\noindent
@@ -108,8 +111,8 @@ In
 order to provide a reliable response in a priority based system, it is
 therefore necessary that priority inversion is bounded.  Two main protocols
 exist that solve this problem: the priority inheritance protocol and the
-priority ceiling protocol.  In \cite{57058}, a priority inheritance protocol is
-defined along with the priority ceiling protocol.  The priority inheritance
+priority ceiling protocol. Rajkumar and Lehoczky define these protocols in their
+paper \cite{57058}. The priority inheritance
 protocol works by raising the priority of a task holding a resource to the
 priority of any task that attempts to gain access to the resource.
 Contrastingly, the priority ceiling protocol raises the priority of the task as
@@ -127,8 +130,8 @@ Up to this point, it has been assumed that real-time systems are able to
 interact with precise timing requirements down to a very fine degree of
 accuracy.  In practice, this is not always the case, in particular with the use
 of distributed systems. There is a large field of research surrounding the
-synchronisation of multiple devices, with algorithms such as Christian's for
-synchronising these systems \cite{37958}. However, the crucial aspect is the
+synchronisation of multiple devices, with algorithms such as Cristian's
+algorithm for synchronising these systems \cite{37958}. However, the crucial aspect is the
 access of a monotonic clock: a clock that ticks at a constant rate and does
 not vary the way a calendar clock does. Baker and Pazy in their 1991 paper,
 \emph{ Real-time Features for Ada 9X} cite the need for high precision,
@@ -154,7 +157,7 @@ clock.
 \subsection{Asynchronous Transfer of Control}
 % Introduction to ATC 
 Asynchronous Transfer of Control (ATC) is a controversial topic due to
-its implementation in many languages, yet it is deemed a useful, if not
+its implementation in many languages. Yet it is deemed a useful, if not
 necessary, feature of a real-time system \cite{atc-article}.  ATC is the
 transfer of control within a thread that has been triggered by an external
 event or thread.  Its effect may be instantaneous or deferred until a safe
@@ -166,27 +169,28 @@ computation, or terminating threads, making it a valuable feature.
 % Have 2-3 articles on the different approaches to ATC within real-time systems
 % programming languages
 \par\bigskip\noindent
-The various methods of implementing Asynchronous Transfer
-of Control have been well studied, with implementations existing in both Java
+The various methods of implementing ATC 
+have been well studied, with implementations existing in both Java
 and Ada. Brosgol and Wellings detail the differences between the Ada and
 Real-time Java implementations: Java favours a class based approach to
 the protocol, where Ada instead provides an explicit language syntax
 \cite{atc-article}. Both solutions favor safety of the system and do not
-necessarily provide immediate cancellation. In \cite{Brosgol:2002:ATC}, Brosgol
-details that there are two alternative implementations for ATC. The first
-concept is aborting a thread. This contains a statement that will abort a
-thread, and there is a notion of an abort-deferred region. 
+necessarily provide immediate cancellation. Brosgol \cite{Brosgol:2002:ATC} 
+details that there are two alternative implementations for ATC. 
+The first is achieved through aborting a thread, in which there is a notion of
+an abort-deferred region. 
 This method avoids much of the complexity of ATC, including the ability to
-propagate.
+propagate cancellation.
 However, it has the additional overhead of thread management and
 thread dependencies.  The second approach discussed is an exception based
 model. In this, ATC is captured by allowing a thread to ``arbitrarily throw an
-exception at a target thread''.  Although this method avoids the overhead of additional
+exception at a target thread'' \cite{Brosgol:2002:ATC}.  
+Although this method avoids the overhead of additional
 thread creation, it requires additional safety to prevent exceptions
-from being thrown when the target thread is not ready to handle them.
+from being thrown when the target thread is not able to handle them.
 \par\bigskip\noindent
-It is therefore possible to determine that Asynchronous
-Transfer of Control is a fundamental notion for a real-time system. The ability
+It is therefore possible to determine that ATC
+is a fundamental notion for a real-time system. The ability
 to time out a computation or terminate a thread during processing is highly
 useful. However, the implementation of this principle requires careful
 consideration. In order to maintain a safe system, threads may not be
@@ -195,7 +199,7 @@ interrupts when desired. Additionally, there are two main methods of
 implementation: a thread cancellation based model and an asynchronous
 exception model. While the thread model has additional overhead due to the
 creation of new threads, the exception based approach has additional complexity
-requiring the ability to safely defer throwing the exception. 
+requiring the ability to safely defer throwing of an exception. 
 
 \section{Abstractions}
 
@@ -205,16 +209,16 @@ abstractions. These abstractions avoid unnecessary
 overcomplication and hence ease development.
 
 \subsection{Periodic Tasks} Ada does not provide a mechanism for
-abstracting periodic tasks and relies instead of their manual construction. 
+abstracting periodic tasks and relies instead on their manual construction. 
 By contrast, Real-time Java directly provides mechanisms for easily creating a periodic task
-through the \texttt{PeriodicParameters} class \cite{real-time-systems}. In
-\cite{periodic-java-thread}, Bruno introduces the concept of a periodic task
+through the \texttt{PeriodicParameters} class \cite{real-time-systems}. 
+Bruno \cite{periodic-java-thread} introduces the concept of a periodic task
 and explains how it might be implemented using the Java defined structures.
 Furthermore, Ravenscar-Java implements a \texttt{PeriodicThread} class. Using
 this class, the run method is periodically invoked, enabling a periodic task to
-be executed \cite{ravenscar-java}.  Similarly, in \cite{burns1998concurrency},
-Burns and Wellings demonstrate how a periodic task can be manually configured in
-Ada through the use of the \texttt{delay\textunderscore{}until} statement.
+be executed \cite{ravenscar-java}.  Similarly, Burns and Wellings \cite{burns1998concurrency}
+demonstrate how a periodic task can be manually configured in
+Ada through the use of the \texttt{delay until} statement.
 Furthermore, they demonstrate how separation of concern can be achieved through
 extracting timing information out of the body of the periodic task.
 \par\bigskip\noindent
@@ -223,7 +227,7 @@ Real-Time Java provide a mechanism for the programming of periodic tasks. Java
 achieves this through the abstraction of the \texttt{PeriodicParameters} and
 \texttt{PeriodicThread} classes.  These allow the programmer to easily and
 effectively adjust the parameters as needed.  Through a more low-level
-approach, Ada provides a \texttt{delay\textunderscore{}until}
+approach, Ada provides a \texttt{delay until}
 statement. This provides the basic building block for a periodic task.
 Furthermore, separation of concerns can be achieved using this approach by
 creating an alternative control structure that manages any timing requirements.
@@ -370,13 +374,11 @@ First, the existing literature surrounding real-time systems has been examined,
 with the different concepts defining a real-time system explored. Secondly,
 abstractions that aid the development of real-time systems have been examined.
 Finally, language design features that are of interest to real-time systems
-have been documented. In the literature surrounding real-time systems and their
-programming languages, there is a heavy focus on two
+have been documented. In the literature surrounding real-time systems there is a heavy focus on two
 programming languages: Java and Ada. Although infrequent references also include C, 
 there is little literature seeking to expand the pool of languages in which 
 real-time systems are developed. From this examination of existing programming 
-languages, it is possible to determine requirements for real-time programming: 
-the language must provide concurrency, priority scheduling, access to a monotonic 
+languages, it is possible to determine requirements for real-time programming. 
+The language must provide: concurrency, priority scheduling, access to a monotonic 
 clock, an absolute sleep function, the priority ceiling and priority inheritance 
-protocols, and finally a method of asynchronous transfer of control. These 
-requirements are examined in further detail in the following chapter. 
+protocols, and finally a method of asynchronous transfer of control. 

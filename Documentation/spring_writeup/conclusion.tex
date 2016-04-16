@@ -2,10 +2,9 @@
 
 % Word Count - 1000 words
 
-The D programming language inherently provides a capable set of features for the 
-development of real-time systems, such as the ability to interact with low-level 
-hardware, powerful concurrency tools, an interesting approach to memory 
-safety, and the ability to interact with existing C code. 
+The D programming language provides a capable set of features for the 
+development of real-time systems, such as: the ability to interact with low-level 
+hardware, powerful concurrency tools, and the ability to interact with existing C code. 
 However, these alone are not enough to provide the full tool-set required for
 the development of a real-time system. 
 As such, additional requirements have been explored, discussed, and implemented 
@@ -13,22 +12,22 @@ through this project.
 \par\bigskip\noindent
 By targeting POSIX compliant operating systems, particularly those that are
 real-time operating systems, it is possible to provide tools that enable control 
-over the operating systems scheduler. 
+over the operating system's scheduler. 
 This allows priority based scheduling to be used, thus satisfying requirements
 1 and 2.
 In order to have high precision timings, access to a monotonic clock is provided 
 as a language feature. 
 This clock can be then used in combination with C
 interoperability to provide absolute delay timings through a wrapper around the
-\texttt{clock\textunderscore{}nanosleep} function, satisfying requirement 3 and
+\texttt{clock\textunderscore{}nanosleep} function, satisfying requirements 3 and
 4. 
-In order to provide a bounding on the amount of Priority Inversion that a task
+In order to provide a bound on the amount of Priority Inversion that a task
 may suffer, both the Priority Inheritance and Priority Ceiling protocols have
-been implemented through the languages use of POSIX Mutexes. This meets
+been implemented through the languages use of POSIX \texttt{Mutexes}. This meets
 requirements 5 and 6. 
 For requirement 7, Asynchronous Transfer of Control has been implemented in two 
 alternative approaches: a two-thread model, and a one-thread \texttt{Exception} model. 
-This provides the desired functionality, and 
+This provides the desired functionality and 
 nicely encapsulates not only creation and cancellation of an
 abortable section, but provides mechanisms for adding cleanup routines and deferring 
 cancellation. 
@@ -39,19 +38,20 @@ This found that, while an \texttt{Exception} based approach depends
 heavily on the setup of the stack during signal handling, it is a much more efficient
 implementation, taking around only 40\% of the computation time compared to a
 two-thread approach. 
-%TODO - talk about comparison vs Ada 
+Additionally, the approaches to ATC in D have been profiled against an
+equivalent Ada program, highlighting that both systems have similar performance.
 \par\bigskip\noindent
 Furthermore, in addition to the provided functionality, a wide range of unit-tests 
 have been provided, along with in-built documentation. 
-The unit-tests can easily be invoked to ensure correct operation on a specific
+These unit-tests can be invoked to ensure correct operation on a specific
 system, and provide example usage of the introduced features. 
-These implemented tools are provided as a module, and can be made available as 
+All the implemented tools are provided as a module, and can be made available as 
 a library. This would enable the development of real-time system in the D programming 
 language, as well as maintaining compatibility with existing code. 
 \par\bigskip\noindent
 However, there are additional difficulties that the 
-language faces: the use of a stop-the-world garbage collector in the 
-D programming language prevents a reliable estimate of timings from being determined. 
+language faces: the use of a stop-the-world garbage collector prevents a reliable 
+estimate of timings from being determined. 
 This is a problem that can be offset through disabling the garbage collector 
 and instead using manual memory management, or through detaching a thread from the 
 runtime and ensuring any GC objects used are referenced from other threads.
@@ -67,3 +67,8 @@ concurrently, currently do not support the use of priority based scheduling.
 As such, it is possible to develop a real-time system in the D programming 
 language using the additional support detailed in this article. However, 
 the Garbage collector remains a significant hurdle in aiding development.
+%TODO - Make out why you would use D over some other programming languages for
+%the development of real-time systems. 
+% I.E it's better than C++, which is used on fighter jet, because it provides a
+% neater encapsulation, advanced features, built in unit-testing, and more
+% robust safety.  POINT - Evidence, evaluation and more evaluation. 

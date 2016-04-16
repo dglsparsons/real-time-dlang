@@ -1,72 +1,29 @@
-% The Design and Implementation Section - plenty to discuss in here - how 
-% each different part of the system has been designed and implemented, as well
-% as what the original design aims were. 
-
-%Formulate a moderate sized problem, to select and justify an appropriate approach, 
-%and to follow the approach systematically. 
-%Examined in the design/implementation chapters of the project. 
-
-%Recognise alternatives, selecting and justifying the approach taken at each 
-%point in the report, identifying parts of the project area that are feasible 
-%within the time (etc) constraints of the project. Examined in the 
-%design/implementation chapters of the project. 
-
-%Appreciate the latent issues of the subject area (for example, in software 
-%engineering they might meet and tackle such as emergent requirements, design 
-%flaws, equipment/application problems). Examined in the project 
-%design/implementation and evaluation chapters. 
-
-
-% Word Count Estimate - 2500 Words
-
-% \section{Design Aims} -- MAYBE DON'T NEED THIS BIT AS THE REQUIREMENTS ARE TO
-% BE FORMULATED FROM THE LIT REVIEW SECTION 
-
-% Using D Way that D works - hooks into C standard libraries in order to 
-% provide support for things. 
-
-% Targeting POSIX operating Systems - real time features, not many other OS 
-% can do this. 
-
-% Ability to target different compilers, not require custom runtimes. 
-% GIVES THE ESSENTIAL - Program written with no knowledge of the Real-time
-% systems additions I am creating will not be effected. This means support can 
-% be added in through importing a library. 
-In previous chapters,
-existing real-time system programming languages have been examined in order to
-define a set of required functionality. From this, a set of project requirements 
-has been determined. 
-This chapter aims to describe the implementation of these requirements into the D
-programming language, highlighting the completed implementations and any design 
-decisions made along the way. 
-For each of the functional requirements of the project, the potential
-implementations are discussed. In this discussion, any design 
-decisions that have been made will be explained. Furthermore, this chapter will 
-detail the completed implementation of each component. 
+%
+%
+%
+This chapter aims to describe the implementation of the project requirements into the D
+programming language, highlighting the completed implementations and any  
+decisions made during their design.
 
 \section{Method of Provision}
-% Library vs modified runtime ? 
 For the end goal of this project to be usable, various methods for its delivery 
 were considered. There are two significant alternatives. 
 If the compiler or the 
 core runtime features of the language do not need to be altered to provide the 
-desired functionality, 
-the project may then be packaged as an external library. 
-This is the most desirable end goal, hence the addition of requirement 8: no
-modifications to the language's compiler or core libraries. 
+desired functionality, the project may then be packaged as an external library. 
+This is the most desirable end goal, as it succeeds in meeting requirement 8. 
 Failing this, a modified runtime and/or compiler would need be provided.
-Although this would 
-enable the development of real-time systems, the modified system would 
-require maintenance to keep it up to date with the core set of D functionality. 
+However, this system would require maintenance to keep it up to date with the
+core set of D functionality. 
 
 \section{Requirement 1: Threads and Interprocess Communication}
 D, being a C/C++ style language, provides support for the creation and use of 
 threads. Threads in D follow a Java style approach: \texttt{Thread} is a class, 
-allowing subclasses to be derived and methods to be overridden. The default 
+allowing subclasses to be derived. The default 
 class method will allow a function to be passed by reference and executed. 
 These features can be seen in the example below, taken from the D website
 \cite{core-thread}: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 import core.Thread; 
 
@@ -97,54 +54,44 @@ void main()
     composed.start;
 }
 \end{lstlisting}
-%TC:endignore
-It is therefore evident that D already provides 
-concurrent control of system components, along with mechanisms for 
-interprocess communication. However, the implementation is of interest: D 
-provides an agnostic approach to the underlying operating system, supporting 
-Windows, FreeBSD, OSX, Linux and Solaris. 
-In order to provide support for this wide range of operating systems, the 
-\texttt{Thread}
+%TCusedtoendignorethis
+It is therefore evident that D provides 
+concurrent control of system components, along with 
+interprocess communication. However, as previously shown, the \texttt{Thread}
 class contains operating system specific code, mapping down a standard interface 
 onto various underlying implementations 
 \cite{github-core-thread}. 
 This project is interested only in operating systems capable of meeting tight timing 
 requirements in any calls to the kernel and context switching.
 As such, all additions made to D with regards to real-time applications are 
-specifically targeted at POSIX compliant 
-operating systems, in particular those with real-time extensions. 
+specifically targeted at real-time POSIX compliant operating systems. 
 \par\bigskip\noindent
-It is worth noting that the underlying operating may require patching in order 
-to be fully viable for a real-time system: the system may not be fully
+It is worth noting that the underlying operating system may require patching in order 
+to be fully viable for a real-time system: it may not be fully
 real-time compliant even if it is POSIX compliant. Because of this, real-time patches 
 to the Linux kernel exist \cite{rt-wiki}. These enable a greater 
 guarantee over the timeliness of the kernel. 
-Furthermore, special care must also be taken when developing such a system,
+Furthermore, special care must also be taken when developing such a system;
 selecting appropriate hardware and programming the system in a manner appreciative 
 of the underlying hardware \cite{rt-wiki-how-to}.
 
 \section{Requirement 2: Priority Based Scheduling}
 The ability to correctly schedule tasks or threads based on their priority is of 
 critical importance to a real-time system. As previously discussed, D provides 
-concurrency through operating system Threads, encapsulated in the
-\texttt{Thread} class. Additionally, the \texttt{Thread} class contains the 
-parameter, \texttt{priority}. This parameter can be used to set or get a
-\texttt{Thread's} priority \cite{core-thread}. 
+concurrency through operating system \texttt{Threads}. These contain the
+parameter, \texttt{priority}, which can be used to adjust or retrieve 
+the \texttt{Thread's} priority \cite{core-thread}. 
 However, in order for priority based scheduling to be used, this alone is not 
-enough: the scheduler must be changed to function in a priority based manner. 
-It has been previously identified that D's threads provide a mapping onto an operating  
-system thread, and hence it is the operating system scheduler that has to be set.  
-However, no support exists within D's standard libraries to interact with the
-scheduler. 
-Therefore, this support has to be supplied. 
+enough: the system scheduler must also be changed.
+However, no support exists within D's standard libraries to set this
+scheduler, therefore, this support has to be supplied. 
 This can be achieved through interaction with C standard libraries, such as GlibC. 
 The function \texttt{sched\textunderscore{}setscheduler} allows the operating system 
-scheduler to be set to either SCHED\textunderscore{}FIFO or SCHED\textunderscore{}RR for 
-this process \cite{sched-setscheduler}. 
-In order to provide a more intuitive interaction, a wrapper was written around the 
-system call. This provides a more 'D like' interface and enables a level of
-abstraction to be taken from manually mapping D onto C for each application. 
-%TC:ignore
+scheduler to be set to either SCHED\textunderscore{}FIFO or
+SCHED\textunderscore{}RR \cite{sched-setscheduler}. 
+In order to provide a more intuitive interaction, a wrapper was written around
+this system call. This provides a more 'D like' interface and a level of
+abstraction. This wrapper takes the following form:
 \begin{lstlisting}[basicstyle=\small,language=C++]
 public import core.sys.posix.sched 
                 : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
@@ -174,40 +121,35 @@ void setRRScheduler(int schedPriority)
     setScheduler(SCHED_RR, schedPriority); 
 }
 \end{lstlisting}
-%TC:endignore
-This can then be called in the following manner: 
-%TC:ignore
+This functionality may then be used in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 void main()
 {
     setFIFOScheduler(50); 
 }
 \end{lstlisting}
-%TC:endignore
 The ability to set the scheduler to use a priority based method, combined with 
-the D language's ability to set the priority of a thread, 
-enables a priority based scheduling approach to be used. It is worth noting
-that on many operating systems, setting the scheduler requires super user
-privileges. 
+D's ability to set the priority of a \texttt{Thread}, enables a 
+priority based scheduling approach to be used. 
+However, it is worth noting that on many operating systems, setting the scheduler 
+requires super user privileges. 
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
-As mentioned in the previous section, it is a necessary feature of a real-time 
-systems programming language to be able to sleep until an absolute time, rather 
-than a relative time. In addition, this sleep must use a monotonic clock in order 
+As mentioned in the previous section, it is a necessary to be able to sleep until 
+an absolute time. In addition, this sleep must use a monotonic clock in order 
 to remove any subjection from clock-drift or time-zone changes. D has support 
-for a monotonic clock as part of the core libraries 
+for a monotonic clock as part of its core libraries 
 \cite{dlang-core-time}. This is accessible using 
-\texttt{MonoTime}. Unfortunately there is no ability to sleep until an 
+\texttt{MonoTime}. However, there is no ability to sleep until an 
 absolute time. Using D's ability to interact with C libraries, it is possible 
-to leverage GlibC's ability to perform this operation: the C function 
+to leverage GlibC's ability to perform this operation. The C function 
 \texttt{clock\textunderscore{}nanosleep} allows an absolute time to be specified
 \cite{clock-nanosleep}.
-A wrapper function has been provided as part of the real-time library this 
-project provides: \texttt{delayUntil}.
+In order to provide a more usable interaction, this project provides a wrapper
+function. 
 This function accepts the D type \texttt{MonoTime} as an input, converts it to the C 
 equivalent, and calls the C function \texttt{clock\textunderscore{}nanosleep}, 
 allowing an absolute delay. The code is displayed below: 
-%TC:ignore
 \begin{lstlisting}[basicstyle=\small]
 void delayUntil(MonoTime timeIn)
 {
@@ -223,27 +165,24 @@ void delayUntil(MonoTime timeIn)
     }
 }
 \end{lstlisting}
-%TC:endignore
-This allows simplistic use from a real-time application. An absolute sleep can 
-be performed in the following manner: 
-%TC:ignore
+This allows simplistic use for a real-time application. An absolute sleep can 
+then be performed in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 void main()
 {
-    auto time = MonoTime.currTime(); 
+    auto time = MonoTime.currTime; 
     time += 3.seconds; 
     delayUntil(time);
 }
 \end{lstlisting}
-%TC:endignore
-As such, the D programming language can easily provide the ability to sleep 
-until an absolute time. In order to easily use this functionality, a 
-wrapper has been provided, giving an interface to D.
+As such, this project provides support for pausing a \texttt{Thread's}
+execution 
+until an absolute time. 
 
 \section{Requirements 5 and 6: Bounded Priority Inversion}
-In D, mutexes follow a similar approach to threads: the language's
-implementation provides a wrapper around operating system calls. This 
-enables operating system independent code to be written simply. However, D has no 
+In D, the \texttt{Mutex} class follow a similar approach to the \texttt{Thread}
+class: the language's implementation provides a wrapper around operating system 
+calls. However, this \texttt{Mutex} class has no 
 inherent ability to provide priority inversion handling protocols. 
 \par\bigskip\noindent
 %Due to the underlying implementation of D's mutexes, there are two alternative 
@@ -265,15 +204,15 @@ constructor for this class cannot be extended. Instead it must be fully
 reimplemented with an alternative implementation of the constructor adding in 
 the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} \cite{mutex-setprotocol}. 
 The full implementation of this mutex class is defined:
-%TC:ignore
-\lstinputlisting[language=Java]{rtmutex.d}
-%TC:endignore
+%TCusedtoignorethis
+\lstinputlisting[basicstyle=\small,language=Java]{rtmutex.d}
+%TCusedtoendignorethis
 A mutex may then be created and initialised in the following manner: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 However, this is not a very D-like implementation: \texttt{enums} are not widely used 
 in constructors. Instead, as with the scheduler calls, 
 it is more intuitive to wrap this into two separate classes. Additionally, 
@@ -284,7 +223,7 @@ functions can extend the class, providing a wrapper around the C functions
 \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling} and 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
 This can be conveniently wrapped in the following manner. 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 class CeilingMutex 
 {
@@ -318,13 +257,13 @@ class CeilingMutex
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 This allows the priority ceiling to be set or retrieved as if it were a property of 
 the \texttt{RTMutex} class. Similarly, the functions defined in \texttt{RTMutex} 
 can be accessed as though they were part of the \texttt{CeilingMutex} class. 
 A similar result is achieved for the \texttt{InheritanceMutex} class.
 This allows an idiomatic and readable interaction: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 auto a = new CeilingMutex;
 a.ceiling = 50; 
@@ -334,7 +273,7 @@ synchronized(a)
     // do something
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 Therefore, on a POSIX compliant operating system, the ability to interact with 
 existing C libraries enables an implementation of a mutex, similar to the languages 
 core model, to be extended, incorporating both the priority inheritance and 
@@ -390,7 +329,7 @@ The first approach incorporates the Java style, having a
 \texttt{Thread.interrupt()} method. A similar method could be implemented in D. 
 This provides an easy to use syntax that acts in the following manner, 
 interrupting a \texttt{Thread} if it has not completed after 2 seconds.
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 void interruptibleCode()
 {
@@ -413,11 +352,11 @@ void main()
     a.interrupt();
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 The second approach instead placed this \texttt{interrupt} method as part of the 
 \texttt{Interruptible} class. Contrastingly, this would be invoked in the following
 manner: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 void interruptibleCode()
 {
@@ -441,7 +380,7 @@ void main()
     a.interrupt();
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 While the difference between the two approaches may appear small, it is significant: 
 in the first implementation, a thread containing multiple \texttt{Interruptible} 
 sections of code may have a later section interrupted by a call to \texttt{interrupt}
@@ -488,7 +427,7 @@ even in the cases where nesting is possible, both these methods are implemented.
 Basic deferral can be achieved through the \texttt{deferred} properties. In order 
 to execute code safely, even in nested cases, an \texttt{executeSafely} method that 
 defers the cancellation has been implemented as follows. 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
@@ -511,9 +450,9 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 this may then be used in the following manner. 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 alias getInt = Interruptible.getThis;
 void interruptibleFunction() 
@@ -529,7 +468,7 @@ void interruptibleFunction()
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 This provides a safe mechanism for handling memory allocation or critical sections 
 of code. Furthermore, this enables code to be executed safely despite being 
 nested in outer \texttt{Interruptible} classes. 
@@ -540,7 +479,7 @@ place. In C with POSIX threads, this can be achieved through the use of the
 This is achievable through use of D's interoperability with C. Again, functions are provided 
 that wrap this functionality, providing a more usable interface. An example of using 
 this cleanup code is as follows: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 __gshared Interruptible a; 
 
@@ -558,7 +497,7 @@ void interruptibleFn()
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 This provides the desired functionality of ATC, as set out in requirement 7, 
 through the use of thread cancellation in a two-thread model.
 
@@ -577,7 +516,7 @@ the use of signals and signal handlers. This can be also be used to remotely
 throw an \texttt{Exception}. The following example shows a simple invocation of ATC
 using achieved by throwing and catching an \texttt{Exception}, breaking out of an
 infinite loop: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 import core.sys.posix.pthread, 
        core.sys.posix.signal, 
@@ -618,7 +557,7 @@ void main()
     pthread_kill(a.id, 36); 
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 The above example displays the simple principal behind this method of ATC.
 However, there are many aspects of its behaviour that make the above
 implementation impractical. 
@@ -653,7 +592,7 @@ This is achieved by creating a new error for each interruptible section, and
 this error having a property that is checked in the catch statement. The error
 is then rethrown if it is not caught by its owner. 
 This is achieved as follows: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 private class ATCInterrupt : Error
 {
@@ -697,7 +636,7 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 This example enables both the use of \texttt{Exception}s within the ATC region and
 enables ATC sections to be nested inside each other. However, compared to the
 \texttt{Thread} based approach, additional functionality is still required. 
@@ -726,7 +665,7 @@ order to guarantee fully safe execution during nested ATC sections. By keeping
 track of each \texttt{Interruptible} section's parent, it is possible to defer
 all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
 achieved in the following manner: 
-%TC:ignore
+%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
@@ -760,7 +699,7 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TC:endignore
+%TCusedtoendignorethis
 This can then be invoked in the same manner as the \texttt{Thread} based
 implementation.
 \par\bigskip\noindent
@@ -799,34 +738,36 @@ these methods have been implemented.
 
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 
-of tests have be provided. These tests allow a new system's viability 
-to be tested and improve the maintainability of the system. D provides a built-in 
+of tests have been provided. These serve two purposes: they enable verification
+of the correct operation of the real-time library; and they improve the
+maintainability of the system. 
+D provides a built-in 
 functionality for unit-testing: using the \texttt{unittest} flag, test code can 
-be placed alongside function declarations. In addition, assert statements allow 
-expected behaviour to be verified. 
+be placed alongside function declarations. In addition, \texttt{assert} statements 
+allow expected behaviour to be verified. 
 This is shown in the following sample:
-%TC:ignore
 \begin{lstlisting}[basicstyle=\small]
-int triple(int i) {
+int triple(int i) 
+{
     return i*3; 
 }
-unittest {
+unittest 
+{
     assert(triple(0) == 0); 
-    assert(triple(-4) == -8); 
-    assert(triple(10) == 20); 
+    assert(triple(-4) == -12); 
+    assert(triple(10) == 30); 
     assert(12.triple == 36);
 }
 \end{lstlisting}
-%TC:endignore
-For testing, a compiler flag using the two most popular compilers, LDC and DMD, 
-inserts any \texttt{unittest} code into the main function. A main function may 
-also be artificially created through a compiler flag. This allows the 
-full testing of library code through a compiler invocation in the following manner: 
-%TC:ignore
+When using either of the two most popular compilers, LDC or DMD, a compiler
+flag may be used to insert any \texttt{unittest} code into the beginning of the 
+main function.
+A main function may also be artificially created through a compiler flag:
+\texttt{-main}. This allows the full testing of library code through a compiler 
+invocation in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 ldc -main -unittest -run realtime.d
 \end{lstlisting}
-%TC:endignore
 This inbuilt definition of \texttt{unittest} allows unit-testing to occur 
 without the need for tools external to the core language, thus providing a convenient 
 and practical testing method. 
