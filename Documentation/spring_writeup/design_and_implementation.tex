@@ -10,13 +10,13 @@ For the end goal of this project to be usable, various methods for its delivery
 were considered. There are two significant alternatives. 
 If the compiler or the 
 core runtime features of the language do not need to be altered to provide the 
-desired functionality, the project may then be packaged as an external library. 
+desired functionality, the project may be packaged as an external library. 
 This is the most desirable end goal, as it succeeds in meeting requirement 8. 
 Failing this, a modified runtime and/or compiler would need be provided.
 However, this system would require maintenance to keep it up to date with the
 core set of D functionality. 
 
-\section{Requirement 1: Threads and Interprocess Communication}
+\section{Requirement 1: Concurrency}
 D, being a C/C++ style language, provides support for the creation and use of 
 threads. Threads in D follow a Java style approach: \texttt{Thread} is a class, 
 allowing subclasses to be derived. The default 
@@ -56,42 +56,24 @@ void main()
 \end{lstlisting}
 %TCusedtoendignorethis
 It is therefore evident that D provides 
-concurrent control of system components, along with 
-interprocess communication. However, as previously shown, the \texttt{Thread}
-class contains operating system specific code, mapping down a standard interface 
-onto various underlying implementations 
-\cite{github-core-thread}. 
-This project is interested only in operating systems capable of meeting tight timing 
-requirements in any calls to the kernel and context switching.
-As such, all additions made to D with regards to real-time applications are 
-specifically targeted at real-time POSIX compliant operating systems. 
-\par\bigskip\noindent
-It is worth noting that the underlying operating system may require patching in order 
-to be fully viable for a real-time system: it may not be fully
-real-time compliant even if it is POSIX compliant. Because of this, real-time patches 
-to the Linux kernel exist \cite{rt-wiki}. These enable a greater 
-guarantee over the timeliness of the kernel. 
-Furthermore, special care must also be taken when developing such a system;
-selecting appropriate hardware and programming the system in a manner appreciative 
-of the underlying hardware \cite{rt-wiki-how-to}.
+concurrent control of system components. Therefore, for requirement 1, no
+further implementation is required. 
 
-\section{Requirement 2: Priority Based Scheduling}
+\section{Requirement 2: Priority Scheduling}
 The ability to correctly schedule tasks or threads based on their priority is of 
-critical importance to a real-time system. As previously discussed, D provides 
-concurrency through operating system \texttt{Threads}. These contain the
+critical importance to a real-time system. D's \texttt{Thread} class contains the
 parameter, \texttt{priority}, which can be used to adjust or retrieve 
 the \texttt{Thread's} priority \cite{core-thread}. 
 However, in order for priority based scheduling to be used, this alone is not 
 enough: the system scheduler must also be changed.
-However, no support exists within D's standard libraries to set this
-scheduler, therefore, this support has to be supplied. 
-This can be achieved through interaction with C standard libraries, such as GlibC. 
-The function \texttt{sched\textunderscore{}setscheduler} allows the operating system 
-scheduler to be set to either SCHED\textunderscore{}FIFO or
-SCHED\textunderscore{}RR \cite{sched-setscheduler}. 
-In order to provide a more intuitive interaction, a wrapper was written around
-this system call. This provides a more 'D like' interface and a level of
-abstraction. This wrapper takes the following form:
+No support exists within D's standard libraries to set the scheduler, and therefore, 
+this support must be supplied. 
+This is achieved through interaction with standard C libraries. 
+The Linux function \texttt{sched\textunderscore{}setscheduler} allows the operating system 
+scheduler to be changed to either a first-in-first-out or round robin scheduler \cite{sched-setscheduler}. 
+In order to provide an intuitive interaction, a wrapper has been written around
+this system call, providing a more 'D like' interface and a level of
+abstraction. This takes the following form:
 \begin{lstlisting}[basicstyle=\small,language=C++]
 public import core.sys.posix.sched 
                 : SCHED_FIFO, SCHED_OTHER, SCHED_RR; 
@@ -131,18 +113,26 @@ void main()
 The ability to set the scheduler to use a priority based method, combined with 
 D's ability to set the priority of a \texttt{Thread}, enables a 
 priority based scheduling approach to be used. 
-However, it is worth noting that on many operating systems, setting the scheduler 
-requires super user privileges. 
+For some operating systems, setting the scheduler may require super user privileges. 
+Furthermore, this project is interested only in operating systems capable of meeting tight timing 
+requirements in any calls to the kernel and context switching.
+If using Linux, the underlying operating system may require patching in order 
+to be fully viable for a real-time system. Because of this, real-time patches 
+to the Linux kernel exist \cite{rt-wiki}. 
+Furthermore, special care must also be taken when developing such a system;
+selecting appropriate hardware and programming the system in a manner appreciative 
+of the underlying hardware \cite{rt-wiki-how-to}.
+
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
 As mentioned in the previous section, it is a necessary to be able to sleep until 
-an absolute time. In addition, this sleep must use a monotonic clock in order 
-to remove any subjection from clock-drift or time-zone changes. D has support 
+an absolute time. This sleep must also use a monotonic clock 
+to remove any subjection to clock-drift or time-zone changes. D has support 
 for a monotonic clock as part of its core libraries 
 \cite{dlang-core-time}. This is accessible using 
 \texttt{MonoTime}. However, there is no ability to sleep until an 
 absolute time. Using D's ability to interact with C libraries, it is possible 
-to leverage GlibC's ability to perform this operation. The C function 
+to leverage C's ability to perform this operation. The C function 
 \texttt{clock\textunderscore{}nanosleep} allows an absolute time to be specified
 \cite{clock-nanosleep}.
 In order to provide a more usable interaction, this project provides a wrapper
@@ -176,54 +166,42 @@ void main()
 }
 \end{lstlisting}
 As such, this project provides support for pausing a \texttt{Thread's}
-execution 
-until an absolute time. 
+execution until an absolute time. 
 
 \section{Requirements 5 and 6: Bounded Priority Inversion}
-In D, the \texttt{Mutex} class follow a similar approach to the \texttt{Thread}
+In D, the \texttt{Mutex} class follows a similar approach to the \texttt{Thread}
 class: the language's implementation provides a wrapper around operating system 
 calls. However, this \texttt{Mutex} class has no 
-inherent ability to provide priority inversion handling protocols. 
-\par\bigskip\noindent
-%Due to the underlying implementation of D's mutexes, there are two alternative 
-%approaches to defining the priority inheritance and priority ceiling protocols.
-%In one approach, the current implementation may be extended to incorporate system calls 
-%setting the POSIX mutexes as using these protocols. In the other approach, a language level 
-%mutex can be added that defines these protocols. 
+inherent ability to provide the Priority Inheritance or the Priority Ceiling protocol. 
 Real-time systems have been shown to only be viable on operating systems that 
 are POSIX compliant, and due to the quantity of work involved in reimplementing 
-and defining these protocols, the decision was made to use the languages
-inbuilt POSIX mutexes. 
+and defining these protocols, the decision was made to expand the languages
+inbuilt POSIX mutexes. The priority inheritance and priority ceiling protocols 
+are available when using POSIX mutexes in C \cite{mutex-setprotocol}. 
 \par\bigskip\noindent
-It is worth noting that the priority inheritance and priority ceiling protocols 
-are available when using POSIX mutexes in C. 
-\cite{mutex-setprotocol}. However, even though D's implementation of the \texttt{Mutex} 
-class uses POSIX mutexes, it does not not set the protocol during their creation. 
 As requirement 8 highlights the importance of an unmodified runtime, the 
-constructor for this class cannot be extended. Instead it must be fully 
-reimplemented with an alternative implementation of the constructor adding in 
-the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} \cite{mutex-setprotocol}. 
-The full implementation of this mutex class is defined:
-%TCusedtoignorethis
+constructor for \texttt{Mutex} class cannot be extended. Instead it must be fully 
+reimplemented as a new class with the constructor adding 
+the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} 
+\cite{mutex-setprotocol}. 
+The full implementation of this \texttt{RTMutex} class is defined:
 \lstinputlisting[basicstyle=\small,language=Java]{rtmutex.d}
-%TCusedtoendignorethis
-A mutex may then be created and initialised in the following manner: 
-%TCusedtoignorethis
+A mutex using the inheritance protocol may then be created and initialised in 
+the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
-%TCusedtoendignorethis
 However, this is not a very D-like implementation: \texttt{enums} are not widely used 
 in constructors. Instead, as with the scheduler calls, 
 it is more intuitive to wrap this into two separate classes. Additionally, 
 further support 
 is needed to set and retrieve the priority ceiling associated with the 
-mutex. This can achieved in a similar manner: additional 
-functions can extend the class, providing a wrapper around the C functions 
+mutex. 
+This is achieved by a second class that provides access to an \texttt{RTMutex}
+instance alongside a wrapper around the C functions 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling} and 
 \texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling}.
-This can be conveniently wrapped in the following manner. 
-%TCusedtoignorethis
+This is implemented in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 class CeilingMutex 
 {
@@ -244,7 +222,7 @@ class CeilingMutex
         if(pthread_mutex_getprioceiling(this.handleAddr, 
                                                 &ceiling))
             throw new SyncError("Unable to fetch the priority 
-                           ceiling for the associated Mutex"); 
+                           ceiling."); 
         return ceiling; 
     }
 
@@ -253,139 +231,94 @@ class CeilingMutex
         if(pthread_mutex_setprioceiling(this.handleAddr, 
                                                 val, null))
             throw new SyncError("Unable to set the priority 
-                           ceiling for the associated Mutex"); 
+                           ceiling."); 
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This allows the priority ceiling to be set or retrieved as if it were a property of 
 the \texttt{RTMutex} class. Similarly, the functions defined in \texttt{RTMutex} 
 can be accessed as though they were part of the \texttt{CeilingMutex} class. 
 A similar result is achieved for the \texttt{InheritanceMutex} class.
 This allows an idiomatic and readable interaction: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 auto a = new CeilingMutex;
 a.ceiling = 50; 
-writeln("priority ceiling of a is: ", a.ceiling); 
 synchronized(a) 
 {
-    // do something
+    // perform an exclusive action
 }
 \end{lstlisting}
-%TCusedtoendignorethis
-Therefore, on a POSIX compliant operating system, the ability to interact with 
-existing C libraries enables an implementation of a mutex, similar to the languages 
-core model, to be extended, incorporating both the priority inheritance and 
-priority ceiling protocols. Wrappers around this \texttt{RTMutex} class for 
-either protocol and around the C functions 
-\texttt{pthread\textunderscore{}mutex\textunderscore{}setprioceiling} 
-and \texttt{pthread\textunderscore{}mutex\textunderscore{}getprioceiling{}} 
-provide an easy to use and intuitive implementation. 
+Therefore, on a POSIX compliant operating system, D's \texttt{Mutex} class can 
+be reimplemented, incorporating both the priority inheritance and 
+priority ceiling protocols. 
 
 \section{Requirement 7: Asynchronous Transfer of Control} % 600 words
-The final primitive required for a programming language to support the development 
-of a real-time system is the ability to perform an asynchronous transfer of 
-control (ATC). This entails providing a section of code that can be interrupted 
-and aborted at any moment in time asynchronously.
+The final primitive required for a real-time system is the ability to perform an Asynchronous Transfer of 
+Control (ATC). This entails providing a section of code that can be interrupted 
+and aborted asynchronously.
 As detailed in the previous section, there are several different methods of 
 achieving this aim. Here, each method is considered and the logic behind the 
 implementation explained. 
 
 \subsubsection*{Setjmp and Longjmp} 
-Through D's interaction with C, asynchronous transfer of control can be achieved 
-through use of the commands, \texttt{setjmp} and \texttt{longjmp}. These allow 
-the control of flow to be altered in a program by marking a location in code when 
-\texttt{setjmp} is called, and jumping to this saved location when \texttt{longjmp} 
-is called. It is possible to asynchronously invoke the \texttt{longjmp} function
-through the use of POSIX signals and a signal handler. This allows an asynchronous 
-signal to effect the flow of control. However, due to the lack of concern for 
-stack management, it is common for the stack to become corrupted using this approach
-\cite{unwinding-stack}. As ATC will typically involve altering the current function, 
-it is likely to affect the stack and would therefore not provide a memory safe 
-implementation in D. As a result of this poor memory management, this method was 
-not implemented in the end product, and is not a viable solution for asynchronous 
-transfer of control in D. 
+In C, ATC can be achieved through use of the functions, \texttt{setjmp} and 
+\texttt{longjmp}. These allow 
+the current execution of a program to be altered by `jumping' to a saved
+point in the execution.
+This jump may occur asynchronously through the use of POSIX signals 
+and a signal handler. 
+However, when using this approach, even though the functions are thread and
+signal safe \cite{setjmp}, it is possible for the stack to become corrupted in
+D, as with C++ \cite{unwinding-stack}. 
+During ATC, the stack may be altered as functions are called, and returning to a 
+previous location without correctly rewinding the stack may cause memory corruption. 
+As a result of this poor memory management, this method was 
+not implemented in the end product.
 
 \subsubsection*{Thread Cancellation}
 The second approach considered for the implementation of ATC in D is a thread 
-cancellation approach. As previously shown, D's \texttt{Thread} class maps down onto 
-operating specific threads. For POSIX compliant operating systems, it therefore 
-uses pthreads. When using pthreads, it is possible to terminate a thread during 
-its execution using the \texttt{pthread\textunderscore{}cancel} function. 
-In both methods, an \texttt{Interruptible} class abstracts the setup and running of an 
-ATC section. 
-Initialising the class will create a new \texttt{Thread}, 
+cancellation approach. When using POSIX threads, it is possible to terminate a 
+thread during its execution using the \texttt{pthread\textunderscore{}cancel} function. 
+In order to neatly abstract this cancellation, an \texttt{Interruptible} class
+was defined.
+Initialising this will create a new \texttt{Thread}, 
 inheriting the priority of the calling \texttt{Thread}. 
-On calling a \texttt{start} function, execution of the calling 
-\texttt{Thread} will then suspend, waiting for the abortable section 
-of code to be executed within the \texttt{Interruptible} class.
-The aim of this class is to provide a friendly interaction 
-that removes concern over the underlying implementation. 
+On calling a \texttt{start} function, an abortable section of code will begin 
+execution in this \texttt{Thread}, and the calling
+\texttt{Thread} will become blocked. 
 For the asynchronous interrupt mechanism, using
 \texttt{pthread\textunderscore{}cancel},
-two alternative approaches were considered.
-The first approach incorporates the Java style, having a 
-\texttt{Thread.interrupt()} method. A similar method could be implemented in D. 
-This provides an easy to use syntax that acts in the following manner, 
-interrupting a \texttt{Thread} if it has not completed after 2 seconds.
-%TCusedtoignorethis
-\begin{lstlisting}[basicstyle=\small]
-void interruptibleCode()
-{
-    while(true)
-    {
-        // loop forever.
-    }
-}
-
-void main()
-{
-    void threadFn()
-    {
-        new Interruptible(&interruptibleCode).start(); 
-    }
-
-    auto a = new Thread(&threadFn); 
-    a.start(); 
-    Thread.sleep(2.seconds); 
-    a.interrupt();
-}
-\end{lstlisting}
-%TCusedtoendignorethis
-The second approach instead placed this \texttt{interrupt} method as part of the 
-\texttt{Interruptible} class. Contrastingly, this would be invoked in the following
-manner: 
-%TCusedtoignorethis
-\begin{lstlisting}[basicstyle=\small]
-void interruptibleCode()
-{
-    while(true)
-    {
-        // loop forever.
-    }
-}
-
-void main()
-{
-    __gshared Interruptible a; 
-    void threadFn()
-    {
-        a = new Interruptible(&interruptibleCode)
-        a.start(); 
-    }
-
-    new Thread(&threadFn).start(); 
-    Thread.sleep(2.seconds); 
-    a.interrupt();
-}
-\end{lstlisting}
-%TCusedtoendignorethis
+two alternative approaches were considered:
+the first follows the Java implementation of a 
+\texttt{Thread.interrupt} method; 
+the second approach instead places this \texttt{interrupt} method as part of the 
+\texttt{Interruptible} class. 
 While the difference between the two approaches may appear small, it is significant: 
-in the first implementation, a thread containing multiple \texttt{Interruptible} 
-sections of code may have a later section interrupted by a call to \texttt{interrupt}
-not intended for it. This may lead to a cause of unexpected behaviour and therefore 
-a decision was made to implement the second approach. 
+in the first implementation, it is not clear which \texttt{Interruptible}
+section is to be cancelled in a situation where the \texttt{Interruptible} 
+sections are nested. 
+Due to this ambiguity, a decision was made to instead implement the second
+approach. 
+For example, this can be used to provide a 2 second timeout on a function call:
+\begin{lstlisting}[basicstyle=\small]
+void interruptibleSection()
+{
+    while(true)
+    {
+        // loop forever.
+    }
+}
+
+void main()
+{
+    auto a = new Interruptible(&interruptibleSection); 
+    new Thread({
+        Thread.sleep(2.seconds);
+        a.interrupt;
+    }).start;
+    a.start; 
+}
+\end{lstlisting}
 \par\bigskip\noindent
 So far, it has been assumed that the interrupt function performs the exact 
 functionality required. 
@@ -395,28 +328,28 @@ to cancel once both a signal is received and a cancellation point in the code
 is reached. 
 Many standard C functions are defined as being thread cancellation points, but 
 there is no guarantee that these may be called within the target thread 
-\cite{pthread-cancel-points}. As a result of this, it is possible to set the 
+\cite{pthread-cancel-points}. It is possible to set the 
 cancellation of a thread to be immediate through the function 
 \texttt{pthread\textunderscore{}setcanceltype}, by setting the value to 
 \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS}. This is 
 crucial in either tight loops or where cancellation must be immediate. 
 \par\bigskip\noindent
 However, this immediate cancellation comes at the cost of safety: interrupting a 
-thread during the middle of a crucial function call, such as a memory allocation, 
-may leave memory in an inconsistent state. In order to safely use this functionality, 
-thread cancellation must therefore be deferred during certain sections of code 
-and enabled during others. This gives rise to the requirement of having 
-deferred regions of code, in which operations can be executed with no risk of 
-being cancelled. Two alternative approaches were considered for the implementation 
-of this feature. The first considered was to have a method of the 
-\texttt{Interruptible} class that allow the cancellation type to be toggled 
+thread during the middle of a function call, such as a memory allocation, 
+may leave memory in an inconsistent state or crash the program. 
+This gives rise to the requirement of having regions of code in which
+interrupts are deferred. 
+Two alternative approaches were considered for the implementation 
+of this feature: a method of the 
+\texttt{Interruptible} class that toggles the cancellation of the thread  
 between \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ENABLE}
-and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}
-The second approach is to toggle boolean flags in the \texttt{Interruptible} class. 
-By using these flags it is possible to determine whether a section of code is 
-currently deferred from being interrupted or not. 
-Furthermore, any pending interrupt that arrives when interrupts are deferred may 
-be stored. When interrupts are re-enabled, this interrupt may then be triggered. 
+and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}; or,
+to toggle a boolean flags in the \texttt{Interruptible} class indicating
+whether it is possible to interrupt. 
+Using either approach, any interrupt that arrives while interrupts are deferred
+must be stored. When interrupts are re-enabled, this may then trigger and
+cancel the \texttt{Thread}. 
+%TODO - current progress
 Conceptually, the two approaches are similar. However, the first approach does 
 not provide a viable method for nesting \texttt{Interruptible} classes. As it is 
 possible for a second interruptible class to be nested within the first, setting 
@@ -427,7 +360,6 @@ even in the cases where nesting is possible, both these methods are implemented.
 Basic deferral can be achieved through the \texttt{deferred} properties. In order 
 to execute code safely, even in nested cases, an \texttt{executeSafely} method that 
 defers the cancellation has been implemented as follows. 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
@@ -450,9 +382,7 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 this may then be used in the following manner. 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 alias getInt = Interruptible.getThis;
 void interruptibleFunction() 

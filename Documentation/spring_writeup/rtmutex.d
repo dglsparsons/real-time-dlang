@@ -72,9 +72,7 @@ private class RTMutex : Object.Monitor
     /**
      * If the mutex is not locked, then it is locked by 
      * the calling thread, incrementing its internal 
-     * counter by one (it is a recursive mutex). 
-     * Subsequent calls from the same thread will further 
-     * increment the internal counter. 
+     * counter.
      * A call to unlock() will decrement the counter if 
      * it is held by the calling thread. 
      */
@@ -98,9 +96,7 @@ private class RTMutex : Object.Monitor
 
     /**
      * If the mutex is locked, a call to unlock() will 
-     * decrement its internal counter by one. If the 
-     * count becomes zero, it is fully released, and
-     * able to be locked by other threads. 
+     * decrement its internal counter by one. 
      */
     @trusted void unlock()
     {
@@ -123,10 +119,6 @@ private class RTMutex : Object.Monitor
     /**
      * This function attempts to lock the mutex, immediately 
      * returning whether the attempt was successful or not. 
-     *
-     * Returns:
-     * true if the calling thread was able to lock the mutex. 
-     * Otherwise, false
      */
     bool tryLock()
     {

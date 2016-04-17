@@ -7,10 +7,9 @@ description of the features of the D programming language, discussing its
 suitability for the development of real-time systems.
 
 \section{Requirements}
-From the examination of existing languages in the Literature Review, it is possible 
-to determine the criteria needed for real-time programming. These are 
-summarised below. Furthermore, additional desired features are set out 
-in this section. 
+The Literature Review highlighted a set of target criteria for real-time 
+programming. These are summarised below. Furthermore, additional desired features 
+are defined in this section. 
 \begin{table}[!h]
 \centering
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
@@ -22,7 +21,6 @@ mechanism such as Java's} \texttt{Thread}\emph{, or Ada's} \texttt{Task}. \\ \hl
 and provides control over concurrent operations. \\ \hline
 \textbf{Criterion}      & New threads of control can be created through a defined 
 function. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -31,13 +29,12 @@ function. \\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 \textbf{Requirement Number} & 2 \\ \hline
-\textbf{Requirement} & \emph{The ability to schedule concurrent threads based on their priority in 
-                either a round-robin or FIFO approach.}\\ \hline
-\textbf{Rationale}      & More important tasks or those with a shorter deadline
+\textbf{Requirement} & \emph{The ability to schedule concurrent threads based on 
+                their priority.}\\ \hline
+\textbf{Rationale}      & High criticality tasks or those with a short deadline
                 must be given a high priority, enabling them to meet their 
                 deadlines. \\ \hline
 \textbf{Criterion}      & A provided function must allow the scheduler to be changed. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -47,11 +44,9 @@ function. \\ \hline
 \hline
 \textbf{Requirement Number} & 3 \\ \hline
 \textbf{Requirement} & \emph{Access to a monotonic clock.} \\ \hline
-\textbf{Rationale}      & Provides precise timing requirements 
-                that are consistent, unlike a calendar clock. \\ \hline
+\textbf{Rationale}      & Provides consistent, precise timing requirements. \\ \hline
 \textbf{Criterion}      & A function must allow a time value to be read from a monotonic
                 clock. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -62,9 +57,8 @@ function. \\ \hline
 \textbf{Requirement Number} & 4 \\ \hline
 \textbf{Requirement} & \emph{An absolute sleep statement.} \\ \hline
 \textbf{Rationale}      & Relative sleep statements are subject to preemption and may not 
-                provide precise timing requirements. \\ \hline
+                provide precise timings. \\ \hline
 \textbf{Criterion}      & A function must delay the calling thread until an absolute time. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -73,11 +67,10 @@ function. \\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 \textbf{Requirement Number} & 5 \\ \hline
-\textbf{Requirement} & \emph{Implementation of the Immediate Priority Ceiling
+\textbf{Requirement} & \emph{The Immediate Priority Ceiling
 Protocol.} \\ \hline
 \textbf{Rationale}      & Limits the blocking a task may suffer.  \\ \hline
-\textbf{Criterion}      & The ability to specify a mutex as using the protocol.\\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
+\textbf{Criterion}      & The ability to specify a mutex using the protocol.\\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -86,11 +79,9 @@ Protocol.} \\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 \textbf{Requirement Number} & 6 \\ \hline
-\textbf{Requirement} & \emph{Implementation of the Priority Inheritance
-Protocol.}\\ \hline
-\textbf{Rationale}      & Provides a limit to blocking a task may suffer. \\ \hline
-\textbf{Criterion}      & The ability to specify a mutex as using the protocol\\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
+\textbf{Requirement} & \emph{The Priority Inheritance Protocol.}\\ \hline
+\textbf{Rationale}      & Limits the blocking a task may suffer. \\ \hline
+\textbf{Criterion}      & The ability to specify a mutex using the protocol\\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -99,14 +90,12 @@ Protocol.}\\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 \textbf{Requirement Number} & 7 \\ \hline
-\textbf{Requirement} & \emph{Implementation of Asynchronous Transfer of Control
-(ATC).} \\ \hline
+\textbf{Requirement} & \emph{Asynchronous Transfer of Control (ATC).} \\ \hline
 \textbf{Rationale}      & Real-time systems require ATC for a wide range of functionality, 
                 including timing out computations, cancelling overrun deadlines,  
                 or instantaneous mode changes of a system. \\ \hline
-\textbf{Criterion}      & The ability to enter an abortable section of code and remotely  
-                abort the code. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
+\textbf{Criterion}      & The ability to enter an abortable section of code and
+                safely abort the code. \\ \hline
 \textbf{Importance}     & Necessary \\ \hline
 \end{tabular}
 \end{table}
@@ -119,10 +108,9 @@ Protocol.}\\ \hline
 core libraries.} \\ \hline
 \textbf{Rationale}      & Provides a more accessible system and simplifies the  
                 process of developing real-time systems in D. 
-                Keeps compatibility with existing D code. \\ \hline
-\textbf{Criterion}      & For programming real-time systems in D, the default compiler and  
+                Maintains compatibility with existing D code. \\ \hline
+\textbf{Criterion}      & For programming real-time systems in D, a standard compiler and  
                 an unmodified runtime may be used. \\ \hline
-\textbf{Functional or Non-Functional} & Non-Functional \\ \hline
 \textbf{Importance}     & Desired \\ \hline
 \end{tabular}
 \end{table}
@@ -131,13 +119,11 @@ core libraries.} \\ \hline
 \begin{tabular}{|L{0.2\linewidth}|L{0.7\linewidth}|}
 \hline
 \textbf{Requirement Number}   & 9 \\ \hline
-\textbf{Requirement} & \emph{Provision of tests for the provided library to show that 
-                implementation is functioning correctly.} \\ \hline
+\textbf{Requirement} & \emph{Provision of tests for the provided library.} \\ \hline
 \textbf{Rationale}      & Allows an easier checking of the viability of  
-                real-time features and aids debugging in any potential future 
+                real-time features. Aids debugging in any future 
                 modifications to the feature-set. \\ \hline
 \textbf{Criterion}      & A set of unit-tests that ensure correct behaviour of the system. \\ \hline
-\textbf{Functional or Non-Functional} & Functional \\ \hline
 \textbf{Importance}     & Desired \\ \hline
 \end{tabular}
 \end{table}
@@ -151,7 +137,6 @@ core libraries.} \\ \hline
 \textbf{Rationale}      & Allows potential users to understand the purpose and 
                 functionality provided. \\ \hline
 \textbf{Criterion}      & All functions and common interactions must be well documented. \\ \hline
-\textbf{Functional or Non-Functional} & Non-Functional \\ \hline
 \textbf{Importance}     & Desired \\ \hline
 \end{tabular}
 \end{table}
@@ -160,10 +145,9 @@ core libraries.} \\ \hline
 As mentioned in the introduction, the D programming language has many 
 characteristics that lend it to the development of real-time systems.
 These are outlined in further detail in this section. 
-However, D also has certain characteristics that are less desirable for 
+However, D also has certain characteristics that are less suitable for 
 real-time systems, such as the use of a garbage collector. 
-These less desirable features are similarly detailed in order to highlight the 
-shortcomings of D. 
+These features are similarly detailed.
 
 \subsection{High and Low-Level}
 % Aims to achieve everything that is possible with other languages such as C++
@@ -174,7 +158,7 @@ right''
 This explains the power that the language possesses. D is a high level, compiled 
 language with support for object oriented programming. In addition, D boasts 
 native efficiency: as with C and C++, there is no virtual 
-machine hosting the language's environment and causing additional overhead. 
+machine hosting the language's environment.
 Furthermore, D aims to provide
 powerful abstractions that aid in the speed and ease of development of general systems. 
 The following code example, taken from dlang.org, cleanly and efficiently 
@@ -211,8 +195,7 @@ syntax.
 
 \subsection{Concurrency}
 D is often referred to as a language that implements the message passing model 
-of concurrency, rather than the more standard lock and mutex approach 
-\cite{ddili-book}. D's message passing API 
+of concurrency \cite{ddili-book}. D's message passing API 
 allows asynchronous messages to be transferred between threads of control using 
 message boxes. This allows a high-level of abstraction and provides an 
 interface that is simplistic to use. However, it is also misleading: the underlying 
@@ -222,11 +205,11 @@ with the message passing interface simply built on top of this
 \cite{dlang-github-concurrency}. 
 As such, when developing in D, the programmer has the option to choose between 
 the higher level message passing interface or the lower level lock and mutex 
-approach. In addition, a mixed approach can be taken, using both. 
+approach. A mixed approach can even be taken, using both. 
 \par\bigskip\noindent
 D also has an interesting approach to sharing memory between threads. 
-Global variables are \emph{not} shared between different threads as they are in 
-other languages. Instead, each thread has a local copy of the global variable. 
+Global variables are \emph{not} shared between different threads by default, as 
+they are in other languages. Instead, each thread has a local copy of the global variable. 
 This is a concept that is known as Thread Local Storage (TLS) 
 \cite{migrate-to-shared}. 
 If global resources are to be shared between different threads, D provides a way of 
@@ -234,13 +217,11 @@ achieving this: the \texttt{shared} and
 \texttt{\textunderscore{}\textunderscore{}gshared} keywords.
 \par\bigskip\noindent
 The core runtime for D provides an additional interesting feature: an atomicop 
-library 
-\cite{core-atomic}. 
+library \cite{core-atomic}. 
 This provides a mechanism for some degree of sharing to be performed without the 
 need for locks, allowing many operations to be performed indivisibly.
 
 \subsection{Memory Safe Programming}
-% Concept of memory safe programming that D supports.
 An area of particular interest to real-time systems is the notion of memory 
 safe programming. In addition to providing powerful inbuilt types such as arrays 
 in D, the D compiler also implements range checking and numerous other 
@@ -255,14 +236,14 @@ operations to be performed, whilst maintaining safety.
 
 \subsection{Garbage Collector}
 Coupled with the safety of the SafeD subset, D provides additional memory
-safety through its use of a garbage collector. A garbage collector
+safety through its use of a garbage collector. This
 automatically manages heap allocated memory. 
 However, this safety comes at a cost. One significant problem with developing a 
 real-time system in D is the need to bypass D's garbage collector. 
 The current implementation of the garbage 
 collector is a `stop the world' approach: when garbage collection is occurring, 
 all threads are halted from making progress 
-\cite{dlang-garbage}. The difficulty arises as a real-time system must be able
+\cite{dlang-garbage}. A real-time system must be able
 to guarantee a maximum response time on any operation performed, 
 where predictable behaviour is fundamental to this; 
 with a stop the world garbage collector, this behaviour cannot be guaranteed. 
@@ -272,14 +253,13 @@ real-time applications. This is possible to do by marking functions \texttt{@nog
 or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
 many of D's higher level features and libraries rely on garbage collection. 
 Another possibility is to replace D's garbage collector with a real-time 
-one. This would provide predictable behaviour, and therefore
-would enable precise timing requirements to be met.
+one. This would provide the necessary predictable behaviour. 
 However, due to the amount of further work required, tackling the issue of the garbage 
 collector is outside the scope of this project.
 A third possibility of avoiding the garbage collector comes in through
 detaching \texttt{Threads} from D's runtime. This prevents the garbage collector from
-stopping them. However, any garbage collected objects used must be registered
-by another \texttt{Thread} within the runtime to prevent them being collected. 
+pausing their execution. However, any garbage collected objects used must be registered
+by another \texttt{Thread} within the runtime to prevent their collection. 
 The final possibility is to preallocate all memory that could be needed. This 
 prevents applications from requesting more memory during their execution, and 
 thus prevents garbage collection. 
@@ -299,17 +279,15 @@ value \cite{interface-to-cpp}.
 
 \section{Analysis of Target Criteria} 
 This section aims to outline the functional requirements of the project,
-offering a brief discussion of any potential implementations for each of these 
-requirements. 
+offering a brief discussion of any potential implementations.
 
 \subsection{Requirements 1 and 2: Concurrency and Priority Scheduling} %100
-In order to provide scheduling of multiple different concerns through a
-real-time system, the previous chapters discussed how the concurrent control of
-system components is a crucial feature for real-time systems. D provides a
-method of concurrency through its \texttt{Thread} class. 
+The previous chapters detailed how real-time systems require concurrent control
+over system components. In D, this can be achieved through its \texttt{Thread} class. 
 \par\bigskip\noindent
-Closely related to this concept is the ability to schedule threads based on
-their priority. In D, \texttt{Threads} exist in kernel space. Therefore, in order to
+However, requirement 2 shows that priority scheduling is also required for a
+real-time system. 
+In D, \texttt{Threads} exist in kernel space. Therefore, in order to
 provide priority based scheduling, the system's scheduler requires changing. Burns
 and Wellings show that there are several different scheduling algorithms that
 may be used in real-time systems \cite{real-time-systems}. It is worth noting
@@ -322,14 +300,13 @@ By default, D is provided with no method to change the underlying operating
 systems scheduler. 
 The ability to adjust the scheduler to use either a round-robin or FIFO approach 
 is therefore a desired end-goal of the project.
-%TODO - change all Operating system with OS
 
 \subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep} 
 As described in the Literature Review chapter, access to both a high precision
 clock and absolute sleep method is necessary for a real-time system. D's
 current implementation can access a high precision clock through the use of
 functionality provided in the core runtime \cite{dlang-core-time}. However,
-access to an absolute sleep function is missing. Instead, D's default
+access to an absolute sleep function is absent. Instead, D's default
 \texttt{sleep}
 method maps onto the C relative sleep function, \texttt{nanosleep}. There are
 therefore two possible alternative implementations. Either the call to
@@ -339,17 +316,16 @@ an absolute sleep with a user specifiable clock \cite{clock-nanosleep}.
 
 \subsection{Requirements 5 and 6: Bounded Priority Inversion} %100
 In order to achieve a bound on the amount of priority inversion that a task
-might suffer, two protocols exist: the priority inheritance protocol and the
-priority ceiling protocol. These protocols have been detailed in the 
-Literature Review section. D's implementation of mutexes currently has
-neither of these protocols and is therefore not suited for real-time systems.
-However, similar to D's approach to the \texttt{Thread} class, the languages
-\texttt{Mutex} class provides a wrapper on POSIX mutexes
-\cite{dlang-github-mutex}. The POSIX specification of mutexes states that
+might suffer, two alternative protocols exist: the Priority Inheritance protocol and the
+Priority Ceiling protocol. D's implementation of a \texttt{Mutex} currently
+implements neither protocol and is therefore not suitable for real-time systems.
+As with the \texttt{Thread} class, the languages \texttt{Mutex} class provides 
+a wrapper on POSIX mutexes \cite{dlang-github-mutex}. 
+The POSIX specification of mutexes states that
 they can implement the priority ceiling or the priority inheritance protocol 
 \cite{mutex-setprotocol}. Therefore, there are two possible ways of
-implementing the priority ceiling protocol and the priority inversion protocol
-in D: either the appropriate external C functions can be imported, allowing the
+implementing these protocols in D: 
+the appropriate C functions can be imported, allowing the
 use of POSIX mutexes with a specified protocol; or the protocol itself may be
 implemented on top of the existing \texttt{Mutex} class. 
 
@@ -357,14 +333,14 @@ implemented on top of the existing \texttt{Mutex} class.
 Asynchronous Transfer of Control (ATC) is a difficult feature to implement due to
 its ``methodologically suspect'' nature \cite{Brosgol:2002:ATC}. There are
 three alternative implementations. In C, ATC can be simulated using the
-\texttt{setjmp} and \texttt{longjmp} instructions. In Ada, a
-two-threaded model is often used. This functions by blocking the calling thread
+\texttt{setjmp} and \texttt{longjmp} instructions, coupled with a signal
+handler. In Ada, a
+two-threaded model is often used. This functions by blocking the calling task
 on a condition, while a subsidiary task is created to execute the abortable
 code. In Java, an exception based approach uses the \texttt{interrupt}
 method to asynchronously throw an exception in the target \texttt{Thread}. 
 As D has the ability to interact with C code, \texttt{setjmp} and \texttt{longjmp} may be
 used. Furthermore, its model of \texttt{Threads} allows a cancellation based
 approach to be taken. Finally, D has a similar model of exceptions to Java. By
-combining D's exception model with POSIX signals, enabling the asynchronous
-execution of code, D therefore has the potential to implement all three
-approaches.
+combining D's exception model with POSIX signals, D therefore has the potential 
+to implement any of the three approaches.
