@@ -566,15 +566,15 @@ taken.
 Instead, there are two alternatives: automatically managing the deferral
 status, or leaving deferral to the developer. 
 \par\bigskip\noindent
-%TODO- fix this paragraph.
 In the first approach, the core runtime and standard libraries would have to be 
-modified. Through doing this, it is possible to
-define a further function property, such as \texttt{@ATCDeferred}.  During these
-sections of code, it would not be possible to interrupt. This
-would be the preferred method of implementing ATC, as it would remove the
-concern over safety from the developer. However, it would require significant
-reworking of the D runtime, and possibly compiler alterations (as this would be
-a language feature). As such, this method is outside of the scope of this
+modified in order to give the language and understanding of ATC. Through doing 
+this, it would be possible to define a function property, such as \texttt{@ATCDeferred},  
+where it would not be possible to asynchronously interrupt. This follows Ada's
+approach to abort deferred regions. 
+This would be the preferred method of implementing ATC, as it would remove the
+concern over the systems safety. However, it would require significant
+reworking of the D runtime, and possibly compiler alterations.
+As such, this method is outside of the scope of this
 project. 
 \par\bigskip\noindent
 The alternative approach is to leave the safety of ATC to the developer by
