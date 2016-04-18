@@ -327,37 +327,38 @@ an immediate cancellation: it is only guaranteed
 to cancel once both a signal is received and a cancellation point in the code 
 is reached. 
 Many standard C functions are defined as being thread cancellation points, but 
-there is no guarantee that these may be called within the target thread 
+there is no guarantee that these may be called within the target
+\texttt{Thread} 
 \cite{pthread-cancel-points}. It is possible to set the 
-cancellation of a thread to be immediate through the function 
+cancellation of a \texttt{Thread} to be immediate through the function 
 \texttt{pthread\textunderscore{}setcanceltype}, by setting the value to 
 \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ASYNCHRONOUS}. This is 
 crucial in either tight loops or where cancellation must be immediate. 
 \par\bigskip\noindent
 However, this immediate cancellation comes at the cost of safety: interrupting a 
-thread during the middle of a function call, such as a memory allocation, 
+\texttt{Thread} during the middle of a function call, such as a memory allocation, 
 may leave memory in an inconsistent state or crash the program. 
 This gives rise to the requirement of having regions of code in which
 interrupts are deferred. 
 Two alternative approaches were considered for the implementation 
-of this feature: a method of the 
-\texttt{Interruptible} class that toggles the cancellation of the thread  
-between \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ENABLE}
-and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}; or,
-to toggle a boolean flags in the \texttt{Interruptible} class indicating
+of this feature. First, a method of the 
+\texttt{Interruptible} class could toggle the cancellation of a
+\texttt{Thread} between \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}ENABLE}
+and \texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE}, or,
+secondly,
+a boolean flag could be toggled in the \texttt{Interruptible} class indicating
 whether it is possible to interrupt. 
 Using either approach, any interrupt that arrives while interrupts are deferred
-must be stored. When interrupts are re-enabled, this may then trigger and
-cancel the \texttt{Thread}. 
-%TODO - current progress
-Conceptually, the two approaches are similar. However, the first approach does 
-not provide a viable method for nesting \texttt{Interruptible} classes. As it is 
-possible for a second interruptible class to be nested within the first, setting 
-\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE} may cause an 
-inner \texttt{Interruptible} to be non-interruptible, even though its outer parent 
-has been cancelled. In order to provide a fine-grained control over the two, 
-even in the cases where nesting is possible, both these methods are implemented. 
-Basic deferral can be achieved through the \texttt{deferred} properties. In order 
+must be stored. When interrupts are re-enabled, stored interrupts are then
+executed. 
+While the two approaches appear similar, the first approach does 
+not provide a viable method for performing nested cancellations: setting 
+\texttt{PTHREAD\textunderscore{}CANCEL\textunderscore{}DISABLE} may cause a
+nested inner section not to be cancelled, even when its outer parent  is cancelled. 
+In order to provide a fine-grained control over cancellation, 
+even when nesting, both these methods are implemented. 
+Basic deferral can be achieved through the \texttt{deferred} properties which
+use the second method. However, in order 
 to execute code safely, even in nested cases, an \texttt{executeSafely} method that 
 defers the cancellation has been implemented as follows. 
 \begin{lstlisting}[basicstyle=\small]
@@ -391,62 +392,52 @@ void interruptibleFunction()
     {
         void update() 
         {
-            // perform some memory allocation
             void* x = GC.malloc(10_000); 
         }
         getInt.executeSafely(&update);
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This provides a safe mechanism for handling memory allocation or critical sections 
 of code. Furthermore, this enables code to be executed safely despite being 
 nested in outer \texttt{Interruptible} classes. 
 \par\bigskip\noindent
-Additionally, it is often desirable to execute code once the cancellation has taken 
-place. In C with POSIX threads, this can be achieved through the use of the 
+Additionally, it may be desirable to execute cleanup code after cancellation 
+has occurred. This is achieved through the use of the 
 \texttt{pthread\textunderscore{}cleanup\textunderscore{}push} function. 
-This is achievable through use of D's interoperability with C. Again, functions are provided 
-that wrap this functionality, providing a more usable interface. An example of using 
-this cleanup code is as follows: 
-%TCusedtoignorethis
+Wrappers are provided around the C function, providing a usable interface. An 
+example of using this cleanup code is as follows: 
 \begin{lstlisting}[basicstyle=\small]
-__gshared Interruptible a; 
-
 extern (C) void thread_cleanup(void* arg) nothrow
 {
-    writeln("Cleanup Function");
+    writeln("This is a cleanup function");
 }
 
 void interruptibleFn()
 {
     auto a = addCleanup(&thread_cleanup, cast(void*)void);
-    while(true)
-    {
-        // loop forever
-    }
+    // perform some work
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This provides the desired functionality of ATC, as set out in requirement 7, 
 through the use of thread cancellation in a two-thread model.
 
 \subsubsection*{Exceptions and Signals}
-An alternative approach to the implementation of ATC is to use D's inbuilt \texttt{Exception}/error 
-handling mechanisms. Errors and \texttt{Exception}s are typically used explicitly within code 
-to affect the flow of control within a program.
-For a POSIX system, it is possible to asynchronously invoke code remotely using 
-signals and signal handlers. While typically used on a process wide level, it
-is also possible to invoke these signal handlers for a specific thread through
-the use of a C function, \texttt{pthread\textunderscore{}kill}. By using a
-real-time signal, such as SIGRTMIN, there are guarantees that the signal
-arrives in a timely manner and that any signals are sent in the correct order. 
-Thus, in D, it is possible to remotely invoke code in a \texttt{Thread} through 
-the use of signals and signal handlers. This can be also be used to remotely
-throw an \texttt{Exception}. The following example shows a simple invocation of ATC
-using achieved by throwing and catching an \texttt{Exception}, breaking out of an
-infinite loop: 
-%TCusedtoignorethis
+An alternative approach to the implementation of ATC is to use D's inbuilt 
+\texttt{Exception} and \texttt{Error} handling mechanisms, combined with
+signals. 
+For a POSIX system, it is possible to asynchronously invoke code using 
+signals and signal handlers. Furthermore, by using a
+real-time signal, such as SIGRTMIN, it is guaranteed that signals
+arrive in a timely manner and that they arrive in order. 
+While typically used on a process wide level, it
+is also possible to invoke signal handlers for a specific \texttt{Thread} through
+use of the C function, \texttt{pthread\textunderscore{}kill}. 
+As \texttt{pthread\textunderscore{}kill} executes the signal handler in the
+context of the target \texttt{Thread} \cite{pthread-kill}, an \texttt{Exception} thrown will
+propagate on the target \texttt{Thread's} stack, enabling it to be caught. 
+The following example shows a simple invocation of ATC achieved by throwing and 
+catching an \texttt{Exception}:
 \begin{lstlisting}[basicstyle=\small]
 import core.sys.posix.pthread, 
        core.sys.posix.signal, 
@@ -487,42 +478,40 @@ void main()
     pthread_kill(a.id, 36); 
 }
 \end{lstlisting}
-%TCusedtoendignorethis
-The above example displays the simple principal behind this method of ATC.
-However, there are many aspects of its behaviour that make the above
-implementation impractical. 
-First, ATC sections may be nested inside each other. Using the above 
-method, it would not be possible to exit two ATC sections through a single interrupt
-to the outermost section. This occurs because the \texttt{Exception} would be caught and
-handled in the inner ATC section. 
-Secondly, internal components may trigger \texttt{Exception}s or may have \texttt{Exception} handlers 
-of their own. Using this approach, an \texttt{Exception} that is intended to perform ATC 
-may instead be caught and would thus have no effect. 
-In order to prevent this from happening, the final implementation for this
-project does not use \texttt{Exceptions}, but instead uses D's notion of an
-\texttt{Error}. Conceptually, \texttt{Errors} and \texttt{Exceptions} are
-similar, both being throw and catch-able objects. 
-However, they are used differently within D: \texttt{Exceptions} are used to
+This displays the simple principal behind the \texttt{Exception} method of ATC.
+However, there are many important considerations for an implementation of ATC
+using this approach. 
+\par\bigskip\noindent
+First, as the abortable function may \texttt{throw} and \texttt{catch} its own
+\texttt{Exceptions}, this may interfere with the cancellation. For example, if
+a \texttt{catch (Exception ex)} statement were used within the function, an
+attempt to cancel would not succeed. 
+In order to prevent this, this projects implementation does not use 
+\texttt{Exceptions}, but instead uses an \texttt{Error}. 
+Conceptually, \texttt{Errors} and \texttt{Exceptions} are
+similar, however, they are used differently within D: \texttt{Exceptions} are used to
 manage the control of flow under \texttt{Exception}al circumstances, whereas
 \texttt{Errors} are typically used for terminating the program and tracing faults. 
-However, the two also differ fundamentally. 
-\texttt{Errors} are allowed to propagate through generic \texttt{Exception} catches, and thus propagate 
-through all \texttt{Exception} handlers. In this regard, they exhibit the desired
-behaviour, enabling abortable code to use \texttt{Exceptions} freely. The only
+As a result, \texttt{Errors} are allowed to propagate through all 
+\texttt{Exception} handlers. The only
 limitation here is that the end user does not program the
-abortable code to catch all \texttt{Errors}. As errors generally occur when the
-program is unable to run or corrupts memory, it is not advisable to do this. 
-For Signal and \texttt{Exception} based ATC, rather than using a generic
-\texttt{Error}, an \texttt{ATCInterrupt} class is defined. 
-This class extends the \texttt{Error} class.
+abortable code to catch all \texttt{Errors}. As \texttt{Errors} generally occur 
+when the program should be aborted, it is not advisable to do this. 
+Inversely, to prevent the asynchronous cancellation from catching
+\texttt{Errors} an \texttt{ATCInterrupt} class is defined as a subclass of
+\texttt{Error}. 
 \par\bigskip\noindent
-In order to allow nesting of Interruptible sections of code, the \texttt{Error} thrown
-must also be rethrown if it is not caught by its corresponding catch statement. 
-This is achieved by creating a new error for each interruptible section, and
-this error having a property that is checked in the catch statement. The error
-is then rethrown if it is not caught by its owner. 
-This is achieved as follows: 
-%TCusedtoignorethis
+Secondly, ATC sections may be nested inside each other. Using the above 
+method, it would not be possible to exit two ATC sections through a single interrupt
+to the outermost section: the \texttt{ATCInterrupt} would be caught and
+handled in the inner ATC section, leaving the outer unaffected.
+In order to allow nesting of Interruptible sections of code, the
+\texttt{ATCInterrupt} thrown is therefore re-thrown if not caught by its 
+corresponding \texttt{Interruptible} section. 
+This is achieved by providing each \texttt{ATCInterrupt} with a notion of it's
+owning \texttt{Interruptible} class. In the \texttt{finally} statement, this
+value is checked, and the \texttt{ATCInterrupt} rethrown if the values do not
+match. The implementation of this functionality is as follows: 
 \begin{lstlisting}[basicstyle=\small]
 private class ATCInterrupt : Error
 {
@@ -566,18 +555,20 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This example enables both the use of \texttt{Exception}s within the ATC region and
-enables ATC sections to be nested inside each other. However, compared to the
-\texttt{Thread} based approach, additional functionality is still required. 
-For the safety of the system it must be possible to defer interrupts, enabling 
-functions such as memory allocation or system calls to fully complete. In
-Real-time Java, this is achieved through the use of runtime reflection to detect
-whether the current function is safe to throw an \texttt{Exception} or not.
-However, D does not have a concept of run-time reflection, and therefore this cannot be
-used. 
-Instead, there are two alternatives. For the first, the core runtime and standard
-libraries would have to be modified. Through doing this, it is possible to
+enables ATC sections to be nested inside each other. 
+As with the \texttt{Thread} based approach, it must be possible to defer interrupts
+for the safety of the system. 
+In Real-time Java, this is achieved through the use of runtime reflection to detect
+whether the current function is capable of throwing an \texttt{Exception} or not.
+However, as D does not a concept of run-time reflection, this approach cannot be
+taken. 
+Instead, there are two alternatives: automatically managing the deferral
+status, or leaving deferral to the developer. 
+\par\bigskip\noindent
+%TODO- fix this paragraph.
+In the first approach, the core runtime and standard libraries would have to be 
+modified. Through doing this, it is possible to
 define a further function property, such as \texttt{@ATCDeferred}.  During these
 sections of code, it would not be possible to interrupt. This
 would be the preferred method of implementing ATC, as it would remove the
@@ -585,9 +576,10 @@ concern over safety from the developer. However, it would require significant
 reworking of the D runtime, and possibly compiler alterations (as this would be
 a language feature). As such, this method is outside of the scope of this
 project. 
+\par\bigskip\noindent
 The alternative approach is to leave the safety of ATC to the developer by
 providing methods to disable and re-enable deferral.
-This can easily be achieved through the use of two boolean flags: one to keep track
+This can be achieved through the use of two boolean flags: one to keep track
 of whether interrupts are deferred, and one to test whether an interrupt has
 arrived while they have been deferred. 
 However, as with the \texttt{Thread} approach, an extra method is then needed in 
@@ -595,7 +587,6 @@ order to guarantee fully safe execution during nested ATC sections. By keeping
 track of each \texttt{Interruptible} section's parent, it is possible to defer
 all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
 achieved in the following manner: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 class Interruptible
 {
@@ -629,42 +620,36 @@ class Interruptible
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This can then be invoked in the same manner as the \texttt{Thread} based
 implementation.
 \par\bigskip\noindent
-Furthermore, as with the implementation of \texttt{Thread} based ATC, a method 
-of specifying cleanup is neeeded. This
-is possible through the use of D's inbuilt \texttt{scope (exit)}.
-This executes code specified on exiting the current scope, regardless of
-whether this was through normal flow or as a result of an \texttt{Exception}. 
-This provides a convenient method of adding cleanup. 
-However, in order to keep the \texttt{Thread} and
-\texttt{Exception} based approaches similar in terms of functionality, and to
-allow the removal of these cleanup routines, the 
-previously \texttt{addCleanup} and \texttt{removeCleanup} functions have
-been added to the \texttt{Exception} model. 
+Furthermore a method of specifying a cleanup function is needed. This
+is possible through the use of D's inbuilt \texttt{scope (exit)}:
+this executes code specified on exiting the current scope, regardless of
+whether this was through normal control flow or as a result of an
+\texttt{Exception} or \texttt{Error}. 
 \par\bigskip\noindent
-As highlighted, there are two possible implementations of Asynchronous
+Therefore, as highlighted, there are two implementations of Asynchronous
 Transfer of Control in D: a two-thread model and a Signal/Exception based
 approach. Both of these methods meet all the desired requirements of ATC: 
-they can be used safely; allow cleanup; they immediately transfer control; and
-they abstract any unnecessary complexity away from the developer. 
-However, some aspects of the two approaches differ. 
+they can be used safely; allow cleanup; immediately transfer control; and
+abstract any unnecessary complexity away from the developer. 
+\par\bigskip\noindent
+However, in some aspects the two approaches differ. 
 Using the \texttt{Thread} based approach, a new \texttt{Thread} is
-created for each invocation. This suggests a heavier weight implementation compared
-to the \texttt{Exception} model.
-As far as the cancellation goes, there is little difference between
-\texttt{pthread\textunderscore{}kill} and
-\texttt{pthread\textunderscore{}cancel}:
-both of these functions are operating system calls that use signals in their
-implementation. 
+created for each invocation. This causes an increased overhead in creating an 
+\texttt{Interruptible} section compared to the \texttt{Exception} model.
+For cancellation, both
+\texttt{pthread\textunderscore{}kill} and \texttt{pthread\textunderscore{}cancel}
+are operating system calls that use signals in their implementation. It is
+therefore expected that these approaches have a similar cost of cancellation.
+\par\bigskip\noindent
 However, the \texttt{Exception} based approach to ATC depends heavily on correct 
 setup of the target \texttt{Thread's} stack when handling a signal. 
 On different CPU architectures, it is possible that the signal handler may not 
 allow propagation through the stack.
-Therefore, in order to provide a generalisable means of performing ATC, both of
-these methods have been implemented. 
+In order to provide a generalisable means of performing ATC, both of
+these methods have therefore been implemented. 
 
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 

@@ -1,22 +1,21 @@
 % Results and Evaluation Section of the Writeup 
 
 % Word Count Guide - 2500 Words
-This section sets out to examine the provided library and how its use
+This section aims to examine the provided library and how its usage
 compares syntactically to the development of a real-time system in Ada. 
 Following this, Asynchronous Transfer of Control will be profiled in both D and
 Ada, comparing the performance of the two. 
 
 \section{Comparison with Ada}
-The first notable difference between D and Ada is that the syntax of the two languages 
-is significantly different: D follows a C style approach, using curly braces to indicate scope,
-Ada by contrast follows a Pascal style syntax, using \texttt{begin} and
+The first notable difference between D and Ada is the syntax of the two languages: 
+D follows a C style approach, using curly braces to indicate scope;
+Ada, by contrast, follows a Pascal style syntax, using \texttt{begin} and
 \texttt{end} statements. However, despite these differences,
 the two languages have much in common. 
 
 \subsection{Concurrency}
 In Ada, it is possible to separate a concurrent thread of control through the
 medium of a \texttt{task}. A \texttt{Task} can be created in the following manner: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 procedure Program is 
     task My_Task; 
@@ -30,7 +29,6 @@ begin
     null; 
 end Program;
 \end{lstlisting}
-%TCusedtoendignorethis
 It is worth noting than in the above example, the \texttt{Program} procedure will wait
 for \texttt{My\textunderscore{}Task} to complete before exiting. D differs in this aspect: 
 there is no concept of ownership of a \texttt{Thread}, and unless
@@ -41,7 +39,6 @@ In terms of syntax, the creation of a
 \texttt{Thread} in D is significantly different. Rather than specifying the body of
 the task inline, it is more typical to place it in a separate function. This
 appears as follows: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 import core.thread; 
 
@@ -55,7 +52,6 @@ void main()
     new Thread(&threadFunction).start;
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 Thus, both languages are able to specify concurrent computation. In
 Ada, this is achieved through the medium of a \texttt{Task}, in D, the medium
 is provided by a \texttt{Thread}. 
@@ -64,13 +60,10 @@ is provided by a \texttt{Thread}.
 Important to real-time systems is the concept of priority scheduling. In both
 Ada and D priority based scheduling is implemented. In Ada, the systems scheduler can
 be set through the use of a \texttt{pragma}. This is done as follows: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 pragma task_dispatching_policy(fifo_within_priorities); 
 \end{lstlisting}
-%TCusedtoendignorethis
 This allows the priority of a task to be statically set in the following manner: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 task Worker is 
     pragma Priority(System.Priority'First + 1); 
@@ -81,7 +74,6 @@ begin
     ...
 end Worker; 
 \end{lstlisting}
-%TCusedtoendignorethis
 Priority scheduling behaves in a similar manner in D, however, there is one
 fundamental difference: the standard approach to priorities in D is not static, 
 and any priorities must instead be assigned at runtime. 
@@ -90,7 +82,6 @@ behaviour can be implemented in Ada using the
 \texttt{Ada.Dynamic\textunderscore{}Priorities}
 package, it is the only option for priority scheduling in D. 
 Priority scheduling can thus be achieved in the following manner: 
-%TCusedtoignorethis 
 \begin{lstlisting}[basicstyle=\small]
 import core.thread; 
 
@@ -108,7 +99,6 @@ void main()
     a.priority = Thread.PRIORITY_MIN + 5; 
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This example shows not only an initial assignment of a priority to a created
 \texttt{Thread}, but highlights the possibility of modifying a priority at
 runtime. 
@@ -117,18 +107,17 @@ runtime.
 With all multithreaded programs, communication between different concurrent
 components is crucial. Both Ada and D support the notion of shared memory,
 allowing separate \texttt{Threads} or \texttt{Tasks} to access the same
-variables. However, due to D's use of shared memory, shared memory functions
+variables. However, due to D's use of Thread Local Storage, shared memory functions
 differently. In D, each \texttt{Thread} contains its own copy of a global 
 variables unless the variable is stated 
 as \texttt{shared} or \texttt{\textunderscore{}\textunderscore{}gshared}. 
 \par\bigskip\noindent
 In Ada, it is common practice to use protected objects to read and write to
-variables, preventing inconsistency. These operate by defining several different 
-operation types: a function that allows concurrent reads to occur; a procedure
-is exclusive of other procedures and functions and allows writes to occur; 
-and an entry allows a task to block, waiting on a condition. This is shown
+variables, preventing simultaneous access. These operate by defining several different 
+operation types: a function allows concurrent reads to occur; a procedure
+is exclusive of other procedures and functions, and allows writes to occur; 
+an entry allows a task to block on a condition. This is shown
 below: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 protected Read_Write is
     function Read return Integer;
@@ -150,12 +139,10 @@ begin
     end Write; 
 end Read_Write; 
 \end{lstlisting}
-%TCusedtoendignorethis
 D does not provide the notion of protected objects, but instead uses a
 special \texttt{ReadWriteMutex} that emulates this behaviour.
 Using this, the previous Ada code may be rewritten in D
 in the following manner: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 auto mut = new ReadWriteMutex(); 
 int data = 0; 
@@ -175,18 +162,14 @@ void writerFunction(int newValue)
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This allows the same principle, protected data, to be used in D for
 safe interprocess communication using shared memory. However, the ability to 
-define an \texttt{entry} or a \texttt{requeue} is not encapsulated. In D,
-however, it is 
-possible to use the \texttt{Condition} class to simulate entry behaviour 
-\cite{dlang-condition}. 
+define an \texttt{entry} or a \texttt{requeue} is not encapsulated. 
 It is worth noting that when using \texttt{ReadWriteMutex}, it is not possible to 
 use either the priority ceiling or priority inheritance protocol.
-However, this can be implemented: the \texttt{ReadWriteMutex} class
-can be redefined as using the corresponding \texttt{CeilingMutex} or
-\texttt{InheritanceMutex} classes, rather than a \texttt{Mutex}. 
+For this to be achieved the \texttt{ReadWriteMutex} class
+can be redefined as using the \texttt{CeilingMutex} or
+\texttt{InheritanceMutex} classes, rather than a standard \texttt{Mutex}. 
 
 \subsection{Priority Inheritance and Priority Ceiling Protocols}
 As detailed in the Literature Review, the ability to use either the priority
@@ -194,7 +177,6 @@ inheritance protocol, or the priority ceiling protocol is crucial in order to
 provide a bounded limit on the about of priority inversion that a task can
 suffer. Ada supports use of the priority ceiling protocol in the following
 manner: 
-%TCusedtoignorethis 
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 protected Buffer is 
     pragma Priority(28); 
@@ -202,13 +184,12 @@ protected Buffer is
     ...
 end Buffer; 
 \end{lstlisting}
-%TCusedtoendignorethis
-When accessing the Buffer, an accessing \texttt{Task} has it's priority raised
-to 28. In D the same functionality is implemented. In D, this applies to
-the \texttt{CeilingMutex}: any \texttt{Thread} that holds a lock on a
-\texttt{CeilingMutex} has its priority raised. This appears in the following
-manner: 
-%TCusedtoignorethis 
+When accessing the Buffer, the \texttt{Task} has its priority raised
+to 28. 
+In D, the same functionality is implemented through 
+the \texttt{CeilingMutex} class: an accessing \texttt{Thread} 
+\texttt{CeilingMutex} has its priority raised as it locks the mutex. 
+The D equivalent appears in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 auto mut = new CeilingMutex(28); 
 
@@ -220,13 +201,10 @@ void accessResource()
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
-As with the implementation in Ada, the ceiling property is dynamic, and can be
-adjusted at runtime. It is therefore possible to see that both D, through this
-project, provides the priority ceiling protocol. However, the priority
-inheritance protocol is also introduced to D. This is absent from Ada, and can
-be used in the following manner: 
-%TCusedtoignorethis
+As with the implementation of priorities, the ceiling property in D is dynamic 
+and can be adjusted at runtime. 
+As with the Priority Ceiling protocol, priority inheritance can be used in the 
+following manner: 
 \begin{lstlisting}[basicstyle=\small]
 auto mut = new InheritanceMutex; 
 
@@ -234,19 +212,18 @@ void accessResource()
 {
     synchronized(mut)
     {
-
+        ...
     }
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 Through these examples, it is shown that D provides two alternative protocols
 to solve priority inversion: the priority ceiling protocol, which behaves the
 same as Ada's priority ceiling protocol, and the priority inheritance protocol. 
 
 \subsection{Periodic Tasks}
+%TODO - current progress
 For a real-time system, periodic tasks are a common feature. In Ada, a periodic
 task is defined in the following manner: 
-%TCusedtoignorethis 
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 task Periodic; 
 task Periodic is 
@@ -260,10 +237,7 @@ begin
     end loop; 
 end Periodic; 
 \end{lstlisting}
-%TCusedtoendignorethis
-This can be defined almost identically in D using the provided
-\texttt{delayUntil} function: 
-%TCusedtoignorethis
+This can be defined almost identically in D using the provided \texttt{delayUntil} function: 
 \begin{lstlisting}[basicstyle=\small][language=Java]
 void periodic()
 {
