@@ -7,8 +7,8 @@ development of real-time systems, such as: the ability to interact with low-leve
 hardware, powerful concurrency tools, and the ability to interact with existing C code. 
 However, these alone are not enough to provide the full tool-set required for
 the development of a real-time system. 
-As such, additional requirements have been explored, discussed, and implemented 
-through this project. 
+Through the course of this project, these additional requirements have been 
+explored, discussed, and implemented.
 \par\bigskip\noindent
 By targeting POSIX compliant operating systems, particularly those that are
 real-time operating systems, it is possible to provide tools that enable control 
@@ -50,25 +50,25 @@ a library. This would enable the development of real-time system in the D progra
 language, as well as maintaining compatibility with existing code. 
 \par\bigskip\noindent
 However, there are additional difficulties that the 
-language faces: the use of a stop-the-world garbage collector prevents a reliable 
-estimate of timings from being determined. 
-This is a problem that can be offset through disabling the garbage collector 
-and instead using manual memory management, or through detaching a thread from the 
-runtime and ensuring any GC objects used are referenced from other threads.
-Alternatively a real-time garbage collector could replace the existing one. 
-Offsetting the penalty of the garbage collector adds additional complexity for 
-the programmer and can restrict the use of more advanced language features.
-This opens an avenue for potential future work in this field. 
-As D's standard libraries are so expansive, there is also potential for future
+language faces that could provide avenues for future work. 
+First, the use of a stop-the-world garbage collector prevents a reliable 
+estimate of timings from being determined. Future work could replace this with a
+real-time garbage collector. 
+Secondly, as D's standard libraries are so expansive, there is also potential for future
 work in making the standard library fully real-time compliant: features such as
 \texttt{Tasks} and \texttt{Fibers}, which can be used to execute work
 concurrently, currently do not support the use of priority based scheduling. 
 \par\bigskip\noindent
 As such, it is possible to develop a real-time system in the D programming 
-language using the additional support detailed in this article. However, 
-the Garbage collector remains a significant hurdle in aiding development.
-%TODO - Make out why you would use D over some other programming languages for
-%the development of real-time systems. 
+language using the additional support detailed in this project. This is
+significant due to the rich set of features D provides compared to other
+real-time systems programming languages. By providing modern primitives such as
+unit-testing as language features, but also boasting native performance, 
+memory safety and powerful abstractions, D provides a modern approach to the
+development of real-time systems. 
+
+% TODO - Make out why you would use D over some other programming languages for
+% the development of real-time systems. 
 % I.E it's better than C++, which is used on fighter jet, because it provides a
 % neater encapsulation, advanced features, built in unit-testing, and more
 % robust safety.  POINT - Evidence, evaluation and more evaluation. 
