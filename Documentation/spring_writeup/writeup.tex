@@ -46,7 +46,8 @@ basicstyle=\ttfamily
 \usepackage{placeins}
 
 % For embedding a wordcount
-\immediate\write18{texcount *.tex -total | grep "Words in" > count.sum;
+\immediate\write18{texcount *.tex ada_profile.adb thread_profile.d
+    exception_profile.d rtmutex.d -total | grep "Words in" > count.sum;
 ./wc_tool.d > count.sum2 }
 \newcommand\wordcount{\input{count.sum2}}
 \immediate\write18{detex writeup.tex | wc -w > count3.sum}
