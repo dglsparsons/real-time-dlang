@@ -21,7 +21,8 @@ into newly created programs, without the need to run custom compilers or make
 modifications to the language's core libraries. Furthermore, the project has a design 
 goal: any existing applications should not be affected through the introduction 
 of this library. This means that any code written without prior knowledge should 
-remain completely unaffected. 
+remain completely unaffected, unless explicity invoked in a real-time context,
+such as during asynchronous transfer of control. 
 \par\bigskip\noindent
 The D programming language was chosen as the target for this project due to its 
 inherent suitability for many real-time principals. The language shows a rich 
@@ -76,10 +77,11 @@ Furthermore, it does not require the use of a virtual machine, as seen in langua
 Java and C\# \cite{zhang2007exploiting}. However, this comes at a cost of implementation: 
 different operating systems handle threads and scheduling very differently. 
 In order to provide guaranteed latencies, real-time systems use a priority based 
-scheduling approach. This approach is only available in D through the use of 
+scheduling approach. This approach is currently only available in D through the use of 
 POSIX threads, targeting a POSIX compliant operating system such as GNU/Linux. 
 As a result, the functionality provided by the real-time library for D is only 
-applicable on a POSIX compliant operating system.
+applicable on a POSIX compliant operating system or one with a binding to the POSIX 
+API.
 
 \subsection{External Libraries}
 
