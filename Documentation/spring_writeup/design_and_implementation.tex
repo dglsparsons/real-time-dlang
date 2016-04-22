@@ -70,7 +70,8 @@ No support exists within D's standard libraries to set the scheduler, and theref
 this support must be supplied. 
 This is achieved through interaction with standard C libraries. 
 The Linux function \texttt{sched\textunderscore{}setscheduler} allows the operating system 
-scheduler to be changed to either a first-in-first-out or round robin scheduler \cite{sched-setscheduler}. 
+scheduler to be changed, along with the scheduler's priority, to either a 
+first-in-first-out or round robin scheduler \cite{sched-setscheduler}. 
 In order to provide an intuitive interaction, a wrapper has been written around
 this system call, providing a more 'D like' interface and a level of
 abstraction. This takes the following form:
@@ -184,8 +185,9 @@ constructor for \texttt{Mutex} class cannot be extended. Instead it must be full
 reimplemented as a new class with the constructor adding 
 the C function \texttt{pthread\textunderscore{}mutexattr\textunderscore{}setprotocol} 
 \cite{mutex-setprotocol}. 
-The full implementation of this \texttt{RTMutex} class is defined:
+The implementation of this constructor for the \texttt{RTMutex} class is defined:
 \lstinputlisting[basicstyle=\small,language=Java]{rtmutex.d}
+The full implementation of \texttt{RTMutex} can be seen in Appendix A.1. 
 A mutex using the inheritance protocol may then be created and initialised in 
 the following manner: 
 \begin{lstlisting}[basicstyle=\small]
@@ -205,7 +207,7 @@ This is implemented in the following manner:
 \begin{lstlisting}[basicstyle=\small]
 class CeilingMutex 
 {
-    private import core.sync.\texttt{Exception} : SyncError;
+    private import core.sync.exception : SyncError;
     alias ceilingMutex this;
     RTMutex ceilingMutex;
 
@@ -410,7 +412,7 @@ example of using this cleanup code is as follows:
 \begin{lstlisting}[basicstyle=\small]
 extern (C) void thread_cleanup(void* arg) nothrow
 {
-    writeln("This is a cleanup function");
+    // cleanup function
 }
 
 void interruptibleFn()
