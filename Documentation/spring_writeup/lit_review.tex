@@ -59,7 +59,7 @@ of scheduling these systems \cite{real-time-systems}.  It is therefore a
 requirement of a real-time systems programming language to provide support for
 an abstraction into isolating concurrent events and their control into separate
 entities.  In Java and C with real-time POSIX, this concurrency mechanism is
-provided by threads or processes. In Ada this mechanism is provided by Tasks
+provided by threads or processes. In Ada this mechanism is provided by tasks
 \cite[p251]{gehani1989concurrent}.
 
 \subsection{Priority Scheduling}
@@ -260,19 +260,10 @@ does not aim to compare the merits of programming language research. However, th
 feature and literature surrounding aspects of programming languages that are of
 interest for this project have been highlighted. 
 
-\subsection{Real-Time Euclid} 
-The programming language Real-Time Euclid is of interest for its historical 
-significance. Introduced as ``a language designed specifically to address reliability 
-and guaranteed schedulability issues in real-time systems'', Real-Time Euclid 
-focuses on providing a high level of exception and error handling coupled with 
-forced time and space bounds on every construct \cite{real-time-euclid}. This 
-gives the language an interesting property: Real-Time Euclid programs can
-be analysed rigorously in order to guarantee the schedulability of their 
-processes. Real-Time Euclid therefore provides highly reliable software. 
-However, the language has not been well adopted, and thus is not in widespread use. 
 
 \subsection{Interprocess Communication and Synchronisation} % 200 words 
-As previously mentioned, sharing memory between processes has long been an import
+As previously mentioned, sharing memory between processes has long been an
+important
 consideration. Hoare's concepts of monitors, coupled with the use of semaphores
 and mutexes, is a common approach for sharing information between threads
 \cite{Hoare:1974:MOS:355620.361161}.  However, message passing provides an
@@ -365,8 +356,19 @@ system, the concern is primarily with interrupts and IO operations. With many
 modern languages running in a virtual machine environment, access to hardware
 is somewhat limited. As a result, significant effort has gone into providing
 Real-time Java with increased support for low-level access \cite{4519616,real-java}. 
-Comparatively, both C and Ada do not run in a virtual machine and have direct
-access to interrupt handlers \cite{real-time-systems}.
+Comparatively, both C and Ada do not run in a virtual machine and therefore
+potentially have direct access to interrupt handlers \cite{real-time-systems}.
+
+\subsection{Timing Contraints and Schedulability} 
+The programming language Real-Time Euclid is of interest for its historical 
+significance. Introduced as ``a language designed specifically to address reliability 
+and guaranteed schedulability issues in real-time systems'', Real-Time Euclid 
+focuses on providing a high level of exception and error handling coupled with 
+forced time and space bounds on every construct \cite{real-time-euclid}. This 
+gives the language an interesting property: Real-Time Euclid programs can
+be analysed rigorously in order to guarantee the schedulability of their 
+processes. Real-Time Euclid therefore provides highly reliable software. 
+However, the language has not been well adopted, and thus is not in widespread use. 
 
 \section{Summary}
 This Literature Review has looked at three areas of relevance to this project.
