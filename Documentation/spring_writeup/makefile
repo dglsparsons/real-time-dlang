@@ -21,7 +21,6 @@ cb:
 
 count: 
 	texcount *.tex ada_profile.adb exception_profile.d thread_profile.d rtmutex.d -total | grep "Words in" 
-	detex writeup.tex | wc -w
 
 cbs: 
 	make clean && make && make cb
