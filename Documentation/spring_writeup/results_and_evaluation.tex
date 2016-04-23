@@ -1,7 +1,8 @@
 % Results and Evaluation Section of the Writeup 
 
 % Word Count Guide - 2500 Words
-This section aims to examine the provided library and how its usage
+As all the provided code has been thoroughly tested to ensure correct
+functionality, this section instead aims to examine the provided library and how its usage
 compares syntactically to the development of a real-time system in Ada. 
 Following this, Asynchronous Transfer of Control will be profiled in both D and
 Ada, comparing the performance of the two. 
@@ -76,8 +77,9 @@ end Worker;
 \end{lstlisting}
 Priority scheduling behaves in a similar manner in D, however, there is one
 fundamental difference: the standard approach to priorities in D is not static, 
-and any priorities must instead be assigned at runtime. 
-Furthermore, priorities can be changed during the programs execution. While similar
+and any priorities must instead be assigned at runtime, after the
+\texttt{Threads} creation. 
+Furthermore, priorities can be changed during execution. While similar
 behaviour can be implemented in Ada using the
 \texttt{Ada.Dynamic\textunderscore{}Priorities}
 package, it is the only option for priority scheduling in D. 
@@ -203,8 +205,8 @@ void accessResource()
 \end{lstlisting}
 As with the implementation of priorities, the ceiling property in D is dynamic 
 and can be adjusted at runtime. 
-As with the Priority Ceiling protocol, priority inheritance can be used in the 
-following manner: 
+Unlike Ada, this project also supports the use of priority inheritance. 
+This can be similarly invoked in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 auto mut = new InheritanceMutex; 
 
@@ -221,7 +223,6 @@ to solve priority inversion: the priority ceiling protocol, which behaves the
 same as Ada's priority ceiling protocol, and the priority inheritance protocol. 
 
 \subsection{Periodic Tasks}
-%TODO - current progress
 For a real-time system, periodic tasks are a common feature. In Ada, a periodic
 task is defined in the following manner: 
 \begin{lstlisting}[basicstyle=\small,language=Ada]
@@ -257,35 +258,31 @@ void main()
     ...
 }
 \end{lstlisting}
-%TCusedtoendignorethis
-This therefore allows a periodic task to be defined in a manner very
+This therefore allows a periodic task to be defined in a manner 
 similar to that of Ada. There is little visible difference between the two
 implementations, and as both utilise operating system threads, there is little
 difference in overhead between the two languages. 
 
 \subsection{Asynchronous Transfer of Control}
 Another crucial aspect of a real-time system is the ability to perform
-Asynchronous Transfer of Control (ATC). In Ada, this is achieved with a special
-variation of the \texttt{select} statement: the \texttt{select ... then abort}
-statement. For example, a timeout of 2 seconds on a function call takes the 
+Asynchronous Transfer of Control (ATC). In Ada, this is achieved by the 
+\texttt{select ... then abort} statement. 
+For example, a timeout of 2 seconds on a function call takes the 
 following form: 
-%TCusedtoignorethis 
 \begin{lstlisting}[basicstyle=\small,language=Ada]
 select 
     delay 2.0; 
-    -- cleanup goes here 
 then abort
     abortable_function; 
 end select; 
 \end{lstlisting}
-%TCusedtoendignorethis
 In D, it is not possible to program a timeout in this manner: the method of ATC
 is fundamentally very different, taking instead a class based approach using 
-signals. In D, an \texttt{Interruptible} task is defined. This enables
+signals. An \texttt{Interruptible} task is defined, this enables
 execution of a function to be performed until there is a call to
-\texttt{interrupt}. Therefore, programming a timeout in D requires an additional
-thread to be created compared to the Ada implementation. This may appear as follows: 
-%TCusedtoignorethis
+\texttt{interrupt}. For programming a timeout in D an additional
+thread has to be created compared to the Ada implementation. 
+This appears as follows: 
 \begin{lstlisting}[basicstyle=\small]
 void abortableFunction()
 {
@@ -302,10 +299,9 @@ void main()
     intr.start; 
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 This allows a implementation of ATC in D, sharing many similarities with the
 behaviour of Ada. However, in some regards it is subtly different to 
-Ada's model of ATC. The most significant difference is the management of
+Ada's model. The most significant difference is the management of
 whether a section of code is abort deferred or not. In Ada, there is notion of
 a task being abort-deferred, specified by \texttt{pragma Abort\textunderscore{}Defer}
 \cite{atc-article}.
@@ -315,10 +311,10 @@ updating shared memory or allocating memory.
 For most standard interactions, such as with protected objects or standard
 packages, there is no need to explicitly specify code as abort-deferred. This
 therefore removes the concern from the developer. In D, there is no notion of a
-function being abort-deferred. Instead, it is left up to the developer to
+function being abort-deferred. Instead, as a result of having an unchanged
+compiler and runtime, it is left up to the developer to
 control whether an ATC region of code may have interrupts deferred, using the 
-\texttt{Interruptible.getThis.deferred} flag. This manual management of
-abort-deferred regions of code requires careful management for the developer. 
+\texttt{Interruptible.getThis.deferred} flag. 
 
 \section{Comparison of Asynchronous Transfer of Control Approaches in D}
 % Profile the two ATC Methods. 
@@ -331,7 +327,8 @@ For profiling, a sample program was created that records the
 time taken for both the setup of an \texttt{Interruptible} section, and the time 
 taken to progress from receiving an asynchronous \texttt{interrupt}. In order to 
 provide reliable results,
-this was repeated 10,000 times with average times recorded. Furthermore, both
+this was repeated 10,000 times with average times and standard deviations recorded. 
+Furthermore, both
 the \texttt{Thread} model, and the \texttt{Exception} model have been compiled 
 using the same version of the DMD compiler (2.069.2), with no compiler
 optimisation. This was run on a Linux system at a high
@@ -343,11 +340,13 @@ Similarly, Thread based ATC is profiled using the following code:
 \lstinputlisting[basicstyle=\small,language=C++]{thread_profile.d}
 These tests produced the following results for the setup and cancellation times: 
 \begin{table}[!htbp]
-\begin{tabular}{l|lll}
-ATC Method & Average Setup Time & Cancellation Time  & Total          \\
-           & (microseconds)     & (microseconds)     & (microseconds) \\ \hline
-Threaded   & 37.81              & 34.40              & 72.21          \\
-Exception  & 13.95              & 13.18              & 27.13          \\
+\begin{tabular}{l|lllll}
+    %TODO - rerun tests but including standard deviations. 
+    % TODO - rewrite D tests to work in the same manner as Ada examples. 
+    ATC Method & Average Setup Time & Setup Standard Deviation & Cancellation Time & Cancellation Standard Deviation & Total          \\
+               & (microseconds)     & (microseconds)           & (microseconds)    & (microseconds)                  & (microseconds) \\ \hline
+    Threaded   & 37.81              &                          & 34.40             &                                 & 72.21          \\
+    Exception  & 16.04              & 4.14                     & 18.09             & 12.29                           & 19.06          \\
 \end{tabular}
 \end{table} \\
 % Ada times & 1.11              & 69.11          & 70.22  \\ 
@@ -368,7 +367,6 @@ continue. This is a lengthier process than simply catching an
 cleanup executed. 
 
 \section{Efficiency of Asynchronous compared to Ada}
-% Compare D with Ada in terms of efficiency.
 In addition to comparing the two Asynchronous Transfer of Control mechanisms, a
 comparison against Ada can be used to highlight the performance of D. As in the
 previous example, it is possible to profile both the setup time and cancellation
