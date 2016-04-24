@@ -334,67 +334,58 @@ using the same version of the DMD compiler (2.069.2), with no compiler
 optimisation. This was run on a Linux system at a high
 priority (90) in order to minimise the amount of interference that the
 profiling might suffer. 
-The D code for profiling the Exception based ATC is as follows: 
+The D code for profiling the Exception or Thread based ATC is as follows: 
 \lstinputlisting[basicstyle=\small,language=C++]{exception_profile.d}
-Similarly, Thread based ATC is profiled using the following code: 
-\lstinputlisting[basicstyle=\small,language=C++]{thread_profile.d}
 These tests produced the following results for the setup and cancellation times: 
 \begin{table}[!htbp]
 \begin{tabular}{l|lllll}
-    %TODO - rerun tests but including standard deviations. 
-    % TODO - rewrite D tests to work in the same manner as Ada examples. 
-    ATC Method & Average Setup Time & Setup Standard Deviation & Cancellation Time & Cancellation Standard Deviation & Total          \\
-               & (microseconds)     & (microseconds)           & (microseconds)    & (microseconds)                  & (microseconds) \\ \hline
-    Threaded   & 37.81              &                          & 34.40             &                                 & 72.21          \\
-    Exception  & 16.04              & 4.14                     & 18.09             & 12.29                           & 19.06          \\
+    ATC Method & Average            & Setup Standard           & Cancellation     & Cancellation       \\
+               & Setup time         & Deviation                & Time             & Standard Deviation \\ 
+               & (microseconds)     & (microseconds)           & (microseconds)   & (microseconds)     \\ \hline
+    Threaded   & 38.05              & 12.31                    & 42.09            & 14.77              \\
+    Exception  &  4.04              & 1.84                     & 15.02            & 11.57              \\
 \end{tabular}
 \end{table} \\
 % Ada times & 1.11              & 69.11          & 70.22  \\ 
 As expected, this shows that there is an additional overhead in the
-\texttt{Thread} based approach to ATC compared to an \texttt{Exception} based
-approach: creating a new \texttt{Thread} for each
-invocation has a more significant overhead, leading to around a 260\% increase 
-in setup time. This occurs as the creation of a \texttt{Thread} in D involves
-the creation of a kernel thread, requiring many operating system calls.
+\texttt{Thread} based approach to ATC. This occurs as the creation of a 
+\texttt{Thread} in D involves the creation of a kernel level thread, which is a 
+heavier weight process than the creation of an \texttt{Exception}.
 Furthermore, the \texttt{Thread} based approach also takes longer to perform
 the cancellation. Both approaches use a POSIX signal in order to asynchronously
 perform their cancellation: the \texttt{Exception} based approach uses a signal
 to throw an exception and the \texttt{Thread} based approach uses a signal to
 terminate the Thread. However, with the \texttt{Thread} based approach, the
 application must wait for the \texttt{Thread} to be fully completed before it can
-continue. This is a lengthier process than simply catching an
+continue. This is a lengthier process than catching an
 \texttt{Exception}, as resources must be reclaimed and any \texttt{Thread}
-cleanup executed. 
+cleanup performed. 
 
-\section{Efficiency of Asynchronous compared to Ada}
-In addition to comparing the two Asynchronous Transfer of Control mechanisms, a
-comparison against Ada can be used to highlight the performance of D. As in the
+\section{Efficiency of ATC compared to Ada}
+In addition to comparing the two ATC mechanisms, a comparison against Ada can be 
+used to highlight the performance of D. As in the
 previous example, it is possible to profile both the setup time and cancellation
-time of Ada's ATC method in a similar manner to that of D. This takes the
-following form: 
+time of Ada's ATC. This takes the following form: 
 \lstinputlisting[basicstyle=\small,language=Ada]{./ada_profile.adb}
-A profiling of the Ada implementation of Asynchronous Transfer of Control gives
-the following results: 
+A profiling of the Ada implementation of ATC gives the following results: 
 \begin{table}[!htbp]
-\begin{tabular}{l|lll}
-ATC Method & Average Setup Time & Cancellation Time  & Total          \\
-           & (microseconds)     & (microseconds)     & (microseconds) \\ \hline
-D Threaded &  37.81             & 34.40              & 72.21          \\
-D Exception & 13.95             & 13.18              & 27.13          \\
-Ada         &  1.11             & 69.11              & 70.22          \\
+\begin{tabular}{l|llll}
+ATC Method & Average            & Setup Standard           & Cancellation     & Cancellation       \\
+           & Setup Time         & Deviation                & Time             & Standard Deviation \\ 
+           & (microseconds)     & (microseconds)           & (microseconds)   & (microseconds)     \\ \hline
+D Threaded   & 38.05            & 12.31                    & 42.09            & 14.77              \\
+D Exception  &  4.04            & 1.84                     & 15.02            & 11.57              \\
+Ada        & 1.39               & 1.50                     & 76.27            & 10.24               \\
 \end{tabular}
 \end{table} \\
 This shows a different distribution of setup and cancellation times compared to
 the previous D profiles: Ada has almost no setup cost, but a much greater
-cancellation time. Overall, this leads to a comparable performance to the
-Threaded approach in D, and a slower performance compared than an Exception
-based approach. As Ada uses an equivalent to a signal and \texttt{setjmp}/\texttt{longjmp} 
-approach in its one-thread model of ATC, there is little overhead in setting up
-an asynchronously interruptible section \cite{atc-article}. Additionally, Ada takes
-a safer, albeit less immediate approach than D towards aborting through the
-notion of abort completion points. This only enables asynchronous transfer to
-occur at locations in the code that are known to be safe, sacrificing abortion
-speed to achieve this. As the implementation in D cancels immediately, and does 
-not wait for an abort completion point, it is the reason for the difference between 
-the cancellation times. 
+cancellation time. Using \texttt{strace} on the gnatmake compiled Ada program 
+shows that a two-thread approach is taken. 
+However, the thread created is much more lightweight than a D \texttt{thread}: it shares memory
+with the parent process. Additionally, Ada takes a safer, although less immediate 
+approach towards aborting: Ada has abort completion points. This prevents ATC 
+occuring except at locations in the code that are known to be safe. This
+approach trades abortion for safety. As the implementation in D contrastingly cancels 
+immediately, it is the reason for the difference between cancellation times. 
 
