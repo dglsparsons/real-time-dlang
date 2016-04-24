@@ -18,7 +18,7 @@ void main()
         GC.collect;
         MonoTime timeCancelled;
         MonoTime timeAfter;
-        MonoTime timeStarting; 
+        __gshared MonoTime timeStarting; 
 
         auto timeBefore = MonoTime.currTime;
 
@@ -49,18 +49,13 @@ void main()
     writeln("Average Setup:    ", totalSetup / numtests); 
     writeln("Average Teardown: ", totalTeardown / numtests); 
 
-    double totalVariance = 0; 
+    double totalSetupVariance = 0; 
+    double totalTeardownVariance = 0; 
     foreach(time; setupTimes)
     {
-        totalVariance += (time - (totalSetup/numtests)).abs.total!"usecs".pow(2);
+        totalSetupVariance += (time - (totalSetup/numtests)).abs.total!"usecs".pow(2);
+        totalTeardownVariance += (time - (totalSetup/numtests)).abs.total!"usecs".pow(2);
     }
-    writeln("Standard deviation of setup: ", sqrt(totalVariance /numtests));
-
-    totalVariance = 0;
-
-    foreach(int i, time; teardownTimes)
-    {
-        totalVariance += (time - (totalSetup/numtests)).abs.total!"usecs".pow(2);
-    }
-    writeln("Standard deviation of teardown: ", sqrt(totalVariance /numtests));
+    writeln("Standard deviation of setup: ", sqrt(totalSetupVariance /numtests));
+    writeln("Standard deviation of teardown: ", sqrt(totalTeardownVariance /numtests));
 }
