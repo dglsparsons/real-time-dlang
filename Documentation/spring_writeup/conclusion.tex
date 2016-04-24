@@ -4,7 +4,7 @@
 
 The D programming language provides a capable set of features for the 
 development of real-time systems, such as: the ability to interact with low-level 
-hardware, powerful concurrency tools, and the ability to interact with existing C code. 
+hardware, powerful concurrency tools, and interoperability with existing C code. 
 However, these alone are not enough to provide the full tool-set required for
 the development of a real-time system. 
 Through the course of this project, these additional requirements have been 
@@ -36,10 +36,14 @@ In the Results and Evaluation section, the two alternative implementations of
 Asynchronous Transfer of Control in D have been profiled. 
 This found that, while an \texttt{Exception} based approach depends 
 heavily on the setup of the stack during signal handling, it is a much more efficient
-implementation, taking around only 40\% of the computation time compared to a
-two-thread approach. 
+implementation than the alternative two-thread approach. 
 Additionally, the approaches to ATC in D have been profiled against an
 equivalent Ada program, highlighting that both systems have similar performance.
+This displays that with the given approach, making no changes to D's runtime or
+compiler, it is possible to achieve all the functionality required. Most
+features are implemented safely through a binding onto real-time POSIX.
+However, the approach taken to ATC is limited by not changing the compiler and
+runtime: deferred code has to be explicitly stated, unlike in Ada's implementation. 
 \par\bigskip\noindent
 Furthermore, in addition to the provided functionality, a wide range of unit-tests 
 have been provided, along with in-built documentation. 
@@ -57,7 +61,11 @@ real-time garbage collector.
 Secondly, as D's standard libraries are so expansive, there is also potential for future
 work in making the standard library fully real-time compliant: features such as
 \texttt{Tasks} and \texttt{Fibers}, which can be used to execute work
-concurrently, currently do not support the use of priority based scheduling. 
+concurrently, currently do not support the use of priority based scheduling.
+Finally, further work could port the provided library to a non-POSIX compliant
+real-time operating system. For the majority of features, a wrapper could
+be provided around the operating system calls. For ATC either thread cancellation 
+or signals must be present. 
 \par\bigskip\noindent
 As such, it is possible to develop a real-time system in the D programming 
 language using the additional support detailed in this project. This is
@@ -66,9 +74,3 @@ real-time systems programming languages. By providing modern primitives such as
 unit-testing as language features, but also boasting native performance, 
 memory safety and powerful abstractions, D provides a modern approach to the
 development of real-time systems. 
-
-% TODO - Make out why you would use D over some other programming languages for
-% the development of real-time systems. 
-% I.E it's better than C++, which is used on fighter jet, because it provides a
-% neater encapsulation, advanced features, built in unit-testing, and more
-% robust safety.  POINT - Evidence, evaluation and more evaluation. 
