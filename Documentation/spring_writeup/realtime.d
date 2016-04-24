@@ -163,7 +163,7 @@ unittest
  *         SCHED_OTHER, 
  *         SCHED_BATCH, 
  *         SCHED_IDLE, 
- *     or for real time applications: 
+ *     or for real-time applications: 
  *         SCHED_FIFO, 
  *         SCHED_RR.
  * int schedulerPriority = the priority that the scheduler should run at.
