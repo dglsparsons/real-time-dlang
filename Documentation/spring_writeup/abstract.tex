@@ -14,8 +14,8 @@ system may depend not only on the result, but also the time that it was delivere
 The development of real-time systems typically involves the use of a programming 
 language providing explicit support for real-time systems. 
 This support involves the provision of protocols that allow the system to 
-behave in a more reliable manner, such as asynchronous transfer of control, or 
-bounded priority inversion. 
+behave in a more reliable manner, such as Asynchronous Transfer of Control
+(ATC), or bounded priority inversion. 
 My project entails the provision of such support to a new programming language: 
 D. D currently has very limited support for the development of real-time systems. 
 \par\bigskip\noindent
@@ -31,20 +31,19 @@ language.
 By examining existing programming languages and research on real-time systems, a core set 
 of functionality for any real-time system supporting language was defined. 
 In some aspects, such as concurrent programming, support was already provided in D. 
-However, for the majority of the real-time programming language features that
-are under consideration, additional support was required. 
-Different approaches for the implementation of these features was considered, and 
-functionality was implemented as a library. 
-With regards to asynchronous transfer of control, there was no clear 
-approach for implementation. As a result, two alternative approaches have 
+However, for the majority of the features under consideration, additional support was required. 
+Different approaches for their implementation was considered, and functionality 
+was implemented as a library. 
+With regards to ATC, there was no clear 
+best approach. As a result, two alternative approaches have 
 been considered, implemented, and profiled. A comparison between the two approaches 
-has shown that a POSIX signal based approach leads to a higher performance 
+has shown that an exception based approach leads to a higher performance 
 solution. 
 \par\bigskip\noindent
 Furthermore, an experiment compares the behaviour of a D program written 
-using the implemented asynchronous transfer of control approaches with an equivalent 
-real-time Ada program. This found that the performance of asynchronous transfer
-of control in the two programming languages is roughly comparable. 
+using the implemented ATC approaches with an equivalent 
+real-time Ada program. This found that the performance of ATC in the two 
+programming languages is roughly comparable. 
 \par\bigskip\noindent
 As a result of this project, the pool of applicable languages for the development 
 of real-time systems has been extended to incorporate a new and powerful language, D, which 

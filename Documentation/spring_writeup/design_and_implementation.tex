@@ -631,8 +631,8 @@ this executes code specified on exiting the current scope, regardless of
 whether this was through normal control flow or as a result of an
 \texttt{Exception} or \texttt{Error}. 
 \par\bigskip\noindent
-Therefore, as highlighted, there are two implementations of Asynchronous
-Transfer of Control in D: a two-thread model and a Signal/Exception based
+Therefore, as highlighted, there are two implementations of ATC in D: a 
+two-thread model and a Signal/Exception based
 approach. Both of these methods meet all the desired requirements of ATC: 
 they can be used safely; allow cleanup; immediately transfer control; and
 abstract any unnecessary complexity away from the developer. 

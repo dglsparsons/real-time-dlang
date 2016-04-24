@@ -25,7 +25,7 @@ In order to provide a bound on the amount of Priority Inversion that a task
 may suffer, both the Priority Inheritance and Priority Ceiling protocols have
 been implemented through the languages use of POSIX \texttt{Mutexes}. This meets
 requirements 5 and 6. 
-For requirement 7, Asynchronous Transfer of Control has been implemented in two 
+For requirement 7, Asynchronous Transfer of Control (ATC) has been implemented in two 
 alternative approaches: a two-thread model, and a one-thread \texttt{Exception} model. 
 This provides the desired functionality and 
 nicely encapsulates not only creation and cancellation of an
@@ -33,7 +33,7 @@ abortable section, but provides mechanisms for adding cleanup routines and defer
 cancellation. 
 \par\bigskip\noindent
 In the Results and Evaluation section, the two alternative implementations of
-Asynchronous Transfer of Control in D have been profiled. 
+ATC in D have been profiled. 
 This found that, while an \texttt{Exception} based approach depends 
 heavily on the setup of the stack during signal handling, it is a much more efficient
 implementation than the alternative two-thread approach. 
