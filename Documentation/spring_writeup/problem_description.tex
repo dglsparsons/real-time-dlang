@@ -146,9 +146,6 @@ core libraries.} \\ \hline
 As mentioned in the introduction, the D programming language has many 
 characteristics that lend it to the development of real-time systems.
 These are outlined in further detail in this section. 
-However, D also has certain characteristics that are less suitable for 
-real-time systems, such as the use of a garbage collector. 
-These features are similarly detailed.
 
 \subsection{High and Low-Level}
 % Aims to achieve everything that is possible with other languages such as C++
@@ -156,13 +153,13 @@ These features are similarly detailed.
 The D programming language is primarily inspired by C++, aiming to be a ``C++ done
 right'' 
 \cite{qznc-tutorial}. 
-This explains the power that the language possesses. D is a high level, compiled 
+This explains the power the language possesses. D is a high level, compiled 
 language with support for object oriented programming. In addition, D boasts 
 native efficiency: as with C and C++, there is no virtual 
 machine hosting the language's environment.
 Furthermore, D aims to provide
 powerful abstractions that aid in the speed and ease of development of general systems. 
-The following code example, taken from dlang.org, cleanly and efficiently 
+For example, the following code example, taken from dlang.org, cleanly and efficiently 
 sorts lines of a file and outputs them. 
 \begin{lstlisting}[basicstyle=\small]
 import std.stdio, std.array, std.algorithm;
@@ -176,7 +173,7 @@ void main()
         .each!writeln;
 }
 \end{lstlisting}
-However, in addition to providing high-level abstractions, D maintains low-level 
+In addition to providing high-level abstractions, D also maintains low-level 
 capabilities: the language retains access to inline assembler, system calls, 
 interrupts, and low level I/O.
 \par\bigskip\noindent
@@ -184,21 +181,20 @@ This flexibility of D is one of its greatest advantages. It ``allows its user to
 into a wide range of programming techniques, without throwing too many 
 idiosyncrasies in the way'' \cite{ddili-book}. 
 These features also make D well suited to the development of real-time systems: 
-as stated in the Literature Review, the ability to program sporadic tasks
-may depend on the ability to handle interrupts in a timely and predictable manner.
+the ability to program sporadic tasks may depend on the ability to handle 
+interrupts in a timely and predictable manner.
 Furthermore, the ability to perform IO operations using hardware allows the
 system to interact with special purpose hardware, another crucial feature of
 real-time systems.
 D's multipurpose approach therefore allows the language to handle low-level concerns,
 while simultaneously benefiting from code that can be aggressively optimized by the
-compiler \cite{dlang-overview}, whilst also maintaining a readable and user-friendly
-syntax.
+compiler \cite{dlang-overview}.
 
 \subsection{Concurrency}
 D is often referred to as a language that implements the message passing model 
 of concurrency \cite{ddili-book}. D's message passing API 
-allows asynchronous messages to be transferred between threads of control using 
-message boxes. This allows a high-level of abstraction and provides an 
+allows messages to be transferred asynchronously between threads of control.
+This allows a high-level of abstraction and provides an 
 interface that is simplistic to use. However, it is also misleading: the underlying 
 model of D uses the more typical lock and mutex approach 
 \cite{dlang-github-mutex}, 
@@ -210,7 +206,7 @@ approach. A mixed approach can even be taken, using both.
 \par\bigskip\noindent
 D also has an interesting approach to sharing memory between threads. 
 Global variables are \emph{not} shared between different threads by default, as 
-they are in other languages. Instead, each thread has a local copy of the global variable. 
+they are in other languages. Instead, each thread has a local copy of the variable. 
 This is a concept that is known as Thread Local Storage (TLS) 
 \cite{migrate-to-shared}. 
 If global resources are to be shared between different threads, D provides a way of 
@@ -224,9 +220,9 @@ need for locks, allowing many operations to be performed indivisibly.
 
 \subsection{Memory Safe Programming}
 An area of particular interest to real-time systems is the notion of memory 
-safe programming. In addition to providing powerful inbuilt types such as arrays 
-in D, the D compiler also implements range checking and numerous other 
-safety checks on compilation, preventing any undefined behaviour.
+safe programming. In addition to providing powerful inbuilt types such as 
+resizable arrays, the D compiler also implements range checking and numerous other 
+safety checks on compilation, preventing undefined behaviour.
 Additional safety features are also provided in the SafeD subset of the language
 \cite{safe-d}. The SafeD subset will only allow functions to perform 
 operations that are deemed as either safe or trusted, preventing any 
@@ -245,8 +241,7 @@ The current implementation of the garbage
 collector is a `stop the world' approach: when garbage collection is occurring, 
 all threads are halted from making progress 
 \cite{dlang-garbage}. A real-time system must be able
-to guarantee a maximum response time on any operation performed, 
-where predictable behaviour is fundamental to this; 
+to guarantee a maximum response time on any operation performed,  
 with a stop the world garbage collector, this behaviour cannot be guaranteed. 
 \par\bigskip\noindent
 One possible solution to this problem is to disable the garbage collector for 
@@ -254,21 +249,21 @@ real-time applications. This is possible to do by marking functions \texttt{@nog
 or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
 many of D's higher level features and libraries rely on garbage collection. 
 Another possibility is to replace D's garbage collector with a real-time 
-one. This would provide the necessary predictable behaviour. 
-However, due to the amount of further work required, tackling the issue of the garbage 
-collector is outside the scope of this project.
-A third possibility of avoiding the garbage collector comes in through
+one. This would provide predictable behaviour. However, due to the amount of 
+further work required, tackling the issue of the garbage collector is outside the 
+scope of this project.
+A third possibility is
 detaching \texttt{Threads} from D's runtime. This prevents the garbage collector from
 pausing their execution. However, any garbage collected objects used must be registered
 by another \texttt{Thread} within the runtime to prevent their collection. 
 The final possibility is to preallocate all memory that could be needed. This 
-prevents applications from requesting more memory during their execution, and 
+prevents applications from requesting more memory during execution, and 
 thus prevents garbage collection. 
 
 \subsection{Additional Interesting Features}
 % Idea of built in tests, contract programming, error handling
 Another unique feature of D is the ability to build unit-tests into a 
-program without the need for external libraries: D provides support for 
+program without the need for external libraries: D provides 
 unit-testing, complete with coverage analysis, as a language feature. 
 \par\bigskip\noindent
 In addition, D provides a Java style model for exceptions and errors, enabling 
@@ -299,11 +294,9 @@ This provides a limitation on the project: D can only be programmed in a real-ti
 capable manner on a real-time POSIX operating system. 
 By default, D is provided with no method to change the underlying operating
 systems scheduler. 
-The ability to adjust the scheduler to use either a round-robin or FIFO approach 
-is therefore a desired end-goal of the project.
 
 \subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep} 
-As described in the Literature Review chapter, access to both a high precision
+As described in the Literature Review, access to both a high precision
 clock and absolute sleep method is necessary for a real-time system. D's
 current implementation can access a high precision clock through the use of
 functionality provided in the core runtime \cite{dlang-core-time}. However,
@@ -316,14 +309,14 @@ or the C function, \texttt{clock\textunderscore{}nanosleep}, may be used. This f
 an absolute sleep with a user specifiable clock \cite{clock-nanosleep}. 
 
 \subsection{Requirements 5 and 6: Bounded Priority Inversion} %100
-In order to achieve a bound on the amount of priority inversion that a task
+In order to achieve a bound on the amount of priority inversion a task
 might suffer, two alternative protocols exist: the Priority Inheritance protocol and the
 Priority Ceiling protocol. D's implementation of a \texttt{Mutex} currently
 implements neither protocol and is therefore not suitable for real-time systems.
 As with the \texttt{Thread} class, the languages \texttt{Mutex} class provides 
 a wrapper on POSIX mutexes \cite{dlang-github-mutex}. 
 The POSIX specification of mutexes states that
-they can implement the priority ceiling or the priority inheritance protocol 
+they can implement the Priority Ceiling or the Priority Inheritance protocol 
 \cite{mutex-setprotocol}. Therefore, there are two possible ways of
 implementing these protocols in D: 
 the appropriate C functions can be imported, allowing the
@@ -343,5 +336,5 @@ method to asynchronously throw an exception in the target \texttt{Thread}.
 As D has the ability to interact with C code, \texttt{setjmp} and \texttt{longjmp} may be
 used. Furthermore, its model of \texttt{Threads} allows a cancellation based
 approach to be taken. Finally, D has a similar model of exceptions to Java. By
-combining D's exception model with POSIX signals, D therefore has the potential 
+combining D's exception model with POSIX signals, D has the potential 
 to implement any of the three approaches.

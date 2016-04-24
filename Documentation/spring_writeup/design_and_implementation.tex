@@ -23,7 +23,6 @@ allowing subclasses to be derived. The default
 class method will allow a function to be passed by reference and executed. 
 These features can be seen in the example below, taken from the D website
 \cite{core-thread}: 
-%TCusedtoignorethis
 \begin{lstlisting}[basicstyle=\small]
 import core.Thread; 
 
@@ -36,16 +35,15 @@ class DerivedThread : Thread
     private:
     void run()
     {
-        // Derived thread running.
+        // Derived thread 
     }
 }
 
 void threadFunc()
 {
-    // Composed thread running.
+    // Composed thread
 }
 
-// create and start instances of each type
 void main()
 {
     auto derived = new DerivedThread();
@@ -54,7 +52,6 @@ void main()
     composed.start;
 }
 \end{lstlisting}
-%TCusedtoendignorethis
 It is therefore evident that D provides 
 concurrent control of system components. Therefore, for requirement 1, no
 further implementation is required. 
@@ -120,10 +117,6 @@ requirements in any calls to the kernel and context switching.
 If using Linux, the underlying operating system may require patching in order 
 to be fully viable for a real-time system. Because of this, real-time patches 
 to the Linux kernel exist \cite{rt-wiki}. 
-Furthermore, special care must also be taken when developing such a system;
-selecting appropriate hardware and programming the system in a manner appreciative 
-of the underlying hardware \cite{rt-wiki-how-to}.
-
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
 As mentioned in the previous section, it is a necessary to be able to sleep until 
