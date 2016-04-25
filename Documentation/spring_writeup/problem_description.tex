@@ -1,7 +1,7 @@
 %Problem description and analysis for my project. 
 % Word Count Guide - 1500 words.
 
-This chapter aims to examine the Literature Review in order to provide a set of 
+This chapter aims to examine the Literature Review to provide a set of 
 requirements for real-time programming. Following this, it will set out a 
 description of the features of the D programming language, discussing its 
 suitability for the development of real-time systems.
@@ -145,7 +145,7 @@ core libraries.} \\ \hline
 \section{Features of the D Programming Language}
 As mentioned in the introduction, the D programming language has many 
 characteristics that lend it to the development of real-time systems.
-These are outlined in further detail in this section. 
+These are further outlined below.
 
 \subsection{High and Low-Level}
 % Aims to achieve everything that is possible with other languages such as C++
@@ -177,16 +177,15 @@ In addition to providing high-level abstractions, D also maintains low-level
 capabilities: the language retains access to inline assembler, system calls, 
 interrupts, and low level I/O.
 \par\bigskip\noindent
-This flexibility of D is one of its greatest advantages. It ``allows its user to tap 
+This flexibility is one of D's greatest advantages. It ``allows its user to tap 
 into a wide range of programming techniques, without throwing too many 
 idiosyncrasies in the way'' \cite{ddili-book}. 
-These features also make D well suited to the development of real-time systems: 
-the ability to program sporadic tasks may depend on the ability to handle 
+These features make D well suited to the development of real-time systems: 
+the ability to program sporadic tasks depends on the ability to handle 
 interrupts in a timely and predictable manner.
-Furthermore, the ability to perform IO operations using hardware allows the
-system to interact with special purpose hardware, another crucial feature of
-real-time systems.
-D's multipurpose approach therefore allows the language to handle low-level concerns,
+Furthermore, the ability to perform IO operations on special purpose hardware
+allows is crucial.
+D's multipurpose approach therefore enables the language to handle low-level concerns,
 while simultaneously benefiting from code that can be aggressively optimized by the
 compiler \cite{dlang-overview}.
 
@@ -213,9 +212,8 @@ If global resources are to be shared between different threads, D provides a way
 achieving this: the \texttt{shared} and
 \texttt{\textunderscore{}\textunderscore{}gshared} keywords.
 \par\bigskip\noindent
-The core runtime for D provides an additional interesting feature: an atomicop 
-library \cite{core-atomic}. 
-This provides a mechanism for some degree of sharing to be performed without the 
+The core runtime for D provides an atomicop library \cite{core-atomic}. 
+This enables sharing to be performed without the 
 need for locks, allowing many operations to be performed indivisibly.
 
 \subsection{Memory Safe Programming}
@@ -235,27 +233,27 @@ operations to be performed, whilst maintaining safety.
 Coupled with the safety of the SafeD subset, D provides additional memory
 safety through its use of a garbage collector. This
 automatically manages heap allocated memory. 
-However, this safety comes at a cost. One significant problem with developing a 
-real-time system in D is the need to bypass D's garbage collector. 
+However, this safety comes at a cost:
+when developing a real-time system, the garbage collector must be bypassed. 
 The current implementation of the garbage 
 collector is a `stop the world' approach: when garbage collection is occurring, 
 all threads are halted from making progress 
 \cite{dlang-garbage}. A real-time system must be able
-to guarantee a maximum response time on any operation performed,  
-with a stop the world garbage collector, this behaviour cannot be guaranteed. 
+to guarantee a maximum response time on any operation performed.
+With a stop the world garbage collector, this behaviour cannot be guaranteed. 
 \par\bigskip\noindent
-One possible solution to this problem is to disable the garbage collector for 
-real-time applications. This is possible to do by marking functions \texttt{@nogc}, 
-or by calling \texttt{GC.disable()}. However, this is not without drawbacks: 
+One possible solution is to disable the garbage collector for 
+real-time applications. This is achieved by marking functions \texttt{@nogc}, 
+or by calling \texttt{GC.disable()}. However, this has drawbacks: 
 many of D's higher level features and libraries rely on garbage collection. 
 Another possibility is to replace D's garbage collector with a real-time 
-one. This would provide predictable behaviour. However, due to the amount of 
+one. However, due to the amount of 
 further work required, tackling the issue of the garbage collector is outside the 
 scope of this project.
 A third possibility is
 detaching \texttt{Threads} from D's runtime. This prevents the garbage collector from
 pausing their execution. However, any garbage collected objects used must be registered
-by another \texttt{Thread} within the runtime to prevent their collection. 
+by another \texttt{Thread} within the runtime.
 The final possibility is to preallocate all memory that could be needed. This 
 prevents applications from requesting more memory during execution, and 
 thus prevents garbage collection. 
@@ -269,7 +267,7 @@ unit-testing, complete with coverage analysis, as a language feature.
 In addition, D provides a Java style model for exceptions and errors, enabling 
 a much simpler error handling system than the C style ERRNOs 
 \cite{ddili-book}. 
-These exceptions are functionally very similar to Java exceptions. Compared to
+These exceptions are functionally similar to Java exceptions. Compared to
 C++'s exception model, D throws exceptions through reference, instead of by
 value \cite{interface-to-cpp}. 
 
@@ -297,13 +295,13 @@ systems scheduler.
 
 \subsection{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep} 
 As described in the Literature Review, access to both a high precision
-clock and absolute sleep method is necessary for a real-time system. D's
-current implementation can access a high precision clock through the use of
-functionality provided in the core runtime \cite{dlang-core-time}. However,
+clock and absolute sleep method is necessary. D's
+current implementation can access a high precision clock in the core runtime 
+\cite{dlang-core-time}. However,
 access to an absolute sleep function is absent. Instead, D's default
 \texttt{sleep}
 method maps onto the C relative sleep function, \texttt{nanosleep}. There are
-therefore two possible alternative implementations. Either the call to
+two possible alternative implementations: either the call to
 \texttt{nanosleep} could be wrapped in such a manner that it is not possible to be preempted, 
 or the C function, \texttt{clock\textunderscore{}nanosleep}, may be used. This function enables 
 an absolute sleep with a user specifiable clock \cite{clock-nanosleep}. 

@@ -3,7 +3,7 @@
 % Word Count - 1000 words
 
 The D programming language provides a capable set of features for the 
-development of real-time systems, such as: the ability to interact with low-level 
+development of real-time systems: the ability to interact with low-level 
 hardware, powerful concurrency tools, and interoperability with existing C code. 
 However, these alone are not enough to provide the full tool-set required for
 the development of a real-time system. 
@@ -21,7 +21,7 @@ This clock can be then used in combination with C
 interoperability to provide absolute delay timings through a wrapper around the
 \texttt{clock\textunderscore{}nanosleep} function, satisfying requirements 3 and
 4. 
-In order to provide a bound on the amount of Priority Inversion that a task
+In order to provide a bound on the amount of priority inversion that a task
 may suffer, both the Priority Inheritance and Priority Ceiling protocols have
 been implemented through the languages use of POSIX \texttt{Mutexes}. This meets
 requirements 5 and 6. 
@@ -67,7 +67,7 @@ real-time operating system. For the majority of features, a wrapper could
 be provided around the operating system calls. For ATC either thread cancellation 
 or signals must be present. 
 \par\bigskip\noindent
-As such, it is possible to develop a real-time system in the D programming 
+Therefore, it is possible to develop a real-time system in the D programming 
 language using the additional support detailed in this project. This is
 significant due to the rich set of features D provides compared to other
 real-time systems programming languages. By providing modern primitives such as

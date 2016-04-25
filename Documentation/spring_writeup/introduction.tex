@@ -14,7 +14,7 @@
 % information
 % My 'Thesis statement' -- guess this means the aim goal? 
 %\section{General Introduction} % 200 words
-This report sets out to detail and discuss the implementation of real-time 
+This report sets out to detail the implementation of real-time 
 programming capabilities into the D programming language. 
 Such support will take the form of a library, allowing a simplistic implementation 
 into new programs, without the need to run custom compilers or 
@@ -31,7 +31,7 @@ improved memory safety over C/C++, a safe type
 system, built-in unit-testing, and a general purpose approach 
 to programming. Simply stated, D aims to be a ``C++ done right'' \cite{qznc-tutorial}. 
 With C++ seeing increasing use on large scale real-time systems, such as the F-35 
-fighter jet, it follows a logical progression that D would provide a suitable 
+fighter jet, it follows that D would provide a suitable 
 alternative \cite{f35}.
 % Why do i want to do it -- Importance.
 % building upon previous work? Looking at something overlooked? Improving upon
@@ -51,8 +51,8 @@ abstractions to D, detailing its suitability for real-time systems.
 % collector. 
 \section{Limitations} % 200 words? 
 Throughout the course of this project, several limitations have been placed on 
-D as a programming language for the development of real-time systems. 
-This section explains these restrictions, and their reasons.
+D. 
+This section explains these restrictions, and their rationale.
 \subsection{Operating System}
 Using D's existing features was a desired requirement for the project. 
 D's native approach to concurrency, a \texttt{Thread}, does not provide a
@@ -68,7 +68,7 @@ different operating systems handle threads and scheduling very differently.
 In order to provide guaranteed latencies, real-time systems use a priority based 
 scheduling approach. This approach is currently only available in D through the use of 
 POSIX threads, targeting a POSIX compliant operating system such as GNU/Linux. 
-As a result, the functionality provided by the real-time library for D is only 
+Therefore, the functionality provided by the real-time library for D is only 
 applicable on a POSIX compliant operating system or one with a binding to the POSIX 
 API.
 
@@ -77,24 +77,24 @@ API.
 Similar to how D handles threads, many of the language's core features, such as 
 mutexes and semaphores, are provided through interaction with external libraries. 
 Many of the features implemented in the real-time library depend on the ability 
-to interact with a standard C library, such as GlibC. This poses another limitation 
-on the project: real-time features are only appropriate on operating systems with 
+to interact with a standard C library, such as GlibC. This poses another
+limitation: real-time features are only appropriate on operating systems with 
 a standard C library provided. However, the use of C is widespread, and C is 
 supported on most operating systems. 
 
 \subsection{Garbage Collector}
 A further limitation is provided by D's use of a stop-the-world garbage collector. 
-This, at any moment in time, may pause the execution of the entire program in 
+This, at any time, may pause the execution of the entire program in 
 order to perform memory management. As providing D with a real-time capable 
 garbage collector is outside the scope of this project, an additional limitation 
-is imposed. In order to guarantee a timely response, and that no 
+is imposed. To guarantee a timely response, and that no 
 deadlines are missed, the garbage collector must either be avoided or memory 
-management techniques such as pooling and preallocation must be used instead. 
+management techniques such as pooling and preallocation must be used. 
 
 % Assumptions. -- Assuming that the GC has negligible impact. ? 
 \section{Assumptions} 
-As D's current garbage-collector does not provide real-time capable
-memory-management, it is assumed that the garbage collector will either be replaced, 
+As D's current garbage collector does not provide real-time capable
+memory management, it is assumed that the garbage collector will either be replaced, 
 avoided, or techniques such as pooling and preallocation will be used so that 
 garbage collection does not affect deadlines. 
 
@@ -104,7 +104,7 @@ itself does not contain participants and as such there is no immediate ethical i
 
 % Outline of what is to come in this report. 
 \section{Report Outline} % 200 words
-This report is divided into 5 main sections:
+This report is divided into 5 main sections.
 First, a literature review will 
 consider existing research, analysing material on 
 real-time systems and situating this report within the context of these works. 
@@ -114,11 +114,12 @@ the target criteria and an overview of features of the D programming
 language. 
 The report will then discuss the approach taken for the implemented library, 
 highlighting any decisions made during the library's creation. This section will 
-also detail how sample programs may be written using.
+also detail how sample programs may be written.
 The next section, Results and Evaluation, will provide a comparison with an 
 existing real-time capable programming language, Ada, as well as a comparison 
-between its own two and Ada's implementations of ATC. 
+between its own and Ada's implementations of ATC. 
 Finally, conclusions will be drawn regarding the following: 
-the efficiency and safety of the two implemented ATC methods, 
-the effectiveness of real-time systems development in D over an alternative language, 
+the efficiency and safety of the two implemented ATC methods;
+the effectiveness of real-time systems development in D over an alternative
+language;
 and the potential D has for developing real-time systems.

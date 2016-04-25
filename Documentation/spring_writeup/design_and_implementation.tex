@@ -24,7 +24,7 @@ class method will allow a function to be passed by reference and executed.
 These features can be seen in the example below, taken from the D website
 \cite{core-thread}: 
 \begin{lstlisting}[basicstyle=\small]
-import core.Thread; 
+import core.thread; 
 
 class DerivedThread : Thread
 {
@@ -61,7 +61,7 @@ The ability to correctly schedule tasks or threads based on their priority is of
 critical importance to a real-time system. D's \texttt{Thread} class contains the
 parameter, \texttt{priority}, which can be used to adjust or retrieve 
 the \texttt{Thread's} priority \cite{core-thread}. 
-However, in order for priority based scheduling to be used, this alone is not 
+However, for priority based scheduling to be used, this alone is not 
 enough: the system scheduler must also be changed.
 No support exists within D's standard libraries to set the scheduler, and therefore, 
 this support must be supplied. 
@@ -119,7 +119,7 @@ to be fully viable for a real-time system. Because of this, real-time patches
 to the Linux kernel exist \cite{rt-wiki}. 
 
 \section{Requirements 3 and 4: Monotonic Clocks and Absolute Sleep}
-As mentioned in the previous section, it is a necessary to be able to sleep until 
+As previously outlined, it is necessary to be able to sleep until 
 an absolute time. This sleep must also use a monotonic clock 
 to remove any subjection to clock-drift or time-zone changes. D has support 
 for a monotonic clock as part of its core libraries 
@@ -149,7 +149,7 @@ void delayUntil(MonoTime timeIn)
     }
 }
 \end{lstlisting}
-This allows simplistic use for a real-time application. An absolute sleep can 
+This allows simple use for a real-time application. An absolute sleep can 
 then be performed in the following manner: 
 \begin{lstlisting}[basicstyle=\small]
 void main()
@@ -170,7 +170,7 @@ inherent ability to provide the Priority Inheritance or the Priority Ceiling pro
 Real-time systems have been shown to only be viable on operating systems that 
 are POSIX compliant, and due to the quantity of work involved in reimplementing 
 and defining these protocols, the decision was made to expand the languages
-inbuilt POSIX mutexes. The priority inheritance and priority ceiling protocols 
+inbuilt POSIX mutexes. The Priority Inheritance and Priority Ceiling protocols 
 are available when using POSIX mutexes in C \cite{mutex-setprotocol}. 
 \par\bigskip\noindent
 As requirement 8 highlights the importance of an unmodified runtime, the 
@@ -186,7 +186,7 @@ the following manner:
 \begin{lstlisting}[basicstyle=\small]
 auto a = new RTMutex(PRIORITY_INHERIT);
 \end{lstlisting}
-However, this is not a very D-like implementation: \texttt{enums} are not widely used 
+However, this is not a very D-like implementation, as \texttt{enums} are not widely used 
 in constructors. Instead, as with the scheduler calls, 
 it is more intuitive to wrap this into two separate classes. Additionally, 
 further support 
@@ -244,12 +244,12 @@ synchronized(a)
 }
 \end{lstlisting}
 Therefore, on a POSIX compliant operating system, D's \texttt{Mutex} class can 
-be reimplemented, incorporating both the priority inheritance and 
-priority ceiling protocols. 
+be reimplemented, incorporating both the Priority Inheritance and 
+Priority Ceiling protocols. 
 
 \section{Requirement 7: Asynchronous Transfer of Control} % 600 words
 The final primitive required for a real-time system is the ability to perform an Asynchronous Transfer of 
-Control (ATC). This entails providing a section of code that can be interrupted 
+Control (ATC). This involves providing a section of code that can be interrupted 
 and aborted asynchronously.
 As detailed in the previous section, there are several different methods of 
 achieving this aim. Here, each method is considered and the logic behind the 
@@ -556,7 +556,7 @@ As with the \texttt{Thread} based approach, it must be possible to defer interru
 for the safety of the system. 
 In Real-time Java, this is achieved through the use of runtime reflection to detect
 whether the current function is capable of throwing an \texttt{Exception} or not.
-However, as D does not a concept of run-time reflection, this approach cannot be
+However, as D does not have a concept of run-time reflection, this approach cannot be
 taken. 
 Instead, there are two alternatives: automatically managing the deferral
 status, or leaving deferral to the developer. 
@@ -567,9 +567,9 @@ this, it would be possible to define a function property, such as \texttt{@ATCDe
 where it would not be possible to asynchronously interrupt. This follows Ada's
 approach to abort deferred regions. 
 This would be the preferred method of implementing ATC, as it would remove the
-concern over the systems safety. However, it would require significant
+concern over the system's safety. However, it would require significant
 reworking of the D runtime, and possibly compiler alterations.
-As such, this method is outside of the scope of this
+This method is therefore outside of the scope of this
 project. 
 \par\bigskip\noindent
 The alternative approach is to leave the safety of ATC to the developer by
@@ -577,8 +577,8 @@ providing methods to disable and re-enable deferral.
 This can be achieved through the use of two boolean flags: one to keep track
 of whether interrupts are deferred, and one to test whether an interrupt has
 arrived while they have been deferred. 
-However, as with the \texttt{Thread} approach, an extra method is then needed in 
-order to guarantee fully safe execution during nested ATC sections. By keeping
+However, as with the \texttt{Thread} approach, an extra method is then needed 
+to guarantee fully safe execution during nested ATC sections. By keeping
 track of each \texttt{Interruptible} section's parent, it is possible to defer
 all interrupts, guaranteeing that no \texttt{Error} will be thrown. This is
 achieved in the following manner: 
@@ -649,7 +649,7 @@ these methods have therefore been implemented.
 \section{Requirement 9: Provision of Testing Facilities}
 In order to verify the correct behaviour of the completed implementation, a set 
 of tests have been provided. These serve two purposes: they enable verification
-of the correct operation of the real-time library; and they improve the
+of the correct operation of the real-time library, and they improve the
 maintainability of the system. 
 D provides a built-in 
 functionality for unit-testing: using the \texttt{unittest} flag, test code can 
