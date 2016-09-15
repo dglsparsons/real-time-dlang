@@ -1,4 +1,0 @@
-Poll model 
-Two Thread Model, 
-Signal Model - deferred 
-             - Enabled. 
