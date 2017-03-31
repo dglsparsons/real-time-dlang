@@ -1,0 +1,105 @@
+% Report write up for my third year project at the University of York on 
+% Real Time Programming in the D Programming Language.
+% By Douglas Parsons
+
+\documentclass[a4paper, 11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[pdftex]{graphicx}
+%\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{listings} % for code examples
+\usepackage[margin=0.8in]{geometry}
+%\usepackage{pdfpages}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+
+% Sorting out the headers 
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{15.2pt}
+\fancyhead[LE,RO]{\leftmark}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,CE]{Chapter \thechapter}
+\fancyfoot[CO,RE]{Douglas Parsons}
+%\setlength{\headheight}{15.2pt}
+%\pagestyle{fancyplain}
+
+
+% Settings for code examples
+\usepackage{color}
+\definecolor{bluekeywords}{rgb}{0.13,0.13,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{redstrings}{rgb}{0.9,0,0}
+\lstset{language=Java,
+showstringspaces=false,
+commentstyle=\color{greencomments},
+keywordstyle=\color{bluekeywords}\bfseries,
+stringstyle=\color{redstrings},
+basicstyle=\ttfamily
+}
+
+% For requirements aligning
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% For forcing float draw after tables
+\usepackage{placeins}
+
+% For embedding a wordcount
+\immediate\write18{texcount *.tex ada_profile.adb exception_profile.d rtmutex.d -total | grep "Words in" > count.sum;
+./wc_tool.d > count.sum2 }
+\newcommand\wordcount{\input{count.sum2}}
+\immediate\write18{detex writeup.tex | wc -w > count3.sum}
+\newcommand\wrdcount{\input{count3.sum}}
+
+% Rewritten the Chapter settings, in order to remove the stupid 50Space 
+% Indent from the top of the page. 
+\makeatletter
+\def\@makechapterhead#1{%
+    \vspace*{10\p@}% %%% removed!
+    {\parindent \z@ \raggedright \normalfont
+        \ifnum \c@secnumdepth >\m@ne
+        \huge\bfseries \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 20\p@
+        \fi
+        \interlinepenalty\@M
+        \Huge \bfseries #1\par\nobreak
+        \vskip 40\p@
+}}
+\def\@makeschapterhead#1{%
+    \vspace*{10\p@}%
+    %%% removed!
+    {\parindent \z@ \raggedright
+        \normalfont
+        \interlinepenalty\@M
+        \Huge \bfseries  #1\par\nobreak
+        \vskip 40\p@
+}}
+\makeatother
+
+\begin{document}
+%\maketitle
+\input{./title.tex}
+\chapter*{Abstract}
+\input{abstract.tex}
+\tableofcontents
+\chapter{Introduction} %1
+\input{introduction.tex}
+\chapter{Literature Review} %2
+\input{lit_review.tex}
+\chapter{Problem Description/Analysis} %3
+\input{problem_description.tex}
+\chapter{Design and Implementation}
+\input{design_and_implementation.tex} %4
+\chapter{Results and Evaluation}
+\input{results_and_evaluation.tex} %5
+\chapter{Conclusions and Future Work}
+\input{conclusion.tex} %6
+\appendix
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\chapter{Appendixes}
+\input{appendix}
+\end{document}
